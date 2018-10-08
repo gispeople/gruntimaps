@@ -30,10 +30,13 @@ namespace GruntiMaps.Interfaces
     public interface IMapData
     {
         Dictionary<string, ILayer> LayerDict { get; set; }
-        CloudStorageAccount CloudAccount { get; }
-        CloudBlobClient CloudClient { get; }
-        CloudBlobContainer MbtContainer { get; }
-        CloudBlobContainer GeojsonContainer { get; }
+        //CloudStorageAccount CloudAccount { get; }
+        //CloudBlobClient CloudClient { get; }
+        //CloudBlobContainer MbtContainer { get; }
+        //CloudBlobContainer GeojsonContainer { get; }
+        IStorageContainer MbtContainer { get; }
+        IStorageContainer GeojsonContainer { get; }
+        IQueue ConversionQueue { get; }
         Options CurrentOptions { get; }
 
         void OpenService(string mbtilefile);

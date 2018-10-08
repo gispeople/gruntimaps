@@ -36,6 +36,23 @@ namespace GruntiMaps.Models
             StorageAccount = config["globalStorageAccount"];
             StorageKey = config["globalStorageKey"];
             StorageContainer = config["storageContainer"];
+            if (config["storageProvider"] == null) StorageProvider = StorageProviders.Local; 
+            else {
+                switch (config["storageProvider"].ToLower())
+                {
+                    case "azure":
+                        StorageProvider = StorageProviders.Azure;
+                        break;
+                    case "local":
+                        StorageProvider = StorageProviders.Local;
+                        break;
+                    default:
+                        StorageProvider = StorageProviders.Local;
+                        break;
+                }
+            }
+
+            FontContainer = config["fontContainer"];
             PacksContainer = config["packsContainer"];
             MbTilesContainer = config["mbtilesContainer"];
             StyleContainer = config["styleContainer"];
@@ -81,6 +98,8 @@ namespace GruntiMaps.Models
         public string StorageContainer { get; }
 
         public string GeoJsonContainer { get; }
+        
+        public string FontContainer { get; }
 
         public string StyleContainer { get; }
 
@@ -95,6 +114,7 @@ namespace GruntiMaps.Models
         public string FontArchive { get; }
         
         public string Platform { get; }
+        public StorageProviders StorageProvider { get; }
          /* 
          Platform determines whether to use Azure Storage/Queues or local file system. 
          It is intended to be the basis for adding support for AWS, Google cloud, IBM, etc etc.

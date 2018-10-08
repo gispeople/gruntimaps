@@ -65,20 +65,13 @@ namespace GruntiMaps.Services
             // geojson files. Why, you might ask, because tippecanoe can import GeoJSON directly? It's because
             // passing the GeoJSON through ogr2ogr will ensure that the final GeoJSON is in the correct projection
             // and that it should be valid GeoJSON as well.
-            var queueClient = _mapdata.CloudAccount.CreateCloudQueueClient();
-            // _logger.LogDebug($"Monitoring {_mapdata.CurrentOptions.GdConvQueue}");
-            var gdalQueue = queueClient.GetQueueReference(_mapdata.CurrentOptions.GdConvQueue);
-            await gdalQueue.CreateIfNotExistsAsync();
-            // if there is a job on the gdal queue, process it.
-            var gdalMsg = await gdalQueue.GetMessageAsync();
-            if (gdalMsg != null)
+            var gdalMsg = await _mapdata.ConversionQueue.GetMessage(_mapdata.CurrentOptions.GdConvQueue);
+            if (gdalMsg != null) // if no message, don't try
             {
-                var gdalStr = gdalMsg.AsString;
-                _logger.LogDebug($"GDALConversion msg found on gdal queue = {gdalStr}");
                 ConversionMessageData gdalData;
                 try
                 {
-                    gdalData = JsonConvert.DeserializeObject<ConversionMessageData>(gdalStr);
+                    gdalData = JsonConvert.DeserializeObject<ConversionMessageData>(gdalMsg.Content);
                 }
                 catch (JsonReaderException e)
                 {
@@ -183,17 +176,7 @@ namespace GruntiMaps.Services
 
                         _logger.LogDebug($"geojson file is in {geoJsonFile}");
                         // now we need to put the converted geojson file into storage
-                        // var client = _mapdata.CloudAccount.CreateCloudBlobClient();
-                        // var geojsonContainer = _mapdata.CloudClient.GetContainerReference(_mapdata.CurrentOptions.GeoJsonContainer);
-                        // await geojsonContainer.CreateIfNotExistsAsync();
-                        // await geojsonContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
-                        CloudBlockBlob blob = _mapdata.GeojsonContainer.GetBlockBlobReference($"{layerName}.geojson");
-                        _logger.LogDebug("Uploading geojson file to storage");
-                        using (var fileStream = File.OpenRead(geoJsonFile))
-                        {
-                            await blob.UploadFromStreamAsync(fileStream);
-//                            await _client.CreateAttachmentAsync(UriFactory.CreateDocumentCollectionUri("db", "regions"), fileStream);
-                        }
+                        var location = await _mapdata.GeojsonContainer.Store($"{layerName}.geojson", geoJsonFile);
                         _logger.LogDebug("Upload of geojson file to storage complete.");
 
                         var end = DateTime.UtcNow;
@@ -203,7 +186,7 @@ namespace GruntiMaps.Services
                         // we created geoJson so we can put a request in for geojson to mvt conversion.
                         await _mapdata.CreateMbConversionRequest(new ConversionMessageData
                         {
-                            DataLocation = blob.Uri.ToString(),
+                            DataLocation = location,
                             Description = gdalData.Description,
                             LayerName = layerName
                         });
@@ -211,7 +194,7 @@ namespace GruntiMaps.Services
                 }
                 // we completed GDAL conversion and creation of MVT conversion request, so remove the GDAL request from the queue
                 _logger.LogDebug("deleting gdal message from queue");
-                await gdalQueue.DeleteMessageAsync(gdalMsg);
+                await _mapdata.ConversionQueue.DeleteMessage(_mapdata.CurrentOptions.GdConvQueue, gdalMsg);
             }
             await Task.Delay(_options.CheckConvertTime);
         }

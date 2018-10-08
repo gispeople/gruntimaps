@@ -163,7 +163,7 @@ done
 ```
 Choose a user to own the app. For the purposes of this document we will call that user `gruntimaps`.
 
-The configuration below assumes Ubuntu 16.04 LTS
+The configuration below assumes Ubuntu 18.04 LTS
 (i.e. it expects a `systemd`-based install). If you are using a non-`systemd` Linux you will
 need to use a different mechanism to configure and manage the Apache HTTPd and ASP.NET Core
 services.
@@ -192,7 +192,7 @@ ssh gruntimaps@<the public IP address> -p 422[123]
 Install Apache HTTPd and dependencies.
 
 ```bash
-sudo apt-get install apache2 apache2-bin apache2-utils apache2-data ssl-cert libapr1 libaprutil1 libaprutil1-dbd-sqlite3 libaprutil1-ldap liblua5.1-0
+sudo apt-get install apache2 apache2-bin apache2-utils apache2-data ssl-cert libapr1 libaprutil1 libaprutil1-dbd-sqlite3 libaprutil1-ldap liblua5.2-0
 ```
 
 #### Tippecanoe
@@ -225,10 +225,11 @@ sudo apt-get install gdal-bin
 Configure `apt` to retrieve the ASP.NET Core distribution and install (see [DotNet Core](https://www.microsoft.com/net/core#linuxubuntu) for more information if needed).
 
 ```bash
-sudo sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ xenial main" > /etc/apt/sources.list.d/dotnetdev.list'
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
+wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+sudo apt-get install apt-transport-https
 sudo apt-get update
-sudo apt-get install dotnet-dev-1.0.4
+sudo apt-get install dotnet-sdk-2.1
 ```
 
 ### Configure packages

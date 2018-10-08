@@ -28,6 +28,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using IMapData = GruntiMaps.Interfaces.IMapData;
 
 namespace GruntiMaps.Services
 {
@@ -63,22 +64,13 @@ namespace GruntiMaps.Services
             //    convert the geojson to mbtile.
             // 2. the geojson from the previous step (or possibly geojson directly) is in storage, we get
             //    a message and convert to mbtile and place result in storage.
-
-            var queueClient = _mapdata.CloudAccount.CreateCloudQueueClient();
-            // _logger.LogDebug($"Monitoring {_mapdata.CurrentOptions.MbConvQueue}");
-            var mbQueue = queueClient.GetQueueReference(_mapdata.CurrentOptions.MbConvQueue);
-            await mbQueue.CreateIfNotExistsAsync();
-            // if there is a job on the mapbox queue, process it.
-            // we are going to need some time to process map conversions. 5 minutes may or may not be enough...
-            var mbMsg = await mbQueue.GetMessageAsync();
+            var mbMsg = await _mapdata.ConversionQueue.GetMessage(_mapdata.CurrentOptions.MbConvQueue);
             if (mbMsg != null) // if no message, don't try
             {
-                var msgStr = mbMsg.AsString;
-                _logger.LogDebug($"MapBoxConversion msg found on mapbox queue = {msgStr}");
                 ConversionMessageData mbData;
                 try
                 {
-                    mbData = JsonConvert.DeserializeObject<ConversionMessageData>(msgStr);
+                    mbData = JsonConvert.DeserializeObject<ConversionMessageData>(mbMsg.Content);
                 }
                 catch (JsonReaderException e)
                 {
@@ -88,7 +80,6 @@ namespace GruntiMaps.Services
                 if (mbData.DataLocation != null && mbData.LayerName != null && mbData.Description != null)
                 // if the mbData had missing values, don't process it, just delete it from queue.
                 {
-                    // _mapdata.RefreshLayers();
                     // convert the geoJSON to a mapbox dataset
                     var start = DateTime.UtcNow;
                     var randomFolderName = Path.GetRandomFileName();
@@ -162,22 +153,13 @@ namespace GruntiMaps.Services
 
                     _logger.LogDebug($"mbtile file is in {mbtileFile}");
                     // now we need to put the converted mbtile file into storage
-                    // var client = _mapdata.CloudAccount.CreateCloudBlobClient();
-                    // var mbtContainer = _mapdata.CloudClient.GetContainerReference(_mapdata.CurrentOptions.MbTilesContainer);
-                    // await mbtContainer.CreateIfNotExistsAsync();
-                    // await mbtContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
-                    CloudBlockBlob blob = _mapdata.MbtContainer.GetBlockBlobReference($"{mbData.LayerName}.mbtiles");
-                    _logger.LogDebug("Uploading mbtile file to storage");
-                    using (var fileStream = File.OpenRead(mbtileFile))
-                    {
-                        await blob.UploadFromStreamAsync(fileStream);
-                    }
+                    await _mapdata.MbtContainer.Store($"{mbData.LayerName}.mbtiles", mbtileFile);
                     _logger.LogDebug("Upload of mbtile file to storage complete.");
                     var end = DateTime.UtcNow;
                     var duration = end - start;
                     _logger.LogDebug($"MapBoxConversion took {duration.TotalMilliseconds} ms.");
                 }
-                await mbQueue.DeleteMessageAsync(mbMsg);
+                await _mapdata.ConversionQueue.DeleteMessage(_mapdata.CurrentOptions.MbConvQueue, mbMsg);
                 _logger.LogDebug("Deleted MapBoxConversion message");
             }
             await Task.Delay(_options.CheckConvertTime);

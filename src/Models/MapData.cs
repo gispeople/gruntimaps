@@ -18,20 +18,16 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
+using GruntiMaps.Interfaces;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage.Blob;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
-using GruntiMaps.Interfaces;
-using GruntiMaps.Models;
-using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
-using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.Queue;
-using Newtonsoft.Json;
 using static System.IO.Directory;
 
 namespace GruntiMaps.Models
@@ -44,14 +40,14 @@ namespace GruntiMaps.Models
         private readonly ILogger<MapData> _logger;
         // we need to be able to see the watcher so we can disable it while downloading layers
         private FileSystemWatcher watcher = new FileSystemWatcher();
-        public CloudBlobContainer PackContainer;
-        public CloudBlobContainer TileContainer;
-        public CloudBlobContainer MbtContainer { get; }
-        public CloudBlobContainer GeojsonContainer { get; }
+        public IStorageContainer PackContainer;
+        public IStorageContainer TileContainer;
+        public IStorageContainer MbtContainer { get; }
+        public IStorageContainer GeojsonContainer { get; }
+        public IStorageContainer FontContainer { get; }
+        public IQueue ConversionQueue { get; }
         public Options CurrentOptions { get; }
 
-        public CloudStorageAccount CloudAccount { get; }
-        public CloudBlobClient CloudClient { get; }
         public Dictionary<string, ILayer> LayerDict { get; set; } = new Dictionary<string, ILayer>();
 
         public MapData(Options options, ILogger<MapData> logger)
@@ -59,161 +55,106 @@ namespace GruntiMaps.Models
             CurrentOptions = options;
             _logger = logger;
             _logger.LogDebug($"Creating MapData root={CurrentOptions.RootDir}");
-            CloudAccount =
-                new CloudStorageAccount(
-                    new StorageCredentials(CurrentOptions.StorageAccount, CurrentOptions.StorageKey), true);
-            CloudClient = CloudAccount.CreateCloudBlobClient();
-            PackContainer = CloudClient.GetContainerReference(CurrentOptions.StorageContainer);
-            PackContainer.CreateIfNotExistsAsync();
-            PackContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
-            TileContainer = CloudClient.GetContainerReference(CurrentOptions.MbTilesContainer);
-            TileContainer.CreateIfNotExistsAsync();
-            TileContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
-            MbtContainer = CloudClient.GetContainerReference(CurrentOptions.MbTilesContainer);
-            MbtContainer.CreateIfNotExistsAsync();
-            MbtContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
-            GeojsonContainer = CloudClient.GetContainerReference(CurrentOptions.GeoJsonContainer);
-            GeojsonContainer.CreateIfNotExistsAsync();
-            GeojsonContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
+            switch (options.StorageProvider)
+            {
+                case StorageProviders.Azure: 
+                    PackContainer = new AzureStorage(CurrentOptions, CurrentOptions.StorageContainer);
+                    TileContainer = new AzureStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
+                    MbtContainer = new AzureStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
+                    GeojsonContainer = new AzureStorage(CurrentOptions, CurrentOptions.GeoJsonContainer);
+                    FontContainer = new AzureStorage(CurrentOptions, CurrentOptions.FontContainer);
+                    ConversionQueue = new AzureQueue(CurrentOptions);
+                    break;
+                case StorageProviders.Local:
+                    PackContainer = new LocalStorage(CurrentOptions, CurrentOptions.StorageContainer);
+                    TileContainer = new LocalStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
+                    GeojsonContainer = new LocalStorage(CurrentOptions, CurrentOptions.GeoJsonContainer);
+                    FontContainer = new LocalStorage(CurrentOptions, CurrentOptions.FontContainer);
+                    ConversionQueue = new LocalQueue(CurrentOptions);
+                    break;
+                default:
+                    _logger.LogCritical("No valid storage provider set.");
+                    break;
+            }
 
             CheckDirectories();
             PopulateFonts();
-            // RefreshLayers(); // we can do this as part of our background task.
             OpenTiles();
         }
 
         public async Task CreateGdalConversionRequest(ConversionMessageData messageData)
         {
-            await CreateConversionRequest(messageData, CurrentOptions.GdConvQueue);
+            await ConversionQueue.AddMessage(CurrentOptions.GdConvQueue, JsonConvert.SerializeObject(messageData));
         }
 
         public async Task CreateMbConversionRequest(ConversionMessageData messageData)
         {
-            await CreateConversionRequest(messageData, CurrentOptions.MbConvQueue);
-        }
-
-        public async Task CreateConversionRequest(ConversionMessageData messageData, string queueName)
-        {
-            var queueClient = CloudAccount.CreateCloudQueueClient();
-            // _logger.LogDebug($"Monitoring {_mapdata.CurrentOptions.GdConvQueue}");
-            var queueRef = queueClient.GetQueueReference(queueName);
-            await queueRef.CreateIfNotExistsAsync();
-
-            _logger.LogDebug("create the new message");
-            _logger.LogDebug($"new message = {messageData}");
-            var jsonMsg = JsonConvert.SerializeObject(messageData);
-            _logger.LogDebug($"msg = {jsonMsg}");
-            CloudQueueMessage message = new CloudQueueMessage(jsonMsg);
-            _logger.LogDebug("Adding msg to queue");
-            await queueRef.AddMessageAsync(message);
+            await ConversionQueue.AddMessage(CurrentOptions.MbConvQueue, JsonConvert.SerializeObject(messageData));
         }
 
         // retrieve global and per-instance tile packs 
         public async Task RefreshLayers()
         {
             // we don't want to do this more than once at the same time so we will need to track that.
-            //_logger.LogDebug("Refreshing layers.");
 
             // stop watching for filesystem changes while we download 
             watcher.EnableRaisingEvents = false;
 
             // check for map packs first.
             _logger.LogDebug("Starting Refreshing layers");
-            // var cloudClient = CloudAccount.CreateCloudBlobClient();
-            // var packContainer = CloudClient.GetContainerReference(CurrentOptions.StorageContainer);
-            // await packContainer.CreateIfNotExistsAsync();
-            // await packContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
 
-            BlobContinuationToken continuationToken = null;
-            do
+            var packs = await PackContainer.List();
+            foreach (var pack in packs)
             {
-                var response = await PackContainer.ListBlobsSegmentedAsync(continuationToken);
-                continuationToken = response.ContinuationToken;
-                foreach (var item in response.Results)
-                    if (item.GetType() == typeof(CloudBlockBlob))
+                var thispackfile = Path.Combine(CurrentOptions.PackPath, pack);
+                if (await PackContainer.GetIfNewer(pack, thispackfile))
+                {
+                    // extract pack to appropriate places
+                    using (var zip = ZipFile.OpenRead(thispackfile))
                     {
-                        var blob = (CloudBlockBlob)item;
-                        var thispackfile = Path.Combine(CurrentOptions.PackPath, blob.Name);
-
-                        if (NeedToExtract(thispackfile, blob.Properties.Length))
+                        foreach (var entry in zip.Entries)
                         {
-                            _logger.LogDebug($"Downloading {thispackfile}.");
-                            using (var fileStream = File.OpenWrite(thispackfile))
+                            var fn = Path.GetFileName(entry.FullName);
+                            var ext = Path.GetExtension(fn);
+                            if (ext.Equals(".json"))
                             {
-                                await blob.DownloadToStreamAsync(fileStream);
-                            }
-                        }
-
-                        // extract pack to appropriate places
-                        using (var zip = ZipFile.OpenRead(thispackfile))
-                        {
-                            foreach (var entry in zip.Entries)
-                            {
-                                var fn = Path.GetFileName(entry.FullName);
-                                var ext = Path.GetExtension(fn);
-                                if (ext.Equals(".json"))
+                                var style = Path.Combine(CurrentOptions.StylePath, fn);
+                                if (NeedToExtract(style, entry.Length))
                                 {
-                                    var style = Path.Combine(CurrentOptions.StylePath, fn);
-                                    if (NeedToExtract(style, entry.Length))
-                                    {
-                                        _logger.LogDebug($"Extracting {style}.");
-                                        entry.ExtractToFile(style, true);
-                                    }
+                                    _logger.LogDebug($"Extracting {style}.");
+                                    entry.ExtractToFile(style, true);
                                 }
+                            }
 
-                                if (ext.Equals(".mbtiles"))
+                            if (ext.Equals(".mbtiles"))
+                            {
+                                var tile = Path.Combine(CurrentOptions.TilePath, fn);
+                                if (NeedToExtract(tile, entry.Length))
                                 {
-                                    var tile = Path.Combine(CurrentOptions.TilePath, fn);
-                                    if (NeedToExtract(tile, entry.Length))
-                                    {
-                                        _logger.LogDebug($"Extracting {tile}.");
-                                        entry.ExtractToFile(tile, true);
-                                        OpenService(tile);
-                                    }
+                                    _logger.LogDebug($"Extracting {tile}.");
+                                    entry.ExtractToFile(tile, true);
+                                    OpenService(tile);
                                 }
                             }
                         }
                     }
-            } while (continuationToken != null);
+
+                };
+            }
 
             // see if there's any new standalone map layers
             _logger.LogDebug("Checking for standalone layers");
-            // var tileContainer = CloudClient.GetContainerReference(CurrentOptions.MbTilesContainer);
-            // await tileContainer.CreateIfNotExistsAsync();
-            // await tileContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
 
-            do
+            var mbtiles = await TileContainer.List();
+            foreach (var mbtile in mbtiles)
             {
-                var response = await TileContainer.ListBlobsSegmentedAsync(continuationToken);
-                continuationToken = response.ContinuationToken;
-                foreach (var item in response.Results)
-                    if (item.GetType() == typeof(CloudBlockBlob))
-                    {
-                        var blob = (CloudBlockBlob)item;
-                        var thismbtile = Path.Combine(CurrentOptions.TilePath, blob.Name);
+                var thismbtile = Path.Combine(CurrentOptions.TilePath, mbtile);
+                if (await PackContainer.GetIfNewer(mbtile, thismbtile))
+                {
+                    OpenService(thismbtile);
+                }
+            }
 
-                        if (NeedToExtract(thismbtile, blob.Properties.Length))
-                        {
-                            _logger.LogDebug($"Downloading {thismbtile}.");
-                            try
-                            {
-                                using (var fileStream = File.OpenWrite(thismbtile))
-                                {
-                                    _logger.LogDebug($"about to download");
-                                    await blob.DownloadToStreamAsync(fileStream);
-                                    _logger.LogDebug("finished download");
-                                }
-                                _logger.LogDebug($"about to open {thismbtile}");
-                                OpenService(thismbtile);
-                                _logger.LogDebug($"opened {thismbtile}");
-                            }
-                            catch (Exception e)
-                            {
-                                _logger.LogError($"An exception occurred while downloading {e}");
-                            }
-                        }
-                    }
-            } while (continuationToken != null);
             // reenable watching for filesystem changes 
             watcher.EnableRaisingEvents = true;
 
@@ -271,48 +212,30 @@ namespace GruntiMaps.Models
         // retrieve font set and populate font directory.
         private async void PopulateFonts()
         {
-            var globalClient = CloudAccount.CreateCloudBlobClient();
-            var fontContainer = globalClient.GetContainerReference("fonts");
-            await fontContainer.CreateIfNotExistsAsync();
-            await fontContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
-
-            BlobContinuationToken continuationToken = null;
-            do
+            var fontPacks = await FontContainer.List();
+            foreach (var fontPack in fontPacks)
             {
-                var response = await fontContainer.ListBlobsSegmentedAsync(continuationToken);
-                continuationToken = response.ContinuationToken;
-                foreach (var item in response.Results)
-                    if (item.GetType() == typeof(CloudBlockBlob))
+                var thisFontPack = Path.Combine(CurrentOptions.FontPath, fontPack);
+                if (await FontContainer.GetIfNewer(fontPack, thisFontPack))
+                {
+                    using (var zip = ZipFile.OpenRead(thisFontPack))
                     {
-                        var blob = (CloudBlockBlob)item;
-                        var fontPackFile = Path.Combine(CurrentOptions.RootDir, blob.Name);
-
-                        if (NeedToExtract(fontPackFile, blob.Properties.Length))
-                        {
-                            _logger.LogDebug($"Downloading {fontPackFile}.");
-                            using (var fileStream = File.OpenWrite(fontPackFile))
+                        foreach (var entry in zip.Entries)
+                            if (entry.Length != 0)
                             {
-                                await blob.DownloadToStreamAsync(fileStream);
+                                var fontFile = Path.Combine(CurrentOptions.FontPath, entry.FullName);
+                                if (NeedToExtract(fontFile, entry.Length)) entry.ExtractToFile(fontFile, true);
                             }
-                        }
-
-                        // extract pack to appropriate places
-                        using (var zip = ZipFile.OpenRead(fontPackFile))
-                        {
-                            foreach (var entry in zip.Entries)
-                                if (entry.Length != 0)
-                                {
-                                    var fontFile = Path.Combine(CurrentOptions.FontPath, entry.FullName);
-                                    if (NeedToExtract(fontFile, entry.Length)) entry.ExtractToFile(fontFile, true);
-                                }
-                                else
-                                {
-                                    var dir = Path.Combine(CurrentOptions.FontPath, entry.FullName);
-                                    CreateDirectory(dir);
-                                }
-                        }
+                            else
+                            {
+                                var dir = Path.Combine(CurrentOptions.FontPath, entry.FullName);
+                                CreateDirectory(dir);
+                            }
                     }
-            } while (continuationToken != null);
+
+                }
+            }
+
         }
 
         private void CheckDirectories()
