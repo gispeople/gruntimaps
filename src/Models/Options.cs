@@ -51,7 +51,13 @@ namespace GruntiMaps.Models
                         break;
                 }
             }
-
+            if (StorageProvider == StorageProviders.Local) {
+                if (config["storagePath"] != null) {
+                    StoragePath = config["storagePath"];
+                } else {
+                    StoragePath = env.ContentRootPath;
+                }
+            }
             FontContainer = config["fontContainer"];
             PacksContainer = config["packsContainer"];
             MbTilesContainer = config["mbtilesContainer"];
@@ -123,5 +129,7 @@ namespace GruntiMaps.Models
         public string PackPath => PackDir;
         public string StylePath => StyleDir;
         public string FontPath => FontDir;
+
+        public string StoragePath { get; }
     }
 }
