@@ -5,8 +5,8 @@ namespace GruntiMaps.Interfaces
 {
     public interface IQueue
     {
-        Task AddMessage(string queueName, string message);
-        Task<Message> GetMessage(string queueName);
-        Task DeleteMessage(string queueName, Message message);
+        Task AddMessage(string message);
+        Task<Message> GetMessage();
+        Task DeleteMessage(Message message);
     }
 }

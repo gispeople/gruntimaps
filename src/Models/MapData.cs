@@ -45,7 +45,8 @@ namespace GruntiMaps.Models
         public IStorageContainer MbtContainer { get; }
         public IStorageContainer GeojsonContainer { get; }
         public IStorageContainer FontContainer { get; }
-        public IQueue ConversionQueue { get; }
+        public IQueue MbConversionQueue { get; }
+        public IQueue GdConversionQueue { get; }
         public Options CurrentOptions { get; }
 
         public Dictionary<string, ILayer> LayerDict { get; set; } = new Dictionary<string, ILayer>();
@@ -63,14 +64,16 @@ namespace GruntiMaps.Models
                     MbtContainer = new AzureStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
                     GeojsonContainer = new AzureStorage(CurrentOptions, CurrentOptions.GeoJsonContainer);
                     FontContainer = new AzureStorage(CurrentOptions, CurrentOptions.FontContainer);
-                    ConversionQueue = new AzureQueue(CurrentOptions);
+                    MbConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.MbConvQueue);
+                    GdConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.GdConvQueue);
                     break;
                 case StorageProviders.Local:
                     PackContainer = new LocalStorage(CurrentOptions, CurrentOptions.StorageContainer);
                     TileContainer = new LocalStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
                     GeojsonContainer = new LocalStorage(CurrentOptions, CurrentOptions.GeoJsonContainer);
                     FontContainer = new LocalStorage(CurrentOptions, CurrentOptions.FontContainer);
-                    ConversionQueue = new LocalQueue(CurrentOptions);
+                    MbConversionQueue = new LocalQueue(CurrentOptions, CurrentOptions.MbConvQueue);
+                    GdConversionQueue = new LocalQueue(CurrentOptions, CurrentOptions.GdConvQueue);
                     break;
                 default:
                     _logger.LogCritical("No valid storage provider set.");
@@ -84,12 +87,12 @@ namespace GruntiMaps.Models
 
         public async Task CreateGdalConversionRequest(ConversionMessageData messageData)
         {
-            await ConversionQueue.AddMessage(CurrentOptions.GdConvQueue, JsonConvert.SerializeObject(messageData));
+            await GdConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
         }
 
         public async Task CreateMbConversionRequest(ConversionMessageData messageData)
         {
-            await ConversionQueue.AddMessage(CurrentOptions.MbConvQueue, JsonConvert.SerializeObject(messageData));
+            await MbConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
         }
 
         // retrieve global and per-instance tile packs 

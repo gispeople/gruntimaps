@@ -36,7 +36,8 @@ namespace GruntiMaps.Interfaces
         //CloudBlobContainer GeojsonContainer { get; }
         IStorageContainer MbtContainer { get; }
         IStorageContainer GeojsonContainer { get; }
-        IQueue ConversionQueue { get; }
+        IQueue MbConversionQueue { get; }
+        IQueue GdConversionQueue { get; }
         Options CurrentOptions { get; }
 
         void OpenService(string mbtilefile);

@@ -64,7 +64,7 @@ namespace GruntiMaps.Services
             //    convert the geojson to mbtile.
             // 2. the geojson from the previous step (or possibly geojson directly) is in storage, we get
             //    a message and convert to mbtile and place result in storage.
-            var mbMsg = await _mapdata.ConversionQueue.GetMessage(_mapdata.CurrentOptions.MbConvQueue);
+            var mbMsg = await _mapdata.MbConversionQueue.GetMessage();
             if (mbMsg != null) // if no message, don't try
             {
                 ConversionMessageData mbData;
@@ -159,7 +159,7 @@ namespace GruntiMaps.Services
                     var duration = end - start;
                     _logger.LogDebug($"MapBoxConversion took {duration.TotalMilliseconds} ms.");
                 }
-                await _mapdata.ConversionQueue.DeleteMessage(_mapdata.CurrentOptions.MbConvQueue, mbMsg);
+                await _mapdata.MbConversionQueue.DeleteMessage(mbMsg);
                 _logger.LogDebug("Deleted MapBoxConversion message");
             }
             await Task.Delay(_options.CheckConvertTime);

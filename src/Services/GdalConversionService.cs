@@ -65,7 +65,7 @@ namespace GruntiMaps.Services
             // geojson files. Why, you might ask, because tippecanoe can import GeoJSON directly? It's because
             // passing the GeoJSON through ogr2ogr will ensure that the final GeoJSON is in the correct projection
             // and that it should be valid GeoJSON as well.
-            var gdalMsg = await _mapdata.ConversionQueue.GetMessage(_mapdata.CurrentOptions.GdConvQueue);
+            var gdalMsg = await _mapdata.GdConversionQueue.GetMessage();
             if (gdalMsg != null) // if no message, don't try
             {
                 ConversionMessageData gdalData;
@@ -194,7 +194,7 @@ namespace GruntiMaps.Services
                 }
                 // we completed GDAL conversion and creation of MVT conversion request, so remove the GDAL request from the queue
                 _logger.LogDebug("deleting gdal message from queue");
-                await _mapdata.ConversionQueue.DeleteMessage(_mapdata.CurrentOptions.GdConvQueue, gdalMsg);
+                await _mapdata.GdConversionQueue.DeleteMessage(gdalMsg);
             }
             await Task.Delay(_options.CheckConvertTime);
         }

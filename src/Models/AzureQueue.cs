@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using GruntiMaps.Interfaces;
-using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Queue;
@@ -11,34 +10,30 @@ namespace GruntiMaps.Models
     public class AzureQueue: IQueue
     {
         public CloudStorageAccount CloudAccount { get; }
-
-        public AzureQueue(Options options)
+        private CloudQueue QueueRef { get; }
+        public AzureQueue(Options options, string queueName)
         {
             CloudAccount =
                 new CloudStorageAccount(
                     new StorageCredentials(options.StorageAccount, options.StorageKey), true);
-        }
-        public async Task AddMessage(string queueName, string messageData)
-        {
             var queueClient = CloudAccount.CreateCloudQueueClient();
             // _logger.LogDebug($"Monitoring {_mapdata.CurrentOptions.GdConvQueue}");
-            var queueRef = queueClient.GetQueueReference(queueName);
-            await queueRef.CreateIfNotExistsAsync();
+            QueueRef = queueClient.GetQueueReference(queueName);
+            QueueRef.CreateIfNotExistsAsync();
+        }
+        public async Task AddMessage(string messageData)
+        {
 
             var jsonMsg = JsonConvert.SerializeObject(messageData);
             CloudQueueMessage message = new CloudQueueMessage(jsonMsg);
-            await queueRef.AddMessageAsync(message);
+            await QueueRef.AddMessageAsync(message);
         }
 
-        public async Task<Message> GetMessage(string queueName)
+        public async Task<Message> GetMessage()
         {
             Message result = new Message();
-            var queueClient = CloudAccount.CreateCloudQueueClient();
-            // _logger.LogDebug($"Monitoring {_mapdata.CurrentOptions.MbConvQueue}");
-            var queue = queueClient.GetQueueReference(queueName);
-            await queue.CreateIfNotExistsAsync();
             // if there is a job on the queue, process it.
-            var msg = await queue.GetMessageAsync();
+            var msg = await QueueRef.GetMessageAsync();
             if (msg != null) // if no message, don't try
             {
                 result.ID = msg.Id;
@@ -49,13 +44,9 @@ namespace GruntiMaps.Models
             return result;
         }
 
-        public async Task DeleteMessage(string queueName, Message message)
+        public async Task DeleteMessage(Message message)
         {
-            var queueClient = CloudAccount.CreateCloudQueueClient();
-            // _logger.LogDebug($"Monitoring {_mapdata.CurrentOptions.MbConvQueue}");
-            var queue = queueClient.GetQueueReference(queueName);
-            await queue.CreateIfNotExistsAsync();
-            await queue.DeleteMessageAsync(message.ID, message.PopReceipt);
+            await QueueRef.DeleteMessageAsync(message.ID, message.PopReceipt);
         }
     }
 }
