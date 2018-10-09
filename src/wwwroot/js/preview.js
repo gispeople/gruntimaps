@@ -128,44 +128,44 @@ $(document).ready(function () {
     });
     map.on("sourcedata",
         function (e) {
-            // console.log(e);
-            // if (e.isSourceLoaded) {
-            var layerGroup = document.getElementById(e.sourceId);
-            if (layerGroup === null) {
-                layerGroup = document.createElement("div");
-                layerGroup.id = e.sourceId;
-                layerGroup.textContent = e.source.description;
-                layerGroup.className = "active";
-                layerGroup.onclick = function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    for (let c of e.target.children) {
-                        console.log(c);
-                        if (map.getLayoutProperty(c.text, "visibility") === "visible") {
-                            map.setLayoutProperty(c.text, "visibility", "none");
-                            layerGroup.className = "";
-                        } else {
-                            map.setLayoutProperty(c.text, "visibility", "visible");
-                            layerGroup.className = "active";
+            if (e.sourceDataType === "metadata") {
+                // if (e.isSourceLoaded) {
+                var layerGroup = document.getElementById(e.sourceId);
+                if (layerGroup === null) {
+                    layerGroup = document.createElement("div");
+                    layerGroup.id = e.sourceId;
+                    layerGroup.textContent = e.source.description;
+                    layerGroup.className = "active";
+                    layerGroup.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        for (let c of e.target.children) {
+                            console.log(c);
+                            if (map.getLayoutProperty(c.text, "visibility") === "visible") {
+                                map.setLayoutProperty(c.text, "visibility", "none");
+                                layerGroup.className = "";
+                            } else {
+                                map.setLayoutProperty(c.text, "visibility", "visible");
+                                layerGroup.className = "active";
+                            }
                         }
-                    }
-                    //const visibility = map.getLayoutProperty(clickedLayer, "visibility");
-                    //if (visibility === "visible") {
-                    //    map.setLayoutProperty(clickedLayer, "visibility", "none");
-                    //    this.className = "";
-                    //} else {
-                    //    this.className = "active";
-                    //    map.setLayoutProperty(clickedLayer, "visibility", "visible");
-                    //}
-                };
+                        //const visibility = map.getLayoutProperty(clickedLayer, "visibility");
+                        //if (visibility === "visible") {
+                        //    map.setLayoutProperty(clickedLayer, "visibility", "none");
+                        //    this.className = "";
+                        //} else {
+                        //    this.className = "active";
+                        //    map.setLayoutProperty(clickedLayer, "visibility", "visible");
+                        //}
+                    };
 
-                const menu = document.getElementById("menu");
-                menu.appendChild(layerGroup);
+                    const menu = document.getElementById("menu");
+                    menu.appendChild(layerGroup);
+                }
+
+                loadLayers(e.source);
+                // }
             }
-
-            loadLayers(e.source);
-            // }
-
         });
 
     map.on("mousemove", function (e) {
