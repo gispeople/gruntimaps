@@ -29,43 +29,47 @@ $(document).ready(function () {
 
 
     function loadLayers(source) {
-
-        $.get(source.metadata.gruntimaps.styles, function(styles) {
-            for (let t in styles) {
-                if (styles.hasOwnProperty(t)) {
-                    if (map.getLayer(styles[t].id) === undefined) {
-                        map.addLayer(styles[t]);
-                        map.setLayoutProperty(styles[t].id, "visibility", "visible");
-                        const link = document.createElement("a");
-                        link.href = "#";
-                        link.className = "active";
-                        link.textContent = styles[t].id;
-                        link.onclick = function(e) {
-                            const clickedLayer = this.text;
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const visibility = map.getLayoutProperty(clickedLayer, "visibility");
-                            if (visibility === "visible") {
-                                map.setLayoutProperty(clickedLayer, "visibility", "none");
-                                this.className = "";
-                            } else {
-                                this.className = "active";
-                                map.setLayoutProperty(clickedLayer, "visibility", "visible");
-                            }
-                        };
-                        const layers = document.getElementById("menu");
-                        layers.appendChild(link);
-                    }
-
-                    layergroup = document.getElementById(styles[t].source);
-                    if (layergroup===null) { 
-                        layergroup = document.createElement("div");
-                        layergroup.id = styles[t].source;
-                        const menu = document.getElementById("menu"); 
-                        menu.appendChild(layergroup);
-                    }
-//                    layergroup.appendChild(link);                                
+        if (source.metadata === undefined) return;
+        $.get(source.metadata.gruntimaps.styles, function (styles) {
+            for (let style of styles) {
+                if (map.getLayer(style.id) === undefined) {
+                    let thisType = style.type;
+                    let mapStyle = map.getStyle();
+                    let existingLayerOfType = mapStyle.layers.find(function(e) { return e.type === thisType; });
+                    if (existingLayerOfType !== undefined && existingLayerOfType !== null) map.addLayer(style, existingLayerOfType.id); else map.addLayer(style);
+                    map.setLayoutProperty(style.id, "visibility", "visible");
+                    const layer = document.createElement("a");
+                    layer.href = "#";
+                    layer.className = "active";
+                    layer.textContent = style.id;
+                    layer.onclick = function (e) {
+                        const clickedLayer = this.text;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const visibility = map.getLayoutProperty(clickedLayer, "visibility");
+                        if (visibility === "visible") {
+                            map.setLayoutProperty(clickedLayer, "visibility", "none");
+                            this.className = "";
+                        } else {
+                            this.className = "active";
+                            map.setLayoutProperty(clickedLayer, "visibility", "visible");
+                        }
+                    };
+                    var layerGroup = document.getElementById(style.source);
+                    //if (layerGroup === null) {
+                    //    layerGroup = document.createElement("div");
+                    //    layerGroup.id = style.source;
+                    //    layerGroup.textContent = style.source
+                    //    const menu = document.getElementById("menu");
+                    //    menu.appendChild(layerGroup);
+                    //}
+                    layerGroup.appendChild(layer);
+//                    const menu = document.getElementById("menu");
+//                    menu.appendChild(layer);
                 }
+
+                //                    layergroup.appendChild(link);                                
+
             }
         });
     }
@@ -94,15 +98,27 @@ $(document).ready(function () {
     const nav = new mapboxgl.NavigationControl();
     map.addControl(nav, "bottom-left");
 
-    map.on("load", function(e) {
-        $.get("/api/layers", function(layers) {
-            console.log(layers);
+    map.on("load", function (e) {
+        map.addSource("empty",
+            {
+                "type": "geojson",
+                "data": { "type": "Feature", "properties": { "title": "empty" }, "geometry": null }
+            });
+        map.addLayer({ "type": "background", "id": "background-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "raster", "id": "raster-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "fill", "id": "fill-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "fill-extrusion", "id": "fill-extrusion-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "line", "id": "line-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "circle", "id": "circle-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "symbol", "id": "symbol-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "heatmap", "id": "heatmap-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "hillshade", "id": "hillshade-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        $.get("/api/layers", function (layers) {
             for (let l of layers.content) {
-                $.get(l.links.href, function(layerProps) {
-                    console.log(layerProps);
+                $.get(l.links.href, function (layerProps) {
                     var source = layerProps.source;
                     var style = layerProps.style;
-                    $.get(source, function(src) {
+                    $.get(source, function (src) {
                         src.metadata = { gruntimaps: { styles: style } };
                         map.addSource(src.name, src);
                     });
@@ -111,15 +127,48 @@ $(document).ready(function () {
         });
     });
     map.on("sourcedata",
-        function(e) {
+        function (e) {
             // console.log(e);
             // if (e.isSourceLoaded) {
+            var layerGroup = document.getElementById(e.sourceId);
+            if (layerGroup === null) {
+                layerGroup = document.createElement("div");
+                layerGroup.id = e.sourceId;
+                layerGroup.textContent = e.source.description;
+                layerGroup.className = "active";
+                layerGroup.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    for (let c of e.target.children) {
+                        console.log(c);
+                        if (map.getLayoutProperty(c.text, "visibility") === "visible") {
+                            map.setLayoutProperty(c.text, "visibility", "none");
+                            layerGroup.className = "";
+                        } else {
+                            map.setLayoutProperty(c.text, "visibility", "visible");
+                            layerGroup.className = "active";
+                        }
+                    }
+                    //const visibility = map.getLayoutProperty(clickedLayer, "visibility");
+                    //if (visibility === "visible") {
+                    //    map.setLayoutProperty(clickedLayer, "visibility", "none");
+                    //    this.className = "";
+                    //} else {
+                    //    this.className = "active";
+                    //    map.setLayoutProperty(clickedLayer, "visibility", "visible");
+                    //}
+                };
+
+                const menu = document.getElementById("menu");
+                menu.appendChild(layerGroup);
+            }
+
             loadLayers(e.source);
             // }
 
         });
 
-    map.on("mousemove", function(e) {
+    map.on("mousemove", function (e) {
         var properties = map.queryRenderedFeatures(e.point);
         if (properties.length !== 0) {
             var props = [];
