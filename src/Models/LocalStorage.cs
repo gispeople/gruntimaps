@@ -23,7 +23,7 @@ namespace GruntiMaps.Models
         {
             var outputPath = Path.Combine(ContainerPath, fileName);
             if (File.Exists(inputPath)) {
-                System.IO.File.Copy(inputPath, outputPath);
+                File.Copy(inputPath, outputPath);
             }
             return outputPath;
         }
@@ -40,8 +40,8 @@ namespace GruntiMaps.Models
                     if (inputAttrs.Length == outputAttrs.Length) {
                         return false;
                     }
-                } 
-                System.IO.File.Copy(inputPath, outputPath);
+                }
+                File.Copy(inputPath, outputPath);
                 return true;
             }
             return false;

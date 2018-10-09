@@ -28,17 +28,18 @@ namespace GruntiMaps.Models
     {
         public Options(IConfiguration config, IHostingEnvironment env)
         {
-            RootDir = Path.Combine(env.ContentRootPath, @"mbroot");
-            StyleDir = Path.Combine(RootDir, @"json");
-            TileDir = Path.Combine(RootDir, @"mbtiles");
-            PackDir = Path.Combine(RootDir, @"zip");
-            FontDir = Path.Combine(RootDir, @"fonts");
+            var pathConfig = config.GetSection("Paths");
+            RootDir = pathConfig["contentRoot"] ?? Path.Combine(env.ContentRootPath, @"mbroot");
+            StyleDir = pathConfig["styleDir"] ?? Path.Combine(RootDir, @"json");
+            TileDir = pathConfig["tileDir"] ?? Path.Combine(RootDir, @"mbtiles");
+            PackDir = pathConfig["packDir"] ?? Path.Combine(RootDir, @"zip");
+            FontDir = pathConfig["fontDir"] ?? Path.Combine(RootDir, @"fonts");
             StorageAccount = config["globalStorageAccount"];
             StorageKey = config["globalStorageKey"];
-            StorageContainer = config["storageContainer"];
-            if (config["storageProvider"] == null) StorageProvider = StorageProviders.Local; 
+            var providerCfg = config.GetSection("Provider");
+            if (providerCfg["Type"] == null) StorageProvider = StorageProviders.Local; 
             else {
-                switch (config["storageProvider"].ToLower())
+                switch (providerCfg["Type"].ToLower())
                 {
                     case "azure":
                         StorageProvider = StorageProviders.Azure;
@@ -51,24 +52,24 @@ namespace GruntiMaps.Models
                         break;
                 }
             }
-            if (StorageProvider == StorageProviders.Local) {
-                if (config["storagePath"] != null) {
-                    StoragePath = config["storagePath"];
-                } else {
-                    StoragePath = env.ContentRootPath;
-                }
+            if (StorageProvider == StorageProviders.Local)
+            {
+                var localCfg = providerCfg.GetSection("LocalSettings");
+                StoragePath = localCfg["Path"] ?? env.ContentRootPath;
             }
-            FontContainer = config["fontContainer"];
-            PacksContainer = config["packsContainer"];
-            MbTilesContainer = config["mbtilesContainer"];
-            StyleContainer = config["styleContainer"];
-            GeoJsonContainer = config["geoJsonContainer"];
-            MbConvQueue = config["mvtConversionQueue"];
-            GdConvQueue = config["gdalConversionQueue"];
-            FontArchive = config["fontArchive"];
-            Platform = config["platform"];
-            CheckUpdateTime = ParseConfigInt(config["layerRefresh"]);
-            CheckConvertTime = ParseConfigInt(config["convertPolling"]);
+            var containerConfig = config.GetSection("Containers");
+            StorageContainer = containerConfig["storage"];
+            FontContainer = containerConfig["fonts"];
+            PacksContainer = containerConfig["packs"];
+            MbTilesContainer = containerConfig["mbtiles"];
+            StyleContainer = containerConfig["styles"];
+            GeoJsonContainer = containerConfig["geojson"];
+            var queueCfg = config.GetSection("Queues");
+            MbConvQueue = queueCfg["mvtConversion"];
+            GdConvQueue = queueCfg["gdalConversion"];
+            var servicesCfg = config.GetSection("Services");
+            CheckUpdateTime = ParseConfigInt(servicesCfg["layerRefresh"]);
+            CheckConvertTime = ParseConfigInt(servicesCfg["convertPolling"]);
         }
 
 
@@ -117,15 +118,13 @@ namespace GruntiMaps.Models
 
         public string MbConvQueue { get; }
 
-        public string FontArchive { get; }
-        
-        public string Platform { get; }
+        /* 
+        StorageProvider determines whether to use Azure Storage/Queues or local file system. 
+        It is intended to be the basis for adding support for AWS, Google cloud, IBM, etc etc.
+         */
         public StorageProviders StorageProvider { get; }
-         /* 
-         Platform determines whether to use Azure Storage/Queues or local file system. 
-         It is intended to be the basis for adding support for AWS, Google cloud, IBM, etc etc.
-          */
-         public string TilePath => TileDir;
+
+        public string TilePath => TileDir;
         public string PackPath => PackDir;
         public string StylePath => StyleDir;
         public string FontPath => FontDir;

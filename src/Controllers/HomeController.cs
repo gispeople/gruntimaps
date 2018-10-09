@@ -40,5 +40,15 @@ namespace GruntiMaps.Controllers
         {
             return View();
         }
+
+        public IActionResult Info()
+        {
+            return View(_mapdata);
+        }
+
+        public IActionResult Preview()
+        {
+            return View();
+        }
     }
 }

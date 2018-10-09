@@ -1,17 +1,17 @@
-<!-- 
+<!--
 
 Copyright 2016, 2017, 2018 GIS People Pty Ltd
 
 This file is part of GruntiMaps.
 
-GruntiMaps is free software: you can redistribute it and/or modify it under 
+GruntiMaps is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License as published by the Free
 Software Foundation, either version 3 of the License, or (at your option) any
 later version.
 
 GruntiMaps is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
+A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
 details.
 
 You should have received a copy of the GNU Affero General Public License along
@@ -28,7 +28,11 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 @section scripts {
     <script src="/js/info.js"></script>
 }
-<style type="text/css">.validate { display: inherit; }</style>
+<style type="text/css">
+    .validate {
+        display: inherit;
+    }
+</style>
 
 <h2>@ViewData["Title"].</h2>
 @if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
@@ -41,20 +45,28 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
     <p>Font directory = @Model.CurrentOptions.FontPath, containing @Directory.GetDirectories(Model.CurrentOptions.FontPath).Length fonts</p>
 }
 <h3>Data Available:</h3>
-<p>Font List: <a asp-controller="Tile" asp-action="GetFonts">Retrieve Font List JSON</a></p>
+<p>Font List: <a asp-controller="RestApi" asp-action="GetFonts">Retrieve Font List JSON</a></p>
 
-    <p>There is/are @Model.LayerDict.Count open vector tile layers:</p>
+<p>There 
+    @if (Model.LayerDict.Count == 1) {
+         @("is")
+    }
+    else
+    {
+        @("are")
+    }
+    @Model.LayerDict.Count open vector tile layers:</p>
 <div class="container">
     @foreach (var c in Model.LayerDict)
-    {    
-    <div class="row">
-        <div class="col-sm-4">@c.Value.Source.description</div>
-        
-        <div class="col-sm-1"><a asp-controller="RestApi" asp-action="Source" asp-route-service="@c.Key">Source</a></div>
-        <div class="col-sm-1"><a asp-controller="RestApi" asp-action="Style" asp-route-service="@c.Key">Style</a></div>
-        <div class="col-sm-1"><a asp-controller="RestApi" asp-action="DataJSON" asp-route-service="@c.Key">Data</a></div>
-        <div class="col-sm-5"><a class="validate" id="@c.Key">Validate</a></div>
-    </div>
+    {
+        <div class="row">
+            <div class="col-sm-4">@c.Value.Source.description</div>
+
+            <div class="col-sm-1"><a asp-controller="RestApi" asp-action="Source" asp-route-service="@c.Key">Source</a></div>
+            <div class="col-sm-1"><a asp-controller="RestApi" asp-action="Style" asp-route-service="@c.Key">Style</a></div>
+            <div class="col-sm-1"><a asp-controller="RestApi" asp-action="DataJSON" asp-route-service="@c.Key">Data</a></div>
+            <div class="col-sm-5"><a class="validate" id="@c.Key">Validate</a></div>
+        </div>
     }
 </div>
 <h3>Configuration:</h3>
@@ -62,14 +74,34 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 <p>The conversion queue is checked every @Model.CurrentOptions.CheckConvertTime ms.</p>
 <p>The external host is @ViewContext.HttpContext.Request.Host</p>
 <p>This is a @Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") environment.</p>
-<p>This page was served from @Environment.GetEnvironmentVariable("host").</p>
-<p>Map data is being obtained from the <b>@Environment.GetEnvironmentVariable("globalStorageAccount")</b> storage account.</p>
-@if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
+@if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("host")))
+{
+    <p> This page was served from @Environment.GetEnvironmentVariable("host").</p>
+}
+
+@switch (Model.CurrentOptions.StorageProvider)
+{
+    case StorageProviders.Local:
+        <p>Local storage provider, path = @Model.CurrentOptions.StoragePath</p>
+        break;
+    case StorageProviders.Azure:
+        <p>Azure storage provider, map data is being obtained from the <b>@Environment.GetEnvironmentVariable("globalStorageAccount")</b> storage account.</p>
+        break;
+}
+@if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+{
+    <h3>Storage Containers</h3>
+    <p>fonts: @Model.CurrentOptions.FontContainer</p>
+    <p>geojson: @Model.CurrentOptions.GeoJsonContainer</p>
+    <p>mbtiles: @Model.CurrentOptions.MbTilesContainer</p>
+    <p>packs: @Model.CurrentOptions.PacksContainer</p>
+    <p>storage: @Model.CurrentOptions.StorageContainer</p>
+    <p>styles: @Model.CurrentOptions.StyleContainer</p>
     <h3>Environment:</h3>
-<ul>
-    @foreach(System.Collections.DictionaryEntry e in Environment.GetEnvironmentVariables())
-    {
-        <li>@e.Key = @e.Value</li>
-    }
-</ul>
+    <ul>
+        @foreach (System.Collections.DictionaryEntry e in Environment.GetEnvironmentVariables())
+        {
+            <li>@e.Key = @e.Value</li>
+        }
+    </ul>
 }
