@@ -56,20 +56,9 @@ $(document).ready(function () {
                         }
                     };
                     var layerGroup = document.getElementById(style.source);
-                    //if (layerGroup === null) {
-                    //    layerGroup = document.createElement("div");
-                    //    layerGroup.id = style.source;
-                    //    layerGroup.textContent = style.source
-                    //    const menu = document.getElementById("menu");
-                    //    menu.appendChild(layerGroup);
-                    //}
+
                     layerGroup.appendChild(layer);
-//                    const menu = document.getElementById("menu");
-//                    menu.appendChild(layer);
                 }
-
-                //                    layergroup.appendChild(link);                                
-
             }
         });
     }
@@ -86,19 +75,28 @@ $(document).ready(function () {
             "glyphs": host + "/api/fonts/{fontstack}/{range}",
             "sprite": host + "/sprites/satellite-v9"
         },
-        center: [-120, 21],
-        zoom: 2
+        center: [-0.13, 51.52],
+        zoom: 8
     });
-
-    //document.map = map;
 
     const zlc = new ZoomLevelControl();
     map.addControl(zlc, "bottom-left");
 
     const nav = new mapboxgl.NavigationControl();
-    map.addControl(nav, "bottom-left");
+    map.addControl(nav, "top-left");
+
+    const att = new mapboxgl.AttributionControl();
+    map.addControl(att, "bottom-right");
+
+    const fsc = new mapboxgl.FullscreenControl();
+    map.addControl(fsc, "top-left");
+
+    const sc = new mapboxgl.ScaleControl();
+    map.addControl(sc, "bottom-left");
 
     map.on("load", function (e) {
+        // the following empty layers are there to allow the other layers to be added in a predictable order.
+        // 
         map.addSource("empty",
             {
                 "type": "geojson",
@@ -106,13 +104,13 @@ $(document).ready(function () {
             });
         map.addLayer({ "type": "background", "id": "background-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         map.addLayer({ "type": "raster", "id": "raster-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "hillshade", "id": "hillshade-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         map.addLayer({ "type": "fill", "id": "fill-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         map.addLayer({ "type": "fill-extrusion", "id": "fill-extrusion-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         map.addLayer({ "type": "line", "id": "line-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         map.addLayer({ "type": "circle", "id": "circle-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         map.addLayer({ "type": "symbol", "id": "symbol-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         map.addLayer({ "type": "heatmap", "id": "heatmap-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        map.addLayer({ "type": "hillshade", "id": "hillshade-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         $.get("/api/layers", function (layers) {
             for (let l of layers.content) {
                 $.get(l.links.href, function (layerProps) {
@@ -129,7 +127,6 @@ $(document).ready(function () {
     map.on("sourcedata",
         function (e) {
             if (e.sourceDataType === "metadata") {
-                // if (e.isSourceLoaded) {
                 var layerGroup = document.getElementById(e.sourceId);
                 if (layerGroup === null) {
                     layerGroup = document.createElement("div");
@@ -149,14 +146,6 @@ $(document).ready(function () {
                                 layerGroup.className = "active";
                             }
                         }
-                        //const visibility = map.getLayoutProperty(clickedLayer, "visibility");
-                        //if (visibility === "visible") {
-                        //    map.setLayoutProperty(clickedLayer, "visibility", "none");
-                        //    this.className = "";
-                        //} else {
-                        //    this.className = "active";
-                        //    map.setLayoutProperty(clickedLayer, "visibility", "visible");
-                        //}
                     };
 
                     const menu = document.getElementById("menu");
