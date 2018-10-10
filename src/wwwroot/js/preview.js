@@ -79,20 +79,23 @@ $(document).ready(function () {
         zoom: 8
     });
 
-    const zlc = new ZoomLevelControl();
-    window.map.addControl(zlc, "bottom-left");
-
     const nav = new mapboxgl.NavigationControl();
     window.map.addControl(nav, "top-left");
-
-    const att = new mapboxgl.AttributionControl();
-    window.map.addControl(att, "bottom-right");
 
     const fsc = new mapboxgl.FullscreenControl();
     window.map.addControl(fsc, "top-left");
 
+    const inf = new InfoControl();
+    window.map.addControl(inf, "top-left");
+
     const sc = new mapboxgl.ScaleControl();
     window.map.addControl(sc, "bottom-left");
+
+    const zlc = new ZoomLevelControl();
+    window.map.addControl(zlc, "bottom-left");
+
+    const att = new mapboxgl.AttributionControl();
+    window.map.addControl(att, "bottom-right");
 
     window.map.on("load", function () {
         // the following empty layers are there to allow the other layers to be added in a predictable order.
@@ -153,20 +156,7 @@ $(document).ready(function () {
                 }
 
                 loadLayers(e.source);
-                // }
             }
-        });
-
-    window.map.on("mousemove", function (e) {
-        var properties = window.map.queryRenderedFeatures(e.point);
-        if (properties.length !== 0) {
-            var props = [];
-            for (var prop of properties) {
-                props.push(prop.properties);
-            }
-            document.getElementById("properties").innerHTML = JSON.stringify(props, null, 2);
-        } else {
-            document.getElementById("properties").innerHTML = '{}';
         }
-    });
+    );
 });

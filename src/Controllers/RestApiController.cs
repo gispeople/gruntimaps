@@ -237,7 +237,7 @@ namespace GruntiMaps.Controllers
 
         // Retrieve the GeoJSON associated with this service
         [AllowCrossSiteJson]
-        [HttpGet("layers/geojson/{service")]
+        [HttpGet("layers/geojson/{service}")]
         public ActionResult GeoJson(string service)
         {
             // not yet implemented
