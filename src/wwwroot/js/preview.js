@@ -165,6 +165,8 @@ $(document).ready(function () {
                 props.push(prop.properties);
             }
             document.getElementById("properties").innerHTML = JSON.stringify(props, null, 2);
+        } else {
+            document.getElementById("properties").innerHTML = '{}';
         }
     });
 });
