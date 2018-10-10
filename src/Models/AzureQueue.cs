@@ -20,12 +20,13 @@ namespace GruntiMaps.Models
             QueueRef = queueClient.GetQueueReference(queueName);
             QueueRef.CreateIfNotExistsAsync();
         }
-        public async Task AddMessage(string messageData)
+        public async Task<string> AddMessage(string messageData)
         {
 
             var jsonMsg = JsonConvert.SerializeObject(messageData);
             CloudQueueMessage message = new CloudQueueMessage(jsonMsg);
             await QueueRef.AddMessageAsync(message);
+            return message.Id;
         }
 
         public async Task<Message> GetMessage()

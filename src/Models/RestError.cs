@@ -47,13 +47,14 @@ namespace GruntiMaps.Models
         public string name;
         public string message;
         public string information_link;
-        public object[] details;
+        public RestErrorDetails[] details;
 
         public RestError(int number, RestErrorDetails[] newDetails)
         {
             code = number;
             name = _errs[number].name;
             message = _errs[number].message;
+            information_link = "https://www.gruntimaps.com";
             details = newDetails;
         }
 

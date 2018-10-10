@@ -18,7 +18,7 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
- using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -79,10 +79,11 @@ namespace GruntiMaps.Controllers
 
             foreach (var layer in _mapData.LayerDict)
             {
-                layerResources.Add(new 
+                layerResources.Add(new
                 {
                     name = layer.Value.Source.description,
-                    links = new {
+                    links = new
+                    {
                         href = $"{Request.GetDisplayUrl()}/{layer.Key}",
                         rel = "self"
                     }
@@ -91,8 +92,8 @@ namespace GruntiMaps.Controllers
 
             return Json(new
             {
-                content = layerResources, 
-                links = new {href = $"{Request.GetDisplayUrl()}", rel = "self"}
+                content = layerResources,
+                links = new { href = $"{Request.GetDisplayUrl()}", rel = "self" }
             });
         }
 
@@ -116,10 +117,18 @@ namespace GruntiMaps.Controllers
                 tiles = $"{baseUrl}/tiles/{service}",
                 grid = $"{baseUrl}/grid/{service}",
                 metadata = $"{baseUrl}/metadata/{service}",
+                geojson = $"{baseUrl}/geojson/{service}",
                 links = new List<object> {
                     new { href = $"{baseUrl}/{service}", rel = "self" }
                 }
             });
+        }
+
+        [AllowCrossSiteJson]
+        [HttpPost("layers/{service}")]
+        public ActionResult CreateLayer(string service)
+        {
+            return Json(new { });
         }
 
         // RESTful retrieve offline map pack.
@@ -168,9 +177,9 @@ namespace GruntiMaps.Controllers
         private static RestErrorDetails[] IdentifyMissingCoordinates(int? x, int? y, byte? z)
         {
             var details = new List<RestErrorDetails>();
-            if (!x.HasValue) details.Add(new RestErrorDetails{ field = "x", issue = "x parameter must be supplied" });
-            if (!y.HasValue) details.Add(new RestErrorDetails{ field = "y", issue = "y parameter must be supplied" });
-            if (!z.HasValue) details.Add(new RestErrorDetails{ field = "z", issue = "z parameter must be supplied" });
+            if (!x.HasValue) details.Add(new RestErrorDetails { field = "x", issue = "x parameter must be supplied" });
+            if (!y.HasValue) details.Add(new RestErrorDetails { field = "y", issue = "y parameter must be supplied" });
+            if (!z.HasValue) details.Add(new RestErrorDetails { field = "z", issue = "z parameter must be supplied" });
             return details.ToArray();
         }
 
@@ -190,7 +199,7 @@ namespace GruntiMaps.Controllers
         public ActionResult Style(string service)
         {
             if (!_mapData.LayerDict.ContainsKey(service))
-                return new RestError(404, new [] {
+                return new RestError(404, new[] {
                     new RestErrorDetails{ field = "service", issue = "Service does not exist" }
                 }).AsJsonResult();
             return Content(JsonPrettify(JsonConvert.SerializeObject(_mapData.LayerDict[service].Style)),
@@ -203,7 +212,7 @@ namespace GruntiMaps.Controllers
         public ActionResult DataJson(string service)
         {
             if (!_mapData.LayerDict.ContainsKey(service))
-                return new RestError(404, new [] {
+                return new RestError(404, new[] {
                     new RestErrorDetails{ field = "service", issue = "Service does not exist" }
                 }).AsJsonResult();
             return Content(JsonPrettify(_mapData.LayerDict[service].DataJson.ToString()), "application/json");
@@ -215,7 +224,7 @@ namespace GruntiMaps.Controllers
         public ActionResult Source(string service)
         {
             if (Request.GetDisplayUrl() == null || service == null || !_mapData.LayerDict.ContainsKey(service))
-                return new RestError(404, new [] {
+                return new RestError(404, new[] {
                     new RestErrorDetails{ field = "service", issue = "Service does not exist" }
                 }).AsJsonResult();
             var src = _mapData.LayerDict[service].Source;
@@ -223,7 +232,44 @@ namespace GruntiMaps.Controllers
             return Content(JsonConvert.SerializeObject(
                 src,
                 Formatting.Indented,
-                new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore}), "application/json");
+                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }), "application/json");
+        }
+
+        // Retrieve the GeoJSON associated with this service
+        [AllowCrossSiteJson]
+        [HttpGet("layers/geojson/{service")]
+        public ActionResult GeoJson(string service)
+        {
+            // not yet implemented
+            return Json(new { });
+        }
+
+        // Upload new GeoJSON for a service.
+        [AllowCrossSiteJson]
+        [HttpPost("layers/geojson/{service}")]
+        public ActionResult UploadGeoJson(string service, string dataLocation, string description)
+        {
+            List<RestErrorDetails> errors = new List<RestErrorDetails>();
+            if (string.IsNullOrWhiteSpace(service))
+                errors.Add(new RestErrorDetails { field = "service", issue = "Service name must be supplied" });
+            if (string.IsNullOrWhiteSpace(dataLocation))
+                errors.Add(new RestErrorDetails { field = "dataLocation", issue = "Data location must be supplied" });
+            if (string.IsNullOrWhiteSpace(description))
+                errors.Add(new RestErrorDetails { field = "description", issue = "Description must be supplied" });
+            if (errors.Count > 0)
+                return new RestError(400, errors.ToArray()).AsJsonResult();
+
+            ConversionMessageData messageData = new ConversionMessageData
+            {
+                LayerName = service,
+                DataLocation = dataLocation,
+                Description = description
+            };
+            var requestId = _mapData.CreateGdalConversionRequest(messageData);
+            return Json(new
+            {
+                requestId
+            });
         }
 
         // Retrieve a list of all available fonts.
@@ -233,10 +279,11 @@ namespace GruntiMaps.Controllers
         {
             var fontDir = new DirectoryInfo(_options.FontPath);
             var dirInfo = fontDir.GetDirectories();
-            var resources = dirInfo.Select(di => new 
-            { 
-                name = di.Name, 
-                links = new {
+            var resources = dirInfo.Select(di => new
+            {
+                name = di.Name,
+                links = new
+                {
                     href = $"{Request.GetDisplayUrl()}/{HttpUtility.UrlEncode(di.Name)}",
                     rel = "collection"
                 }
@@ -244,10 +291,11 @@ namespace GruntiMaps.Controllers
             //resources.Add(new RestLink {href = Request.GetDisplayUrl(), rel = "self", title = "self"});
             return Json(new
             {
-                content = resources, 
+                content = resources,
                 links = new
                 {
-                    href = Request.GetDisplayUrl(), rel = "self"
+                    href = Request.GetDisplayUrl(),
+                    rel = "self"
                 }
             });
         }
@@ -285,7 +333,7 @@ namespace GruntiMaps.Controllers
                 }).ToList(),
                 new {href = Request.GetDisplayUrl(), rel = "self"}
             };
-            return Json(new {links = resources});
+            return Json(new { links = resources });
         }
 
         // retrieve a mapbox font. 
@@ -298,11 +346,11 @@ namespace GruntiMaps.Controllers
             if (face == null || range == null)
             {
                 var details = new List<RestErrorDetails>();
-                if (face == null) details.Add(new RestErrorDetails {field = "face", issue = "Face must be supplied"});
-                if (range == null) details.Add(new RestErrorDetails {field = "range", issue = "Range must be supplied"});
+                if (face == null) details.Add(new RestErrorDetails { field = "face", issue = "Face must be supplied" });
+                if (range == null) details.Add(new RestErrorDetails { field = "range", issue = "Range must be supplied" });
                 return new RestError(400, details.ToArray()).AsJsonResult();
             }
-            
+
             var faceFile = HttpUtility.UrlDecode(face);
             var fontChoices = faceFile.Split(",");
             var details2 = new List<RestErrorDetails>();
@@ -310,10 +358,10 @@ namespace GruntiMaps.Controllers
             {
                 // validate font and range
                 if (!Regex.IsMatch(fontChoice, "^[a-zA-Z ]+$"))
-                    details2.Add(new RestErrorDetails {field = "face", issue = "Font face is invalid"});
+                    details2.Add(new RestErrorDetails { field = "face", issue = "Font face is invalid" });
 
                 if (!Regex.IsMatch(range, "^[0-9]{1,5}-[0-9]{1,5}$"))
-                    details2.Add(new RestErrorDetails {field = "range", issue = "Font range is invalid"});
+                    details2.Add(new RestErrorDetails { field = "range", issue = "Font range is invalid" });
                 // if there were errors for this font, skip to the next one (if it exists)
                 if (details2.Count > 0) continue;
 
@@ -321,7 +369,7 @@ namespace GruntiMaps.Controllers
                 if (Exists(path))
                     return new FileContentResult(ReadAllBytes(path), "application/x-protobuf");
             }
-            if (details2.Count > 0) return new RestError(400, details2.ToArray()).AsJsonResult(); 
+            if (details2.Count > 0) return new RestError(400, details2.ToArray()).AsJsonResult();
             return new RestError(404, new[]
             {
                 new RestErrorDetails {field = "face", issue = "Font resource not found"}
@@ -339,17 +387,17 @@ namespace GruntiMaps.Controllers
             // we don't want to get the names of the files that have @2x and @4x in their names, just the base names.
             var resources = spriteInfo
                 .Where(f => !f.Name.Contains("@"))
-                .Select(sp => new 
+                .Select(sp => new
                 {
                     href = $"{Request.Scheme}://{Request.Host}/sprites/{Path.GetFileNameWithoutExtension(sp.Name)}",
                     rel = "item",
                     title = Path.GetFileNameWithoutExtension(sp.Name)
                 }).ToList();
-            resources.Add(new {href = Request.GetDisplayUrl(), rel = "self", title = "self"});
-            return Json(new {links = resources});
+            resources.Add(new { href = Request.GetDisplayUrl(), rel = "self", title = "self" });
+            return Json(new { links = resources });
         }
 
-#region Internals
+        #region Internals
 
         public static string JsonPrettify(string json)
         {
@@ -362,7 +410,7 @@ namespace GruntiMaps.Controllers
             using (var stringWriter = new StringWriter())
             {
                 var jsonReader = new JsonTextReader(stringReader);
-                var jsonWriter = new JsonTextWriter(stringWriter) {Formatting = Formatting.Indented};
+                var jsonWriter = new JsonTextWriter(stringWriter) { Formatting = Formatting.Indented };
                 jsonWriter.WriteToken(jsonReader);
                 return stringWriter.ToString();
             }
@@ -373,9 +421,9 @@ namespace GruntiMaps.Controllers
         {
             //validate input vars
             if (x == null || y == null || z == null || service == null || !_mapData.LayerDict.ContainsKey(service))
-                return new byte[] {0};
+                return new byte[] { 0 };
 
-            y = IntPow(2, (byte) z) - 1 - y;
+            y = IntPow(2, (byte)z) - 1 - y;
 
             var conn = _mapData.LayerDict[service].Conn;
 
@@ -385,9 +433,9 @@ namespace GruntiMaps.Controllers
                     $"select tile_data as t from tiles where zoom_level={z} and tile_column={x} and tile_row={y}";
                 cmd.CommandText = command;
 
-                var result = (byte[]) cmd.ExecuteScalar();
+                var result = (byte[])cmd.ExecuteScalar();
 
-                return result ?? new byte[] {0};
+                return result ?? new byte[] { 0 };
             }
         }
 
@@ -398,7 +446,7 @@ namespace GruntiMaps.Controllers
             if (x == null || y == null || z == null || service == null ||
                 !_mapData.LayerDict.ContainsKey(service)) return "{}";
 
-            y = IntPow(2, (byte) z) - 1 - y;
+            y = IntPow(2, (byte)z) - 1 - y;
 
             var conn = _mapData.LayerDict[service].Conn;
 
@@ -410,7 +458,7 @@ namespace GruntiMaps.Controllers
                         $"select grid as g from grids where zoom_level={z} and tile_column={x} and tile_row={y}";
                     cmd.CommandText = command;
 
-                    var b = (byte[]) cmd.ExecuteScalar();
+                    var b = (byte[])cmd.ExecuteScalar();
 
                     if (b.Length == 0) return "{}";
 

@@ -84,14 +84,14 @@ namespace GruntiMaps.Models
             OpenTiles();
         }
 
-        public async Task CreateGdalConversionRequest(ConversionMessageData messageData)
+        public async Task<string> CreateGdalConversionRequest(ConversionMessageData messageData)
         {
-            await GdConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
+            return await GdConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
         }
 
-        public async Task CreateMbConversionRequest(ConversionMessageData messageData)
+        public async Task<string> CreateMbConversionRequest(ConversionMessageData messageData)
         {
-            await MbConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
+            return await MbConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
         }
 
         // retrieve global and per-instance tile packs 

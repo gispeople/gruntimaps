@@ -40,8 +40,8 @@ namespace GruntiMaps.Interfaces
         void OpenService(string mbtilefile);
         void CloseService(string name);
         Task RefreshLayers();
-        Task CreateGdalConversionRequest(ConversionMessageData messageData);
-        Task CreateMbConversionRequest(ConversionMessageData messageData);
+        Task<string> CreateGdalConversionRequest(ConversionMessageData messageData);
+        Task<string> CreateMbConversionRequest(ConversionMessageData messageData);
 
     }
 }

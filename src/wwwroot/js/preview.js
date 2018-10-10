@@ -32,12 +32,12 @@ $(document).ready(function () {
         if (source.metadata === undefined) return;
         $.get(source.metadata.gruntimaps.styles, function (styles) {
             for (let style of styles) {
-                if (map.getLayer(style.id) === undefined) {
+                if (window.map.getLayer(style.id) === undefined) {
                     let thisType = style.type;
-                    let mapStyle = map.getStyle();
+                    let mapStyle = window.map.getStyle();
                     let existingLayerOfType = mapStyle.layers.find(function(e) { return e.type === thisType; });
-                    if (existingLayerOfType !== undefined && existingLayerOfType !== null) map.addLayer(style, existingLayerOfType.id); else map.addLayer(style);
-                    map.setLayoutProperty(style.id, "visibility", "visible");
+                    if (existingLayerOfType !== undefined && existingLayerOfType !== null) window.map.addLayer(style, existingLayerOfType.id); else window.map.addLayer(style);
+                    window.map.setLayoutProperty(style.id, "visibility", "visible");
                     const layer = document.createElement("a");
                     layer.href = "#";
                     layer.className = "active";
@@ -46,13 +46,13 @@ $(document).ready(function () {
                         const clickedLayer = this.text;
                         e.preventDefault();
                         e.stopPropagation();
-                        const visibility = map.getLayoutProperty(clickedLayer, "visibility");
+                        const visibility = window.map.getLayoutProperty(clickedLayer, "visibility");
                         if (visibility === "visible") {
-                            map.setLayoutProperty(clickedLayer, "visibility", "none");
+                            window.map.setLayoutProperty(clickedLayer, "visibility", "none");
                             this.className = "";
                         } else {
                             this.className = "active";
-                            map.setLayoutProperty(clickedLayer, "visibility", "visible");
+                            window.map.setLayoutProperty(clickedLayer, "visibility", "visible");
                         }
                     };
                     var layerGroup = document.getElementById(style.source);
@@ -66,7 +66,7 @@ $(document).ready(function () {
     // create preview map
     mapboxgl.config.REQUIRE_ACCESS_TOKEN = false;
     var host = window.location.protocol + "//" + window.location.host;
-    map = new mapboxgl.Map({
+    window.map = new mapboxgl.Map({
         container: "map",
         style: {
             "version": 8,
@@ -80,37 +80,37 @@ $(document).ready(function () {
     });
 
     const zlc = new ZoomLevelControl();
-    map.addControl(zlc, "bottom-left");
+    window.map.addControl(zlc, "bottom-left");
 
     const nav = new mapboxgl.NavigationControl();
-    map.addControl(nav, "top-left");
+    window.map.addControl(nav, "top-left");
 
     const att = new mapboxgl.AttributionControl();
-    map.addControl(att, "bottom-right");
+    window.map.addControl(att, "bottom-right");
 
     const fsc = new mapboxgl.FullscreenControl();
-    map.addControl(fsc, "top-left");
+    window.map.addControl(fsc, "top-left");
 
     const sc = new mapboxgl.ScaleControl();
-    map.addControl(sc, "bottom-left");
+    window.map.addControl(sc, "bottom-left");
 
-    map.on("load", function (e) {
+    window.map.on("load", function () {
         // the following empty layers are there to allow the other layers to be added in a predictable order.
         // 
-        map.addSource("empty",
+        window.map.addSource("empty",
             {
                 "type": "geojson",
                 "data": { "type": "Feature", "properties": { "title": "empty" }, "geometry": null }
             });
-        map.addLayer({ "type": "background", "id": "background-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        map.addLayer({ "type": "raster", "id": "raster-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        map.addLayer({ "type": "hillshade", "id": "hillshade-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        map.addLayer({ "type": "fill", "id": "fill-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        map.addLayer({ "type": "fill-extrusion", "id": "fill-extrusion-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        map.addLayer({ "type": "line", "id": "line-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        map.addLayer({ "type": "circle", "id": "circle-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        map.addLayer({ "type": "symbol", "id": "symbol-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        map.addLayer({ "type": "heatmap", "id": "heatmap-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        window.map.addLayer({ "type": "background", "id": "background-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        window.map.addLayer({ "type": "raster", "id": "raster-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        window.map.addLayer({ "type": "hillshade", "id": "hillshade-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        window.map.addLayer({ "type": "fill", "id": "fill-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        window.map.addLayer({ "type": "fill-extrusion", "id": "fill-extrusion-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        window.map.addLayer({ "type": "line", "id": "line-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        window.map.addLayer({ "type": "circle", "id": "circle-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        window.map.addLayer({ "type": "symbol", "id": "symbol-placeholder", "source": "empty", "layout": { "visibility": "none"} });
+        window.map.addLayer({ "type": "heatmap", "id": "heatmap-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         $.get("/api/layers", function (layers) {
             for (let l of layers.content) {
                 $.get(l.links.href, function (layerProps) {
@@ -118,13 +118,13 @@ $(document).ready(function () {
                     var style = layerProps.style;
                     $.get(source, function (src) {
                         src.metadata = { gruntimaps: { styles: style } };
-                        map.addSource(src.name, src);
+                        window.map.addSource(src.name, src);
                     });
                 });
             }
         });
     });
-    map.on("sourcedata",
+    window.map.on("sourcedata",
         function (e) {
             if (e.sourceDataType === "metadata") {
                 var layerGroup = document.getElementById(e.sourceId);
@@ -138,11 +138,11 @@ $(document).ready(function () {
                         e.stopPropagation();
                         for (let c of e.target.children) {
                             console.log(c);
-                            if (map.getLayoutProperty(c.text, "visibility") === "visible") {
-                                map.setLayoutProperty(c.text, "visibility", "none");
+                            if (window.map.getLayoutProperty(c.text, "visibility") === "visible") {
+                                window.map.setLayoutProperty(c.text, "visibility", "none");
                                 layerGroup.className = "";
                             } else {
-                                map.setLayoutProperty(c.text, "visibility", "visible");
+                                window.map.setLayoutProperty(c.text, "visibility", "visible");
                                 layerGroup.className = "active";
                             }
                         }
@@ -157,8 +157,8 @@ $(document).ready(function () {
             }
         });
 
-    map.on("mousemove", function (e) {
-        var properties = map.queryRenderedFeatures(e.point);
+    window.map.on("mousemove", function (e) {
+        var properties = window.map.queryRenderedFeatures(e.point);
         if (properties.length !== 0) {
             var props = [];
             for (var prop of properties) {

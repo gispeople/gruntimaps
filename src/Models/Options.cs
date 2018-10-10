@@ -26,6 +26,11 @@ namespace GruntiMaps.Models
 {
     public class Options
     {
+        public Options(string storagePath)
+        {
+            StorageProvider = StorageProviders.Local;
+            StoragePath = storagePath;
+        }
         public Options(IConfiguration config, IHostingEnvironment env)
         {
             RootDir = config["Paths:contentRoot"] ?? Path.Combine(env.ContentRootPath, @"mbroot");
@@ -51,6 +56,8 @@ namespace GruntiMaps.Models
             if (StorageProvider == StorageProviders.Local)
             {
                 StoragePath = config["Provider:LocalSettings:Path"] ?? env.ContentRootPath;
+                QueueEntryTries = int.Parse(config["Provider:LocalSettings:queueEntryLife"] ?? "5");
+                QueueTimeLimit = int.Parse(config["Provider:LocalSettings:queueTimeLimit"] ?? "30");
             }
 
             if (StorageProvider == StorageProviders.Azure)
@@ -116,6 +123,7 @@ namespace GruntiMaps.Models
 
         public string MbConvQueue { get; }
 
+        public int QueueEntryTries { get; }
         /* 
         StorageProvider determines whether to use Azure Storage/Queues or local file system. 
         It is intended to be the basis for adding support for AWS, Google cloud, IBM, etc etc.
@@ -128,5 +136,6 @@ namespace GruntiMaps.Models
         public string FontPath => FontDir;
 
         public string StoragePath { get; }
+        public int QueueTimeLimit { get; set; }
     }
 }
