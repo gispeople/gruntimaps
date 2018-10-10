@@ -2,7 +2,7 @@
 {
     public class Message
     {
-        public string ID;
+        public string Id;
         public string PopReceipt;
         public string Content;
     }

@@ -21,9 +21,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using GruntiMaps.Models;
-using GruntiMaps.Interfaces;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace GruntiMaps.Interfaces
 {

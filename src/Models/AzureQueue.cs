@@ -17,7 +17,6 @@ namespace GruntiMaps.Models
                 new CloudStorageAccount(
                     new StorageCredentials(options.StorageAccount, options.StorageKey), true);
             var queueClient = CloudAccount.CreateCloudQueueClient();
-            // _logger.LogDebug($"Monitoring {_mapdata.CurrentOptions.GdConvQueue}");
             QueueRef = queueClient.GetQueueReference(queueName);
             QueueRef.CreateIfNotExistsAsync();
         }
@@ -36,7 +35,7 @@ namespace GruntiMaps.Models
             var msg = await QueueRef.GetMessageAsync();
             if (msg != null) // if no message, don't try
             {
-                result.ID = msg.Id;
+                result.Id = msg.Id;
                 result.Content = msg.AsString;
                 result.PopReceipt = msg.PopReceipt;
             }
@@ -46,7 +45,7 @@ namespace GruntiMaps.Models
 
         public async Task DeleteMessage(Message message)
         {
-            await QueueRef.DeleteMessageAsync(message.ID, message.PopReceipt);
+            await QueueRef.DeleteMessageAsync(message.Id, message.PopReceipt);
         }
     }
 }
