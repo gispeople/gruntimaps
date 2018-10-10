@@ -26,20 +26,21 @@ namespace GruntiMaps.Models
 {
     public class Options
     {
+        public Options(string storagePath)
+        {
+            StorageProvider = StorageProviders.Local;
+            StoragePath = storagePath;
+        }
         public Options(IConfiguration config, IHostingEnvironment env)
         {
-            var pathConfig = config.GetSection("Paths");
-            RootDir = pathConfig["contentRoot"] ?? Path.Combine(env.ContentRootPath, @"mbroot");
-            StyleDir = pathConfig["styleDir"] ?? Path.Combine(RootDir, @"json");
-            TileDir = pathConfig["tileDir"] ?? Path.Combine(RootDir, @"mbtiles");
-            PackDir = pathConfig["packDir"] ?? Path.Combine(RootDir, @"zip");
-            FontDir = pathConfig["fontDir"] ?? Path.Combine(RootDir, @"fonts");
-            StorageAccount = config["globalStorageAccount"];
-            StorageKey = config["globalStorageKey"];
-            var providerCfg = config.GetSection("Provider");
-            if (providerCfg["Type"] == null) StorageProvider = StorageProviders.Local; 
+            RootDir = config["Paths:contentRoot"] ?? Path.Combine(env.ContentRootPath, @"mbroot");
+            StyleDir = config["Paths:styleDir"] ?? Path.Combine(RootDir, @"json");
+            TileDir = config["Paths:tileDir"] ?? Path.Combine(RootDir, @"mbtiles");
+            PackDir = config["Paths:packDir"] ?? Path.Combine(RootDir, @"zip");
+            FontDir = config["Paths:fontDir"] ?? Path.Combine(RootDir, @"fonts");
+            if (config["Provider:Type"] == null) StorageProvider = StorageProviders.Local; 
             else {
-                switch (providerCfg["Type"].ToLower())
+                switch (config["Provider:Type"].ToLower())
                 {
                     case "azure":
                         StorageProvider = StorageProviders.Azure;
@@ -54,22 +55,26 @@ namespace GruntiMaps.Models
             }
             if (StorageProvider == StorageProviders.Local)
             {
-                var localCfg = providerCfg.GetSection("LocalSettings");
-                StoragePath = localCfg["Path"] ?? env.ContentRootPath;
+                StoragePath = config["Provider:LocalSettings:Path"] ?? env.ContentRootPath;
+                QueueEntryTries = int.Parse(config["Provider:LocalSettings:queueEntryLife"] ?? "5");
+                QueueTimeLimit = int.Parse(config["Provider:LocalSettings:queueTimeLimit"] ?? "30");
             }
-            var containerConfig = config.GetSection("Containers");
-            StorageContainer = containerConfig["storage"];
-            FontContainer = containerConfig["fonts"];
-            PacksContainer = containerConfig["packs"];
-            MbTilesContainer = containerConfig["mbtiles"];
-            StyleContainer = containerConfig["styles"];
-            GeoJsonContainer = containerConfig["geojson"];
-            var queueCfg = config.GetSection("Queues");
-            MbConvQueue = queueCfg["mvtConversion"];
-            GdConvQueue = queueCfg["gdalConversion"];
-            var servicesCfg = config.GetSection("Services");
-            CheckUpdateTime = ParseConfigInt(servicesCfg["layerRefresh"]);
-            CheckConvertTime = ParseConfigInt(servicesCfg["convertPolling"]);
+
+            if (StorageProvider == StorageProviders.Azure)
+            {
+                StorageAccount = config["Provider:AzureSettings:globalStorageAccount"];
+                StorageKey = config["Provider:AzureSettings:globalStorageKey"];
+            }
+            StorageContainer = config["Containers:storage"];
+            FontContainer = config["Containers:fonts"];
+            PacksContainer = config["Containers:packs"];
+            MbTilesContainer = config["Containers:mbtiles"];
+            StyleContainer = config["Containers:styles"];
+            GeoJsonContainer = config["Containers:geojson"];
+            MbConvQueue = config["Queues:mvtConversion"];
+            GdConvQueue = config["Queues:gdalConversion"];
+            CheckUpdateTime = ParseConfigInt(config["Services:layerRefresh"]);
+            CheckConvertTime = ParseConfigInt(config["Services:convertPolling"]);
         }
 
 
@@ -118,6 +123,7 @@ namespace GruntiMaps.Models
 
         public string MbConvQueue { get; }
 
+        public int QueueEntryTries { get; }
         /* 
         StorageProvider determines whether to use Azure Storage/Queues or local file system. 
         It is intended to be the basis for adding support for AWS, Google cloud, IBM, etc etc.
@@ -130,5 +136,6 @@ namespace GruntiMaps.Models
         public string FontPath => FontDir;
 
         public string StoragePath { get; }
+        public int QueueTimeLimit { get; set; }
     }
 }

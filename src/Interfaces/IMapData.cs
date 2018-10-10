@@ -21,9 +21,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using GruntiMaps.Models;
-using GruntiMaps.Interfaces;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace GruntiMaps.Interfaces
 {
@@ -43,8 +40,8 @@ namespace GruntiMaps.Interfaces
         void OpenService(string mbtilefile);
         void CloseService(string name);
         Task RefreshLayers();
-        Task CreateGdalConversionRequest(ConversionMessageData messageData);
-        Task CreateMbConversionRequest(ConversionMessageData messageData);
+        Task<string> CreateGdalConversionRequest(ConversionMessageData messageData);
+        Task<string> CreateMbConversionRequest(ConversionMessageData messageData);
 
     }
 }

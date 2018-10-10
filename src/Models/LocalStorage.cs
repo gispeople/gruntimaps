@@ -7,30 +7,31 @@ namespace GruntiMaps.Models
 {
     public class LocalStorage: IStorageContainer
     {
-        private string LocalStoreLocation;
-        private string Container;
-        private string ContainerPath;
+        private readonly string _containerPath;
         public LocalStorage(Options options, string containerName)
         {
-            LocalStoreLocation = options.StoragePath;
-            Container = containerName;
-            ContainerPath = Path.Combine(LocalStoreLocation, Container);
-            Directory.CreateDirectory(ContainerPath);
+            var localStoreLocation = options.StoragePath;
+            _containerPath = Path.Combine(localStoreLocation, containerName);
+            Directory.CreateDirectory(_containerPath);
         }
 
         // the methods are not really asynchronous but this makes it consistent with other providers
         public async Task<string> Store(string fileName, string inputPath)
         {
-            var outputPath = Path.Combine(ContainerPath, fileName);
+
+            var outputPath = Path.Combine(_containerPath, fileName);
             if (File.Exists(inputPath)) {
-                File.Copy(inputPath, outputPath);
+                await Task.Run(() =>
+                {
+                    File.Copy(inputPath, outputPath);
+                });
             }
             return outputPath;
         }
 
         public async Task<bool> GetIfNewer(string fileName, string outputPath)
         {
-            var inputPath = Path.Combine(ContainerPath, fileName);
+            var inputPath = Path.Combine(_containerPath, fileName);
             // if the source doesn't exist, not much to do
             if (File.Exists(inputPath)) {
                 // if the dest doesn't exist, no need to check length
@@ -41,7 +42,10 @@ namespace GruntiMaps.Models
                         return false;
                     }
                 }
-                File.Copy(inputPath, outputPath);
+                await Task.Run(() =>
+                {
+                    File.Copy(inputPath, outputPath);
+                });
                 return true;
             }
             return false;
@@ -50,9 +54,13 @@ namespace GruntiMaps.Models
         public async Task<List<string>> List()
         {
             var result = new List<string>();
-            foreach (var fileName in Directory.EnumerateFiles(ContainerPath)) {
-                result.Add(fileName);
-            }
+            await Task.Run(() =>
+            {
+                foreach (var fileName in Directory.EnumerateFiles(_containerPath))
+                {
+                    result.Add(fileName);
+                }
+            });
             return result;
         }
     }

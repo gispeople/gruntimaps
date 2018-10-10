@@ -23,7 +23,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using GruntiMaps.Interfaces;
-using GruntiMaps.Models;
 using Microsoft.Data.Sqlite;
 using Newtonsoft.Json.Linq;
 
@@ -238,30 +237,42 @@ namespace GruntiMaps.Models
                             case "Point":
                                 styleLayer.Add("id", layerName + "-circle");
                                 styleLayer.Add("type", "circle");
-                                JObject circle = new JObject();
-                                circle.Add("circle-stroke-color", "white");
-                                circle.Add("circle-color",
-                                    _kellyColors[Math.Abs(layerName.GetHashCode()) % _kellyColors.Length]);
-                                circle.Add("circle-stroke-width", 1);
+                                JObject circle = new JObject
+                                {
+                                    { "circle-stroke-color", "white" },
+                                    {
+                                        "circle-color",
+                                        _kellyColors[Math.Abs(layerName.GetHashCode()) % _kellyColors.Length]
+                                    },
+                                    { "circle-stroke-width", 1 }
+                                };
                                 styleLayer.Add("paint", circle);
                                 break;
                             case "LineString":
                                 styleLayer.Add("id", layerName + "-line");
-                                JObject line = new JObject();
-                                line.Add("line-color",
-                                    _kellyColors[Math.Abs(layerName.GetHashCode()) % _kellyColors.Length]);
-                                line.Add("line-width", 2);
+                                JObject line = new JObject
+                                {
+                                    {
+                                        "line-color",
+                                        _kellyColors[Math.Abs(layerName.GetHashCode()) % _kellyColors.Length]
+                                    },
+                                    { "line-width", 2 }
+                                };
                                 styleLayer.Add("paint", line);
                                 styleLayer.Add("type", "line");
                                 break;
                             case "Polygon":
                                 styleLayer.Add("id", layerName + "-fill");
                                 styleLayer.Add("type", "fill");
-                                JObject fill = new JObject();
-                                fill.Add("fill-color",
-                                    _kellyColors[Math.Abs(layerName.GetHashCode()) % _kellyColors.Length]);
-                                fill.Add("fill-outline-color", "white");
-                                fill.Add("fill-opacity", 0.2);
+                                JObject fill = new JObject
+                                {
+                                    {
+                                        "fill-color",
+                                        _kellyColors[Math.Abs(layerName.GetHashCode()) % _kellyColors.Length]
+                                    },
+                                    { "fill-outline-color", "white" },
+                                    { "fill-opacity", 0.2 }
+                                };
                                 styleLayer.Add("paint", fill);
                                 break;
                         }

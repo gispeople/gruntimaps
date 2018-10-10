@@ -21,7 +21,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using GruntiMaps.Interfaces;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -85,14 +84,14 @@ namespace GruntiMaps.Models
             OpenTiles();
         }
 
-        public async Task CreateGdalConversionRequest(ConversionMessageData messageData)
+        public async Task<string> CreateGdalConversionRequest(ConversionMessageData messageData)
         {
-            await GdConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
+            return await GdConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
         }
 
-        public async Task CreateMbConversionRequest(ConversionMessageData messageData)
+        public async Task<string> CreateMbConversionRequest(ConversionMessageData messageData)
         {
-            await MbConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
+            return await MbConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
         }
 
         // retrieve global and per-instance tile packs 
@@ -141,8 +140,7 @@ namespace GruntiMaps.Models
                             }
                         }
                     }
-
-                };
+                }
             }
 
             // see if there's any new standalone map layers
@@ -180,7 +178,7 @@ namespace GruntiMaps.Models
         public void OpenService(string mbtilefile)
         {
             // don't try to open the file if it's locked, or if it doesn't pass basic mbtile file requirements
-            if (!isFileLocked(mbtilefile) && IsValidMbTile(mbtilefile))
+            if (!IsFileLocked(mbtilefile) && IsValidMbTile(mbtilefile))
             {
                 var name = Path.GetFileNameWithoutExtension(mbtilefile);
                 if (name == null || LayerDict.ContainsKey(name)) return;
@@ -275,7 +273,7 @@ namespace GruntiMaps.Models
         }
 
         // function to check if a file is openable. We use this below.
-        private bool isFileLocked(string filepath)
+        private bool IsFileLocked(string filepath)
         {
             FileStream stream = null;
             try
