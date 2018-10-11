@@ -1,16 +1,17 @@
 using GruntiMaps.Models;
 using System;
+using System.Diagnostics;
 using System.IO;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace GruntiMaps.Tests
 {
-    public class UnitTest1: IDisposable
+    public class LocalQueueTest: IDisposable
     {
         private readonly LocalQueue _queue;
         private readonly ITestOutputHelper output;
-        public UnitTest1(ITestOutputHelper output)
+        public LocalQueueTest(ITestOutputHelper output)
         {
             this.output = output;
             var options = new Options(Path.GetTempPath());
@@ -18,7 +19,7 @@ namespace GruntiMaps.Tests
             _queue = new LocalQueue(options, "testQueue");
         }
         [Fact]
-        public async void TestLocalQueueAdd()
+        public async void AddMessage()
         {
             _queue.Clear();
             var msgString = "a new message";
@@ -29,7 +30,7 @@ namespace GruntiMaps.Tests
         }
 
         [Fact]
-        public async void TestLocalQueueDelete()
+        public async void DeleteMessage()
         {
             _queue.Clear();
             var msgString = "another message";
@@ -43,16 +44,30 @@ namespace GruntiMaps.Tests
             Assert.Null(message2);  // we started with an empty queue so message2 should have nothing in it.
         }
         [Fact]
-        public async void TestLocalQueuePoison()
+        public async void PoisonMessage()
         {
-            for (int i = 0; i < 500; i++)
+            Stopwatch swAdd = new Stopwatch();
+            Stopwatch swGet = new Stopwatch();
+            int total = 500;
+            // first, add messages
+            for (int i = 0; i < total; i++)
             {
                 var msgString = $"yet another message {i}";
+                swAdd.Start();
                 var msgId = await _queue.AddMessage(msgString);
-                output.WriteLine($"added msg {msgId}");
+                swAdd.Stop();
+                output.WriteLine($"Add msg {msgId}");
+            }
+            // now get them 
+            for (int j = 0; j < total; j++)
+            {
+                swGet.Start();
                 var message = await _queue.GetMessage();
+                swGet.Stop();
                 output.WriteLine($"retrieved message {message.Id}");
             }
+            output.WriteLine($"{total} adds took {swAdd.Elapsed}");
+            output.WriteLine($"{total} gets took {swGet.Elapsed}");
 
         }
         public void Dispose()
