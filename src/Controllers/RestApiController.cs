@@ -126,7 +126,7 @@ namespace GruntiMaps.Controllers
         [HttpGet("layers/{service}")]
         public ActionResult GetService(string service)
         {
-            var baseUrl = $"{GetBaseUrl()}/api/layers";
+            var baseUrl = $"{GetBaseHost()}/api/layers";
             if (!_mapData.LayerDict.ContainsKey(service))
             {
                 return new RestError(404, new[] {
