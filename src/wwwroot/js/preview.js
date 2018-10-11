@@ -85,16 +85,16 @@ $(document).ready(function () {
     const fsc = new mapboxgl.FullscreenControl();
     window.map.addControl(fsc, "top-left");
 
-    const inf = new InfoControl();
-    window.map.addControl(inf, "top-left");
+    //const inf = new InfoControl();
+    //window.map.addControl(inf, "top-left");
 
     const sc = new mapboxgl.ScaleControl();
     window.map.addControl(sc, "bottom-left");
 
     const zlc = new ZoomLevelControl();
-    window.map.addControl(zlc, "bottom-left");
+    window.map.addControl(zlc, "bottom-right");
 
-    const att = new mapboxgl.AttributionControl({customAttribution: "Served using <a href='www.gruntimaps.com'>GruntiMaps</a>"});
+    const att = new mapboxgl.AttributionControl({customAttribution: "Contains OS data &copy; Crown copyright and database rights 2018<br>Served using <a href='https://www.gruntimaps.com'>GruntiMaps</a>"});
     window.map.addControl(att, "bottom-right");
 
     window.map.on("load", function () {
