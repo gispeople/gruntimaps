@@ -94,7 +94,7 @@ $(document).ready(function () {
     const zlc = new ZoomLevelControl();
     window.map.addControl(zlc, "bottom-left");
 
-    const att = new mapboxgl.AttributionControl();
+    const att = new mapboxgl.AttributionControl({customAttribution: "Served using <a href='www.gruntimaps.com'>GruntiMaps</a>"});
     window.map.addControl(att, "bottom-right");
 
     window.map.on("load", function () {
