@@ -118,7 +118,7 @@ namespace GruntiMaps.Controllers
         {
             var baseUri = new Uri(Request.GetDisplayUrl());
             var tmp = baseUri.GetComponents(UriComponents.Path, UriFormat.UriEscaped);
-            return $"{GetBaseHost()}" + tmp;
+            return $"{GetBaseHost()}/{tmp}";
         }
 
         // RESTful layer information
