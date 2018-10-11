@@ -18,6 +18,8 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -57,7 +59,7 @@ namespace GruntiMaps.Controllers
         [HttpGet]
         public ActionResult GetRoot()
         {
-            var baseUrl = Request.GetDisplayUrl();
+            var baseUrl = GetBaseUrl();
             return Json(new
             {
                 links = new List<object>
@@ -75,6 +77,8 @@ namespace GruntiMaps.Controllers
         [HttpGet("layers")]
         public ActionResult GetCatalog()
         {
+            string baseUrl = GetBaseUrl();
+
             var layerResources = new List<object>();
 
             foreach (var layer in _mapData.LayerDict)
@@ -84,7 +88,7 @@ namespace GruntiMaps.Controllers
                     name = layer.Value.Source.description,
                     links = new
                     {
-                        href = $"{Request.GetDisplayUrl()}/{layer.Key}",
+                        href = $"{baseUrl}/{layer.Key}",
                         rel = "self"
                     }
                 });
@@ -93,8 +97,28 @@ namespace GruntiMaps.Controllers
             return Json(new
             {
                 content = layerResources,
-                links = new { href = $"{Request.GetDisplayUrl()}", rel = "self" }
+                links = new { href = $"{baseUrl}", rel = "self" }
             });
+        }
+
+        private string GetBaseHost()
+        {
+            var baseHost = $"{Request.Protocol}://{Request.Host}";
+            string xForwardedProto = Request.Headers["X-Forwarded-Proto"];
+            string xForwardedHost = Request.Headers["X-Forwarded-Host"];
+
+            if (!string.IsNullOrWhiteSpace(xForwardedHost) && !string.IsNullOrWhiteSpace(xForwardedProto))
+            {
+                baseHost = $"{xForwardedProto}://{xForwardedHost}";
+            }
+
+            return baseHost;
+        }
+        private string GetBaseUrl()
+        {
+            var baseUri = new Uri(Request.GetDisplayUrl());
+            var tmp = baseUri.GetComponents(UriComponents.Path, UriFormat.UriEscaped);
+            return $"{GetBaseHost()}" + tmp;
         }
 
         // RESTful layer information
@@ -102,7 +126,7 @@ namespace GruntiMaps.Controllers
         [HttpGet("layers/{service}")]
         public ActionResult GetService(string service)
         {
-            var baseUrl = $"{Request.Scheme}://{Request.Host}/api/layers";
+            var baseUrl = $"{GetBaseUrl()}/api/layers";
             if (!_mapData.LayerDict.ContainsKey(service))
             {
                 return new RestError(404, new[] {
@@ -223,12 +247,12 @@ namespace GruntiMaps.Controllers
         [HttpGet("/api/layers/source/{service}")]
         public ActionResult Source(string service)
         {
-            if (Request.GetDisplayUrl() == null || service == null || !_mapData.LayerDict.ContainsKey(service))
+            if (GetBaseUrl() == null || service == null || !_mapData.LayerDict.ContainsKey(service))
                 return new RestError(404, new[] {
                     new RestErrorDetails{ field = "service", issue = "Service does not exist" }
                 }).AsJsonResult();
             var src = _mapData.LayerDict[service].Source;
-            src.tiles[0] = src.tiles[0].Replace("#publicHost#", Request.Scheme + "://" + Request.Host);
+            src.tiles[0] = src.tiles[0].Replace("#publicHost#", GetBaseHost());
             return Content(JsonConvert.SerializeObject(
                 src,
                 Formatting.Indented,
@@ -284,7 +308,7 @@ namespace GruntiMaps.Controllers
                 name = di.Name,
                 links = new
                 {
-                    href = $"{Request.GetDisplayUrl()}/{HttpUtility.UrlEncode(di.Name)}",
+                    href = $"{GetBaseUrl()}/{HttpUtility.UrlEncode(di.Name)}",
                     rel = "collection"
                 }
             }).ToList();
@@ -294,7 +318,7 @@ namespace GruntiMaps.Controllers
                 content = resources,
                 links = new
                 {
-                    href = Request.GetDisplayUrl(),
+                    href = GetBaseUrl(),
                     rel = "self"
                 }
             });
@@ -327,11 +351,11 @@ namespace GruntiMaps.Controllers
             {
                 ranges.Select(fr => new
                 {
-                    href = $"{Request.GetDisplayUrl()}/{Path.GetFileNameWithoutExtension(fr.Name)}",
+                    href = $"{GetBaseUrl()}/{Path.GetFileNameWithoutExtension(fr.Name)}",
                     rel = "item",
                     title = $"{faceFile}, glyphs {Path.GetFileNameWithoutExtension(fr.Name)}"
                 }).ToList(),
-                new {href = Request.GetDisplayUrl(), rel = "self"}
+                new {href = GetBaseUrl(), rel = "self"}
             };
             return Json(new { links = resources });
         }
@@ -389,11 +413,11 @@ namespace GruntiMaps.Controllers
                 .Where(f => !f.Name.Contains("@"))
                 .Select(sp => new
                 {
-                    href = $"{Request.Scheme}://{Request.Host}/sprites/{Path.GetFileNameWithoutExtension(sp.Name)}",
+                    href = $"{GetBaseHost()}/sprites/{Path.GetFileNameWithoutExtension(sp.Name)}",
                     rel = "item",
                     title = Path.GetFileNameWithoutExtension(sp.Name)
                 }).ToList();
-            resources.Add(new { href = Request.GetDisplayUrl(), rel = "self", title = "self" });
+            resources.Add(new { href = GetBaseUrl(), rel = "self", title = "self" });
             return Json(new { links = resources });
         }
 

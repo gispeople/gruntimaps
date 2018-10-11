@@ -79,17 +79,17 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
     <p> This page was served from @Environment.GetEnvironmentVariable("host").</p>
 }
 
-@switch (Model.CurrentOptions.StorageProvider)
-{
-    case StorageProviders.Local:
-        <p>Local storage provider, path = @Model.CurrentOptions.StoragePath</p>
-        break;
-    case StorageProviders.Azure:
-        <p>Azure storage provider, map data is being obtained from the <b>@Environment.GetEnvironmentVariable("globalStorageAccount")</b> storage account.</p>
-        break;
-}
 @if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
 {
+    switch (Model.CurrentOptions.StorageProvider)
+    {
+         case StorageProviders.Local:
+             <p>Local storage provider, path = @Model.CurrentOptions.StoragePath</p>
+            break;
+        case StorageProviders.Azure:
+            <p>Azure storage provider, map data is being obtained from the <b>@Environment.GetEnvironmentVariable("globalStorageAccount")</b> storage account.</p>
+            break;
+    }
     <h3>Storage Containers</h3>
     <p>fonts: @Model.CurrentOptions.FontContainer</p>
     <p>geojson: @Model.CurrentOptions.GeoJsonContainer</p>
