@@ -91,11 +91,11 @@ $(document).ready(function () {
     const sc = new mapboxgl.ScaleControl();
     window.map.addControl(sc, "bottom-left");
 
-    const zlc = new ZoomLevelControl();
-    window.map.addControl(zlc, "bottom-right");
-
     const att = new mapboxgl.AttributionControl({customAttribution: "Contains OS data &copy; Crown copyright and database rights 2018<br>Served using <a href='https://www.gruntimaps.com'>GruntiMaps</a>"});
     window.map.addControl(att, "bottom-right");
+
+    const zlc = new ZoomLevelControl();
+    window.map.addControl(zlc, "bottom-right");
 
     window.map.on("load", function () {
         // the following empty layers are there to allow the other layers to be added in a predictable order.
