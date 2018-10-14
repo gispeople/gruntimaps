@@ -16,8 +16,10 @@ namespace GruntiMaps.Tests
             this.output = output;
             var options = new Options(Path.GetTempPath());
             options.QueueTimeLimit = 1; // set the time limit to 1 minute so we can check that expiry works
+            options.QueueEntryTries = 2; // try twice in our tests.
             _queue = new LocalQueue(options, "testQueue");
         }
+        
         [Fact]
         public async void AddMessage()
         {
@@ -43,6 +45,7 @@ namespace GruntiMaps.Tests
             var message2 = await _queue.GetMessage();
             Assert.Null(message2);  // we started with an empty queue so message2 should have nothing in it.
         }
+
         [Fact]
         public async void PoisonMessage()
         {
@@ -64,7 +67,10 @@ namespace GruntiMaps.Tests
                 swGet.Start();
                 var message = await _queue.GetMessage();
                 swGet.Stop();
-                output.WriteLine($"retrieved message {message.Id}");
+                if (message != null)
+                    output.WriteLine($"retrieved message {message.Id}");
+                else 
+                    output.WriteLine("No message available");
             }
             output.WriteLine($"{total} adds took {swAdd.Elapsed}");
             output.WriteLine($"{total} gets took {swGet.Elapsed}");
