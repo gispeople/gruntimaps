@@ -103,7 +103,7 @@ namespace GruntiMaps.Controllers
 
         private string GetBaseHost()
         {
-            var baseHost = $"{Request.Protocol}://{Request.Host}";
+            var baseHost = $"{Request.Scheme}://{Request.Host}";
             string xForwardedProto = Request.Headers["X-Forwarded-Proto"];
             string xForwardedHost = Request.Headers["X-Forwarded-Host"];
 
