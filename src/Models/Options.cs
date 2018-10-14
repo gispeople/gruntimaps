@@ -123,7 +123,7 @@ namespace GruntiMaps.Models
 
         public string MbConvQueue { get; }
 
-        public int QueueEntryTries { get; }
+        public int QueueEntryTries { get; set; }
         /* 
         StorageProvider determines whether to use Azure Storage/Queues or local file system. 
         It is intended to be the basis for adding support for AWS, Google cloud, IBM, etc etc.
