@@ -207,7 +207,7 @@ namespace GruntiMaps.Models
 
         private JArray GetStyle()
         {
-            if (_style != null) return _style;
+//            if (_style != null) return _style;
             var styleFile = System.IO.Path.Combine(_options.StyleDir, $"{DbName}.json");
             if (!File.Exists(styleFile))
             {
