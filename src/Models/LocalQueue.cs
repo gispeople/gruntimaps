@@ -40,7 +40,7 @@ namespace GruntiMaps.Models
 
         public async Task<string> AddMessage(string message)
         {
-            const string addMsg = "INSERT INTO Queue(Content) VALUES($content)";
+            const string addMsg = "INSERT INTO Queue(PopCount, Content) VALUES(0, $content)";
             var addMsgCmd = new SqliteCommand(addMsg, _queueDatabase);
             addMsgCmd.Parameters.AddWithValue("$content", message);
             addMsgCmd.ExecuteScalar();
@@ -59,7 +59,13 @@ namespace GruntiMaps.Models
             var getMsgCmd = new SqliteCommand(getMsg, _queueDatabase);
             var reader = getMsgCmd.ExecuteReader();
             var popReceipt = Guid.NewGuid().ToString();
-            var popCount1 = (int)(DBNull.Value.Equals(reader["PopCount"]) ? 0 : reader["PopCount"]);
+            var pop = reader["PopCount"];
+            long popCount1;
+            if (DBNull.Value.Equals(pop)) {
+                popCount1 = 0;
+            } else {
+                popCount1 = (long)pop;
+            }
             popCount1++;
             var msg = new Message
             {
