@@ -1,7 +1,7 @@
 # Gruntimaps MapServer RESTful API
 
 The new RESTful API can be navigated from its initial endpoint of `/api`. It aims for compliance with the HATEOAS model.
- 
+
 In the examples, the server is referred to as `demo.gruntimaps.com`.
 
 As a general rule, non-terminal endpoints return an array of links to other endpoints. Typically those links contain a link to the endpoint (named `href`), a relationship indicator named `rel` (e.g. `self`, `collection`, `item`), the method to be used when invoking the endpoint (e.g. `GET`, `POST`, `PATCH`, etc), and a `title` which identifies the purpose of that link.
@@ -12,7 +12,8 @@ As a general rule, non-terminal endpoints return an array of links to other endp
 
 **Parameters**: none
 
-### Example Success Response
+**Example Success Response**:
+
     200 OK
 
 ```json
@@ -42,48 +43,53 @@ As a general rule, non-terminal endpoints return an array of links to other endp
 ```
 
 ### Example Error Responses
+
 None by design.
 
 ## Layer List
+
 **URL** : `/api/layers`
 
 **Parameters**: none
 
-This call returns a list of all of the layers configured on the server. 
+This call returns a list of all of the layers configured on the server.
 
-### Example Success Response
+**Example Success Response**:
+
     200 OK
 
 ```json
 {
-	"content": [
+    "content": [
         {
             "name":"A description of this layer",
-		    "links":{
-			    "href":"https://demo.gruntimaps.com/api/layers/a_layer",
-				"rel":"collection"
-			}
+            "links":{
+                "href":"https://demo.gruntimaps.com/api/layers/a_layer",
+                "rel":"collection"
+            }
         },
         {
             "name":"The description for the second layer"
-		    "links":{
-	            "href":"https://demo.gruntimaps.com/api/layers/another_layer",
-		        "rel":"collection"
-			}
+            "links":{
+                "href":"https://demo.gruntimaps.com/api/layers/another_layer",
+                "rel":"collection"
+            }
         }
-	],
+    ],
     "links":{
             "href":"https://demo.gruntimaps.com/api/layers",
             "rel":"self"
     }
 }
 ```
+
 ## Layer Details
+
 **URL** : `/api/layers/a_layer`
 
 **Parameters**: The layer identifier is passed in the URL
 
-This call returns the various data elements available for the specified layer. 
+This call returns the various data elements available for the specified layer.
 
 ### Example Success Response
 
@@ -93,8 +99,8 @@ This call returns the various data elements available for the specified layer.
 {
     "source":"https://demo.gruntimaps.com/api/layers/source/a_layer",
     "style":"https://demo.gruntimaps.com/api/layers/style/a_layer",
-	"mappack":"https://demo.gruntimaps.com/api/layers/mappack/a_layer",
-	"tiles":"https://demo.gruntimaps.com/api/layers/tiles/a_layer",
+    "mappack":"https://demo.gruntimaps.com/api/layers/mappack/a_layer",
+    "tiles":"https://demo.gruntimaps.com/api/layers/tiles/a_layer",
     "grid":"https://demo.gruntimaps.com/api/layers/grid/a_layer",
     "metadata":"https://demo.gruntimaps.com/api/layers/metadata/a_layer",
     "geojson":"https://demo.gruntimaps.com/api/layers/geojson/a_layer",
@@ -103,11 +109,14 @@ This call returns the various data elements available for the specified layer.
             "href":"https://demo.gruntimaps.com/api/layers/a_layer",
             "rel":"self"
         }
-	]
+    ]
 }
 ```
-### Example Error Responses
+
+**Example Error Responses**:
+
     404 Not Found
+
 ```json
 {
     "name":"RESOURCE_NOT_FOUND",
@@ -123,15 +132,17 @@ This call returns the various data elements available for the specified layer.
 ```
 
 ## Layer Source JSON
+
 **URL** : `/api/layers/source/a_layer`
 
 **Parameters**: The layer identifier is passed in the URL
 
-This call returns the MapBox source JSON component for the specified layer. 
+This call returns the MapBox source JSON component for the specified layer.
 
-### Example Success Response
+**Example Success Response**:
 
     200 OK
+
 ```json
 {
     "tilejson": "2.0.0",
@@ -161,15 +172,17 @@ This call returns the MapBox source JSON component for the specified layer.
 ```
 
 ## Layer Style JSON
+
 **URL** : `/api/layers/style/a_layer`
 
 **Parameters**: The layer identifier is passed in the URL
 
-This call returns the MapBox style JSON component for the specified layer. 
+This call returns the MapBox style JSON component for the specified layer.
 
-### Example Success Response
+**Example Success Response**:
 
     200 OK
+
 ```json
 [
   {
@@ -208,19 +221,21 @@ This call returns the MapBox style JSON component for the specified layer.
 ```
 
 ## Layer Offline Map Pack
+
 **URL** : `/api/layers/mappack/a_layer`
 
 **Parameters**: The layer identifier is passed in the URL
 
-This call returns an offline map pack for the specified layer. 
+This call returns an offline map pack for the specified layer.
 
-### Example Success Response
+**Example Success Response**:
 
     200 OK
 **Content** : a zip file containing the stylesheet and the mbtiles file for this layer.
 
-### Example Error Response
+**Example Error Response**:
     400 Bad Request
+
 ```json
 {
     "name":"INVALID_REQUEST",
@@ -234,7 +249,9 @@ This call returns an offline map pack for the specified layer.
     ]
 }
 ````
+
     404 Not Found
+
 ```json
 {
     "name":"RESOURCE_NOT_FOUND",
@@ -250,102 +267,111 @@ This call returns an offline map pack for the specified layer.
 ```
 
 ## Layer Tiles request
+
 **URL** : `/api/layers/tiles/a_layer?x={x}&y={y}&z={z}`
 
 **Parameters**: The layer identifier is passed in the URL, plus `x`, `y` and `z` coordinates.
 
-This call returns the appropriate tile for the slippy coordinates `x`, `y` and `z` for the specified layer. 
+This call returns the appropriate tile for the slippy coordinates `x`, `y` and `z` for the specified layer.
 
 The tile data returned could be PNG or PBF depending on the type of data stored in the MapBox Tile database.
 
-### Example Success Response
+**Example Success Response**:
+
     200 OK
 **Content** : A PNG tile or a PBF(MVT) tile depending on the data type stored in the layer.
 
 ## Layer Grid request
+
 **URL** : `/api/layers/grid/a_layer?x={x}&y={y}&z={z}`
 
 **Parameters**: The layer identifier is passed in the URL, plus `x`, `y` and `z` coordinates.
 
-This call returns the appropriate grid data for the slippy coordinates `x`, `y` and `z` for the specified layer. 
+This call returns the appropriate grid data for the slippy coordinates `x`, `y` and `z` for the specified layer.
 
-### Example Success Response
+**Example Success Response**:
+
     200 OK
 **Content** : JSON grid data for this tile.
 
 ## Font List
+
 **URL** : `/api/fonts`
 
 **Parameters**: none
 
-This call returns the list of fonts available on the server. 
+This call returns the list of fonts available on the server.
 
-### Example Success Response
+**Example Success Response**:
+
     200 OK
 
 ```json
 {
-	"content": [
-		{
-			"name": "A Font Name",
-			"links": {
-				"href": "https://demo.gruntimaps.com/api/fonts/A+Font+Name",
-				"rel": "collection"
-			}
-		},
-		{
-			"name": "A Different Font",
-			"links": {
-		        "href":"https://demo.gruntimaps.com/api/fonts/A+Different+Font",
-				"rel":"collection"
-			}
-		}
-	],
+    "content": [
+        {
+            "name": "A Font Name",
+            "links": {
+                "href": "https://demo.gruntimaps.com/api/fonts/A+Font+Name",
+                "rel": "collection"
+            }
+        },
+        {
+            "name": "A Different Font",
+            "links": {
+                "href":"https://demo.gruntimaps.com/api/fonts/A+Different+Font",
+                "rel":"collection"
+            }
+        }
+    ],
     "links":{
         "href":"https://demo.gruntimaps.com/api/fonts",
         "rel":"self",
     }
 }
 ```
+
 ## Font Details
+
 **URL** : `/api/fonts/A+Font+Name`
 
 **Parameters**: the font name, passed in through the URL
 
-This call returns a list of the supported glyph ranges for the specified font. 
+This call returns a list of the supported glyph ranges for the specified font.
 
-### Example Success Response
+**Example Success Response**:
 
     200 OK
+
 ```json
 {
-	"content":[
-	    {
-			"name":"A Font Name, glyphs 9216-9471",
-			"links": {
-				"href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9216-9471",
-				"rel":"item"
-			}
+    "content":[
+        {
+            "name":"A Font Name, glyphs 9216-9471",
+            "links": {
+                "href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9216-9471",
+                "rel":"item"
+            }
         },{
             "name":"A Font Name, glyphs 9472-9727",
-			"links": {
-				"href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9472-9727",
-				"rel":"item"
-			}
+            "links": {
+                "href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9472-9727",
+                "rel":"item"
+            }
         },{
             "name":"A Font Name, glyphs 9728-9983",
-			"links": {
-				"href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9728-9983",
-				"rel":"item"
-			}
+            "links": {
+                "href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9728-9983",
+                "rel":"item"
+            }
         },{
             "name":"A Font Name, glyphs 9984-10239",
-			"links": {
-				"href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9984-10239",
-				"rel":"item"
-			}
+            "links": {
+                "href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9984-10239",
+                "rel":"item"
+            }
         }
-	],
+    ],
     "links":{
         "href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name",
         "rel":"self",
@@ -354,15 +380,17 @@ This call returns a list of the supported glyph ranges for the specified font.
 ```
 
 ## Sprites List
+
 **URL** : `/api/sprites`
 
 **Parameters**: none
 
 The `href` entries returned from this call are intended to be passed into a MapBox stylesheet - the MapBox client uses them as the base part of URLs that it constructs to retrieve individual sprites. (It adds `.json` to retrieve the list of sprites in the set, `.png` to retrieve the normal size sprite, `@2x.png` to retrieve the double-sized sprites and `@4x.png` to retrieve the quadruple-sized sprites. Arguably these could be presented as collection members for each sprite set but they are not needed for current purposes.)
 
-### Example Success Response
+**Example Success Response**:
 
     200 OK
+
 ```json
 {
     "links":[
@@ -386,4 +414,3 @@ The `href` entries returned from this call are intended to be passed into a MapB
     ]
 }
 ```
-
