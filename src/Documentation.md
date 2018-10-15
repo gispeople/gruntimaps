@@ -2,7 +2,7 @@
 
 The new RESTful API can be navigated from its initial endpoint of `/api`. It aims for compliance with the HATEOAS model.
  
-In the examples, the server is referred to as `www.mymapserver.com`.
+In the examples, the server is referred to as `demo.gruntimaps.com`.
 
 As a general rule, non-terminal endpoints return an array of links to other endpoints. Typically those links contain a link to the endpoint (named `href`), a relationship indicator named `rel` (e.g. `self`, `collection`, `item`), the method to be used when invoking the endpoint (e.g. `GET`, `POST`, `PATCH`, etc), and a `title` which identifies the purpose of that link.
 
@@ -19,27 +19,22 @@ As a general rule, non-terminal endpoints return an array of links to other endp
 {
     "links":[
         {
-            "href":"https://www.mymapserver.com/api",
+            "href":"https://demo.gruntimaps.com/api",
             "rel":"self",
-            "method":"GET",
-            "title":"self"
         },
         {
-            "href":"https://www.mymapserver.com/api/layers",
+            "href":"https://demo.gruntimaps.com/api/layers",
             "rel":"collection",
-            "method":"GET",
             "title":"layers"
         },
         {
-            "href":"https://www.mymapserver.com/api/fonts",
+            "href":"https://demo.gruntimaps.com/api/fonts",
             "rel":"collection",
-            "method":"GET",
             "title":"fonts"
         },
         {
-            "href":"https://www.mymapserver.com/api/sprites",
+            "href":"https://demo.gruntimaps.com/api/sprites",
             "rel":"collection",
-            "method":"GET",
             "title":"sprites"
         }
     ]
@@ -61,26 +56,26 @@ This call returns a list of all of the layers configured on the server.
 
 ```json
 {
-    "links":[
+	"content": [
         {
-            "href":"https://www.mymapserver.com/api/layers",
-            "rel":"self",
-            "method":"GET",
-            "title":"self"
+            "name":"A description of this layer",
+		    "links":{
+			    "href":"https://demo.gruntimaps.com/api/layers/a_layer",
+				"rel":"collection"
+			}
         },
         {
-            "href":"https://www.mymapserver.com/api/layers/a_layer",
-            "rel":"collection",
-            "method":"GET",
-            "title":"A description of this layer"
-        },
-        {
-            "href":"https://www.mymapserver.com/api/layers/another_layer",
-            "rel":"collection",
-            "method":"GET",
-            "title":"The description for the second layer"
+            "name":"The description for the second layer"
+		    "links":{
+	            "href":"https://demo.gruntimaps.com/api/layers/another_layer",
+		        "rel":"collection"
+			}
         }
-    ]
+	],
+    "links":{
+            "href":"https://demo.gruntimaps.com/api/layers",
+            "rel":"self"
+    }
 }
 ```
 ## Layer Details
@@ -96,44 +91,19 @@ This call returns the various data elements available for the specified layer.
 
 ```json
 {
+    "source":"https://demo.gruntimaps.com/api/layers/source/a_layer",
+    "style":"https://demo.gruntimaps.com/api/layers/style/a_layer",
+	"mappack":"https://demo.gruntimaps.com/api/layers/mappack/a_layer",
+	"tiles":"https://demo.gruntimaps.com/api/layers/tiles/a_layer",
+    "grid":"https://demo.gruntimaps.com/api/layers/grid/a_layer",
+    "metadata":"https://demo.gruntimaps.com/api/layers/metadata/a_layer",
+    "geojson":"https://demo.gruntimaps.com/api/layers/geojson/a_layer",
     "links":[
         {
-            "href":"https://www.mymapserver.com/api/layers/a_layer",
-            "rel":"self",
-            "method":"GET",
-            "title":"self"
-        },{
-            "href":"https://www.mymapserver.com/api/layers/a_layer/source",
-            "rel":"item",
-            "method":"GET",
-            "title":"source"
-        },{
-            "href":"https://www.mymapserver.com/api/layers/a_layer/style",
-            "rel":"item",
-            "method":"GET",
-            "title":"style"
-        },{
-            "href":"https://www.mymapserver.com/api/layers/a_layer/mappack",
-            "rel":"item",
-            "method":"GET",
-            "title":"mappack"
-        },{
-            "href":"https://www.mymapserver.com/api/layers/a_layer/tiles",
-            "rel":"item",
-            "method":"GET",
-            "title":"tiles"
-        },{
-            "href":"https://www.mymapserver.com/api/layers/a_layer/grid",
-            "rel":"item",
-            "method":"GET",
-            "title":"grid"
-        },{
-            "href":"https://www.mymapserver.com/api/layers/a_layer/metadata",
-            "rel":"item",
-            "method":"GET",
-            "title":"metadata"
-        }    
-    ]
+            "href":"https://demo.gruntimaps.com/api/layers/a_layer",
+            "rel":"self"
+        }
+	]
 }
 ```
 ### Example Error Responses
@@ -153,7 +123,7 @@ This call returns the various data elements available for the specified layer.
 ```
 
 ## Layer Source JSON
-**URL** : `/api/layers/a_layer/source`
+**URL** : `/api/layers/source/a_layer`
 
 **Parameters**: The layer identifier is passed in the URL
 
@@ -170,7 +140,7 @@ This call returns the MapBox source JSON component for the specified layer.
     "version": "2",
     "scheme": "xyz",
     "tiles": [
-        "https://www.mymapserver.com/api/layers/a_layer/tiles&x={x}&y={y}&z={z}"
+        "https://demo.gruntimaps.com/api/layers/tiles/a_layer&x={x}&y={y}&z={z}"
     ],
     "minzoom": 0.0,
     "maxzoom": 14.0,
@@ -191,7 +161,7 @@ This call returns the MapBox source JSON component for the specified layer.
 ```
 
 ## Layer Style JSON
-**URL** : `/api/layers/a_layer/style`
+**URL** : `/api/layers/style/a_layer`
 
 **Parameters**: The layer identifier is passed in the URL
 
@@ -238,7 +208,7 @@ This call returns the MapBox style JSON component for the specified layer.
 ```
 
 ## Layer Offline Map Pack
-**URL** : `/api/layers/a_layer/mappack`
+**URL** : `/api/layers/mappack/a_layer`
 
 **Parameters**: The layer identifier is passed in the URL
 
@@ -280,7 +250,7 @@ This call returns an offline map pack for the specified layer.
 ```
 
 ## Layer Tiles request
-**URL** : `/api/layers/a_layer/tiles?x={x}&y={y}&z={z}`
+**URL** : `/api/layers/tiles/a_layer?x={x}&y={y}&z={z}`
 
 **Parameters**: The layer identifier is passed in the URL, plus `x`, `y` and `z` coordinates.
 
@@ -293,7 +263,7 @@ The tile data returned could be PNG or PBF depending on the type of data stored 
 **Content** : A PNG tile or a PBF(MVT) tile depending on the data type stored in the layer.
 
 ## Layer Grid request
-**URL** : `/api/layers/a_layer/grid?x={x}&y={y}&z={z}`
+**URL** : `/api/layers/grid/a_layer?x={x}&y={y}&z={z}`
 
 **Parameters**: The layer identifier is passed in the URL, plus `x`, `y` and `z` coordinates.
 
@@ -315,26 +285,26 @@ This call returns the list of fonts available on the server.
 
 ```json
 {
-    "links":[
-        {
-            "href":"https://www.mymapserver.com/api/fonts/A+Font+Name",
-            "rel":"collection",
-            "method":"GET",
-            "title":"A Font Name"
-        },
-        {
-            "href":"https://www.mymapserver.com/api/fonts/A+Different+Font",
-            "rel":"collection",
-            "method":"GET",
-            "title":"A Different Font"
-        },
-        {
-            "href":"https://www.mymapserver.com/api/fonts",
-            "rel":"self",
-            "method":"GET",
-            "title":"self"
-        }
-    ]
+	"content": [
+		{
+			"name": "A Font Name",
+			"links": {
+				"href": "https://demo.gruntimaps.com/api/fonts/A+Font+Name",
+				"rel": "collection"
+			}
+		},
+		{
+			"name": "A Different Font",
+			"links": {
+		        "href":"https://demo.gruntimaps.com/api/fonts/A+Different+Font",
+				"rel":"collection"
+			}
+		}
+	],
+    "links":{
+        "href":"https://demo.gruntimaps.com/api/fonts",
+        "rel":"self",
+    }
 }
 ```
 ## Font Details
@@ -349,34 +319,37 @@ This call returns a list of the supported glyph ranges for the specified font.
     200 OK
 ```json
 {
-    "links":[
-        {
-            "href":"https://www.mymapserver.com/api/fonts/A+Font+Name/9216-9471",
-            "rel":"item",
-            "method":"GET",
-            "title":"A Font Name, glyphs 9216-9471"
+	"content":[
+	    {
+			"name":"A Font Name, glyphs 9216-9471",
+			"links": {
+				"href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9216-9471",
+				"rel":"item"
+			}
         },{
-            "href":"https://www.mymapserver.com/api/fonts/A+Font+Name/9472-9727",
-            "rel":"item",
-            "method":"GET",
-            "title":"A Font Name, glyphs 9472-9727"
+            "name":"A Font Name, glyphs 9472-9727",
+			"links": {
+				"href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9472-9727",
+				"rel":"item"
+			}
         },{
-            "href":"https://www.mymapserver.com/api/fonts/A+Font+Name/9728-9983",
-            "rel":"item",
-            "method":"GET",
-            "title":"A Font Name, glyphs 9728-9983"
+            "name":"A Font Name, glyphs 9728-9983",
+			"links": {
+				"href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9728-9983",
+				"rel":"item"
+			}
         },{
-            "href":"https://www.mymapserver.com/api/fonts/A+Font+Name/9984-10239",
-            "rel":"item",
-            "method":"GET",
-            "title":"A Font Name, glyphs 9984-10239"
-        },{
-            "href":"https://www.mymapserver.com/api/fonts/A+Font+Name",
-            "rel":"self",
-            "method":"GET",
-            "title":"self"
+            "name":"A Font Name, glyphs 9984-10239",
+			"links": {
+				"href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name/9984-10239",
+				"rel":"item"
+			}
         }
-    ]
+	],
+    "links":{
+        "href":"https://demo.gruntimaps.com/api/fonts/A+Font+Name",
+        "rel":"self",
+    }
 }
 ```
 
@@ -394,24 +367,20 @@ The `href` entries returned from this call are intended to be passed into a MapB
 {
     "links":[
         {
-            "href":"https://www.mymapserver.com/sprites/basic-v9",
+            "href":"https://demo.gruntimaps.com/sprites/basic-v9",
             "rel":"item",
-            "method":"GET",
             "title":"basic-v9"
         },{
-            "href":"https://www.mymapserver.com/sprites/bright-v9",
+            "href":"https://demo.gruntimaps.com/sprites/bright-v9",
             "rel":"item",
-            "method":"GET",
             "title":"bright-v9"
         },{
-            "href":"https://www.mymapserver.com/sprites/satellite-v9",
+            "href":"https://demo.gruntimaps.com/sprites/satellite-v9",
             "rel":"item",
-            "method":"GET",
             "title":"satellite-v9"
         },{
-            "href":"https://www.mymapserver.com/api/sprites",
+            "href":"https://demo.gruntimaps.com/api/sprites",
             "rel":"self",
-            "method":"GET",
             "title":"self"
         }
     ]

@@ -36,6 +36,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
+using static System.String;
 
 namespace GruntiMaps.Controllers
 {
@@ -70,6 +71,91 @@ namespace GruntiMaps.Controllers
                     new {href = $"{baseUrl}/sprites", rel = "collection", title = "sprites"}
                 }
             });
+        }
+
+        // V2 root
+        // In the v2 API, maps contain one or more layer-sets, which contain one or more layers. Layers refer to one source each. 
+        // Maps and layer-sets are not required but provide a way to bundle layers/layer-sets.
+        // 
+        [AllowCrossSiteJson]
+        [HttpGet("v2")]
+        public ActionResult GetRootV2()
+        {
+            var baseUrl = GetBaseUrl();
+            return Json(new
+            {
+                links = new List<object>
+                {
+                    new {href = baseUrl, rel = "self"},
+                    new {href = $"{baseUrl}/sources", rel = "collection", title = "sources"},
+                    new {href = $"{baseUrl}/layers", rel = "collection", title = "layers"},
+                    new {href = $"{baseUrl}/layer-sets", rel = "collection", title = "layer sets"},
+                    new {href = $"{baseUrl}/maps", rel = "collection", title = "maps"},
+                    new {href = $"{baseUrl}/fonts", rel = "collection", title = "fonts"},
+                    new {href = $"{baseUrl}/sprites", rel = "collection", title = "sprites"}
+                }
+            });
+        }
+
+        // V2 list of sources
+        [AllowCrossSiteJson]
+        [HttpGet("v2/sources")]
+        public ActionResult GetSourcesV2()
+        {
+            var baseUrl = GetBaseUrl();
+            return Json(new 
+            {
+                links = new List<object>
+                {
+                    new {href = baseUrl, rel = "self"}
+                }
+            });
+        }
+
+        // V2 list of layers
+        [AllowCrossSiteJson]
+        [HttpGet("v2/layers")]
+        public ActionResult GetLayersV2()
+        {
+            var baseUrl = GetBaseUrl();
+            return Json(new 
+            {
+                links = new List<object>
+                {
+                    new {href = baseUrl, rel = "self"}
+                }
+            });
+        }
+
+        // V2 list of layer-sets
+        [AllowCrossSiteJson]
+        [HttpGet("v2/layer-sets")]
+        public ActionResult GetLayerSetsV2()
+        {
+            var baseUrl = GetBaseUrl();
+            return Json(new 
+            {
+                links = new List<object>
+                {
+                    new {href = baseUrl, rel = "self"}
+                }
+            });
+        }
+
+        // V2 list of maps
+        [AllowCrossSiteJson]
+        [HttpGet("v2/maps")]
+        public ActionResult GetMapsV2()
+        {
+            var baseUrl = GetBaseUrl();
+            return Json(new 
+            {
+                links = new List<object>
+                {
+                    new {href = baseUrl, rel = "self"}
+                }
+            });
+
         }
 
         // RESTful layer list
@@ -140,7 +226,7 @@ namespace GruntiMaps.Controllers
         [HttpGet("layers/mappack/{service}")]
         public ActionResult MapPack(string service)
         {
-            if (string.IsNullOrEmpty(service))
+            if (IsNullOrEmpty(service))
             {
                 return new RestError(400, new[] {
                     new RestErrorDetails { field = "service", issue = "Service name must be supplied" }
@@ -199,7 +285,7 @@ namespace GruntiMaps.Controllers
 
         // Retrieve the style snippet for this map service. 
         [AllowCrossSiteJson]
-        [HttpGet("/api/layers/style/{service}")]
+        [HttpGet("layers/style/{service}")]
         public ActionResult Style(string service)
         {
             if (!_mapData.LayerDict.ContainsKey(service))
@@ -212,7 +298,7 @@ namespace GruntiMaps.Controllers
 
         // Retrieve the data json to help with setting up initial styling
         [AllowCrossSiteJson]
-        [HttpGet("/api/layers/metadata/{service}")]
+        [HttpGet("layers/metadata/{service}")]
         public ActionResult DataJson(string service)
         {
             if (!_mapData.LayerDict.ContainsKey(service))
@@ -224,7 +310,7 @@ namespace GruntiMaps.Controllers
 
         // Retrieve a json snippet that defines the mapbox 'source' for this service
         [AllowCrossSiteJson]
-        [HttpGet("/api/layers/source/{service}")]
+        [HttpGet("layers/source/{service}")]
         public ActionResult Source(string service)
         {
             if (GetBaseUrl() == null || service == null || !_mapData.LayerDict.ContainsKey(service))
@@ -254,11 +340,11 @@ namespace GruntiMaps.Controllers
         public ActionResult UploadGeoJson(string service, string dataLocation, string description)
         {
             List<RestErrorDetails> errors = new List<RestErrorDetails>();
-            if (string.IsNullOrWhiteSpace(service))
+            if (IsNullOrWhiteSpace(service))
                 errors.Add(new RestErrorDetails { field = "service", issue = "Service name must be supplied" });
-            if (string.IsNullOrWhiteSpace(dataLocation))
+            if (IsNullOrWhiteSpace(dataLocation))
                 errors.Add(new RestErrorDetails { field = "dataLocation", issue = "Data location must be supplied" });
-            if (string.IsNullOrWhiteSpace(description))
+            if (IsNullOrWhiteSpace(description))
                 errors.Add(new RestErrorDetails { field = "description", issue = "Description must be supplied" });
             if (errors.Count > 0)
                 return new RestError(400, errors.ToArray()).AsJsonResult();
@@ -279,6 +365,7 @@ namespace GruntiMaps.Controllers
         // Retrieve a list of all available fonts.
         [AllowCrossSiteJson]
         [HttpGet("fonts")]
+        [HttpGet("v2/fonts")]
         public ActionResult GetFonts()
         {
             var fontDir = new DirectoryInfo(_options.FontPath);
@@ -307,6 +394,7 @@ namespace GruntiMaps.Controllers
         // retrieve possible ranges for mapbox font.
         [AllowCrossSiteJson]
         [HttpGet("fonts/{face}")]
+        [HttpGet("v2/fonts/{face}")]
         public ActionResult Font(string face)
         {
             if (face == null)
@@ -327,17 +415,25 @@ namespace GruntiMaps.Controllers
 
             var rangeDir = new DirectoryInfo(Path.Combine(_options.FontPath, faceFile));
             var ranges = rangeDir.GetFiles("*.pbf", SearchOption.TopDirectoryOnly);
-            var resources = new List<object>
+            var resources = ranges.Select(fr => new
             {
-                ranges.Select(fr => new
+                name = $"{faceFile}, glyphs {Path.GetFileNameWithoutExtension(fr.Name)}",
+                links = new
                 {
                     href = $"{GetBaseUrl()}/{Path.GetFileNameWithoutExtension(fr.Name)}",
-                    rel = "item",
-                    title = $"{faceFile}, glyphs {Path.GetFileNameWithoutExtension(fr.Name)}"
-                }).ToList(),
-                new {href = GetBaseUrl(), rel = "self"}
-            };
-            return Json(new { links = resources });
+                    rel = "item"
+                }
+            }).ToList();
+        
+            return Json(new
+            {
+                content = resources,
+                links = new
+                {
+                    href = GetBaseUrl(),
+                    rel = "self"
+                }
+            });
         }
 
         // retrieve a mapbox font. 
@@ -345,6 +441,7 @@ namespace GruntiMaps.Controllers
         // api/fonts/Open%20Sans%20Regular,Arial%20Unicode%20MS%20Regular/0-255 which means try the first font, and if not found, try the second.
         [AllowCrossSiteJson]
         [HttpGet("fonts/{face}/{range}")]
+        [HttpGet("v2/fonts/{face}/{range}")]
         public ActionResult Font(string face, string range)
         {
             var details = new List<RestErrorDetails>();
@@ -382,6 +479,7 @@ namespace GruntiMaps.Controllers
         // return the sprite sets available.
         [AllowCrossSiteJson]
         [HttpGet("sprites")]
+        [HttpGet("v2/sprites")]
         public ActionResult GetSprites()
         {
             var webRootPath = _hostingEnv.WebRootPath;
@@ -540,22 +638,19 @@ namespace GruntiMaps.Controllers
         
         private string GetBaseHost()
         {
-            var baseHost = $"{Request.Scheme}://{Request.Host}";
-            string xForwardedProto = Request.Headers["X-Forwarded-Proto"];
-            string xForwardedHost = Request.Headers["X-Forwarded-Host"];
-
-            if (!string.IsNullOrWhiteSpace(xForwardedHost) && !string.IsNullOrWhiteSpace(xForwardedProto))
-            {
-                baseHost = $"{xForwardedProto}://{xForwardedHost}";
-            }
-
-            return baseHost;
+            // if X-Forwarded-Proto or X-Forwarded-Host headers are set, use them to build the self-referencing URLs
+            var proto = IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Proto"])
+                ? Request.Scheme
+                :(string) Request.Headers["X-Forwarded-Proto"];
+            var host = IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Host"])
+                ? Request.Host.ToUriComponent()
+                : (string) Request.Headers["X-Forwarded-Host"];
+            return $"{proto}://{host}";
         }
+
         private string GetBaseUrl()
         {
-            var baseUri = new Uri(Request.GetDisplayUrl());
-            var tmp = baseUri.GetComponents(UriComponents.Path, UriFormat.UriEscaped);
-            return $"{GetBaseHost()}/{tmp}";
+            return $"{GetBaseHost()}/{new Uri(Request.GetDisplayUrl()).GetComponents(UriComponents.Path, UriFormat.UriEscaped)}";
         }
 
         #endregion
