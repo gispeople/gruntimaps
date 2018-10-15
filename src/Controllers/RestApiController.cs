@@ -101,26 +101,6 @@ namespace GruntiMaps.Controllers
             });
         }
 
-        private string GetBaseHost()
-        {
-            var baseHost = $"{Request.Scheme}://{Request.Host}";
-            string xForwardedProto = Request.Headers["X-Forwarded-Proto"];
-            string xForwardedHost = Request.Headers["X-Forwarded-Host"];
-
-            if (!string.IsNullOrWhiteSpace(xForwardedHost) && !string.IsNullOrWhiteSpace(xForwardedProto))
-            {
-                baseHost = $"{xForwardedProto}://{xForwardedHost}";
-            }
-
-            return baseHost;
-        }
-        private string GetBaseUrl()
-        {
-            var baseUri = new Uri(Request.GetDisplayUrl());
-            var tmp = baseUri.GetComponents(UriComponents.Path, UriFormat.UriEscaped);
-            return $"{GetBaseHost()}/{tmp}";
-        }
-
         // RESTful layer information
         [AllowCrossSiteJson]
         [HttpGet("layers/{service}")]
@@ -367,9 +347,9 @@ namespace GruntiMaps.Controllers
         [HttpGet("fonts/{face}/{range}")]
         public ActionResult Font(string face, string range)
         {
+            var details = new List<RestErrorDetails>();
             if (face == null || range == null)
             {
-                var details = new List<RestErrorDetails>();
                 if (face == null) details.Add(new RestErrorDetails { field = "face", issue = "Face must be supplied" });
                 if (range == null) details.Add(new RestErrorDetails { field = "range", issue = "Range must be supplied" });
                 return new RestError(400, details.ToArray()).AsJsonResult();
@@ -377,23 +357,22 @@ namespace GruntiMaps.Controllers
 
             var faceFile = HttpUtility.UrlDecode(face);
             var fontChoices = faceFile.Split(",");
-            var details2 = new List<RestErrorDetails>();
             foreach (var fontChoice in fontChoices)
             {
                 // validate font and range
                 if (!Regex.IsMatch(fontChoice, "^[a-zA-Z ]+$"))
-                    details2.Add(new RestErrorDetails { field = "face", issue = "Font face is invalid" });
+                    details.Add(new RestErrorDetails { field = "face", issue = "Font face is invalid" });
 
                 if (!Regex.IsMatch(range, "^[0-9]{1,5}-[0-9]{1,5}$"))
-                    details2.Add(new RestErrorDetails { field = "range", issue = "Font range is invalid" });
+                    details.Add(new RestErrorDetails { field = "range", issue = "Font range is invalid" });
                 // if there were errors for this font, skip to the next one (if it exists)
-                if (details2.Count > 0) continue;
+                if (details.Count > 0) continue;
 
                 var path = Path.Combine(_options.FontPath, $@"{fontChoice}", $"{range}.pbf");
                 if (Exists(path))
                     return new FileContentResult(ReadAllBytes(path), "application/x-protobuf");
             }
-            if (details2.Count > 0) return new RestError(400, details2.ToArray()).AsJsonResult();
+            if (details.Count > 0) return new RestError(400, details.ToArray()).AsJsonResult();
             return new RestError(404, new[]
             {
                 new RestErrorDetails {field = "face", issue = "Font resource not found"}
@@ -557,6 +536,28 @@ namespace GruntiMaps.Controllers
 
             return resBuffer;
         }
+
+        
+        private string GetBaseHost()
+        {
+            var baseHost = $"{Request.Scheme}://{Request.Host}";
+            string xForwardedProto = Request.Headers["X-Forwarded-Proto"];
+            string xForwardedHost = Request.Headers["X-Forwarded-Host"];
+
+            if (!string.IsNullOrWhiteSpace(xForwardedHost) && !string.IsNullOrWhiteSpace(xForwardedProto))
+            {
+                baseHost = $"{xForwardedProto}://{xForwardedHost}";
+            }
+
+            return baseHost;
+        }
+        private string GetBaseUrl()
+        {
+            var baseUri = new Uri(Request.GetDisplayUrl());
+            var tmp = baseUri.GetComponents(UriComponents.Path, UriFormat.UriEscaped);
+            return $"{GetBaseHost()}/{tmp}";
+        }
+
         #endregion
     }
 }
