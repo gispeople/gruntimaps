@@ -38,7 +38,7 @@ namespace GruntiMaps.Models
             delMsgCmd.ExecuteNonQuery();
         }
 
-        public async Task<string> AddMessage(string message)
+        public Task<string> AddMessage(string message)
         {
             const string addMsg = "INSERT INTO Queue(PopCount, Content) VALUES(0, $content)";
             var addMsgCmd = new SqliteCommand(addMsg, _queueDatabase);
@@ -47,10 +47,10 @@ namespace GruntiMaps.Models
             const string getKey = "SELECT last_insert_rowid()";
             var getKeyCmd = new SqliteCommand(getKey, _queueDatabase);
             var key = (long)getKeyCmd.ExecuteScalar();
-            return key.ToString();
+            return Task.FromResult(key.ToString());
         }
 
-        public async Task<Message> GetMessage()
+        public Task<Message> GetMessage()
         {
             CheckExpiredMessages();
 
@@ -79,8 +79,8 @@ namespace GruntiMaps.Models
             updateMsgCmd.Parameters.AddWithValue("$popReceipt", msg.PopReceipt);
             updateMsgCmd.Parameters.AddWithValue("$popCount", popCount1);
             updateMsgCmd.ExecuteReader();
-            if (string.IsNullOrWhiteSpace(msg.Id)) return null; // if there was no result send back an empty message - conforms with Azure's approach
-            else return msg;
+            if (string.IsNullOrWhiteSpace(msg.Id)) return Task.FromResult<Message>(null); // if there was no result send back an empty message - conforms with Azure's approach
+            else return Task.FromResult(msg);
         }
 
         private void CheckExpiredMessages()
@@ -117,13 +117,14 @@ namespace GruntiMaps.Models
             }
         }
 
-        public async Task DeleteMessage(Message message)
+        public Task DeleteMessage(Message message)
         {
             const string delMsg = "DELETE FROM Queue WHERE ID=$ID AND PopReceipt=$popReceipt";
             var delMsgCmd = new SqliteCommand(delMsg, _queueDatabase);
             delMsgCmd.Parameters.AddWithValue("$ID", message.Id);
             delMsgCmd.Parameters.AddWithValue("$popReceipt", message.PopReceipt);
             delMsgCmd.ExecuteReader();
+            return Task.CompletedTask;
         }
     }
 }
