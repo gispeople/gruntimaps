@@ -1,0 +1,102 @@
+<!--
+
+Copyright 2016, 2017, 2018 GIS People Pty Ltd
+
+This file is part of GruntiMaps.
+
+GruntiMaps is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+GruntiMaps is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details.
+
+You should have received a copy of the GNU Affero General Public License along
+with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
+
+ -->
+@section Styles {
+    @*<link rel="stylesheet" type="text/css" href="~/lib/bootstrap-colorpicker/dist/css/bootstrap-colorpicker.min.css" />*@
+    <link href="~/css/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        #menu {
+            background: #fff;
+            position: absolute;
+            z-index: 1;
+            top: 60px;
+            right: 10px;
+            border-radius: 3px;
+            width: 20%;
+            border: 1px solid rgba(0,0,0,0.4);
+            font-family: 'Open Sans', sans-serif;
+        }
+            #menu div {
+                border-bottom: 1px solid rgba(0,0,0,0.25);
+            }
+        #menu div.active {
+            background-color: #3887be;
+            color: #fff;
+        }
+            #menu a {
+                font-size: 13px;
+                color: #404040;
+                display: none;
+                /*display: block;*/
+                margin: 0;
+                padding: 0;
+                padding: 5px;
+                text-decoration: none;
+/*                border-bottom: 1px solid rgba(0,0,0,0.25);*/
+                text-align: center;
+            }
+
+                #menu a:last-child {
+                    border: none;
+                }
+
+                #menu a:hover {
+                    background-color: #f8f8f8;
+                    color: #404040;
+                }
+
+                #menu a.active {
+                    background-color: #3887be;
+                    color: #ffffff;
+                }
+
+                    #menu a.active:hover {
+                        background: #3074a4;
+                    }
+
+        #properties {
+            position: absolute;
+            top: 200px;
+            width: 300px;
+            overflow: auto;
+            background: rgba(255,255,255,0.8);
+        }
+
+        #map {
+            position: absolute;
+            top: 60px;
+            bottom: 0;
+            left: 10px;
+            width: 75%;
+            height: 90%;
+        }
+    </style>
+}
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @*<script src="~/lib/bootstrap-colorpicker/dist/js/bootstrap-colorpicker.min.js"></script>*@
+    <script src="~/js/mapbox-gl.js"></script>
+    @*<script src="~/lib/geojson-extent/geojson-extent.js"></script>*@
+    <script src="~/js/zoom-level-control.js"></script>
+    <script src="~/js/preview.js"></script>
+    <script src="~/js/info-control.js"></script>
+}
+<nav id="menu"></nav>
+<div id="map"></div>
