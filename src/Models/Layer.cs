@@ -79,7 +79,7 @@ namespace GruntiMaps.Models
         }
 
         public SqliteConnection Conn => _internalConnection ?? (_internalConnection = GetConnection());
-        public IMapBoxSource Source { get; set; }
+        public ISource Source { get; set; }
 
         public JArray Style
         {

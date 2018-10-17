@@ -24,7 +24,7 @@ using Microsoft.Data.Sqlite;
 
 namespace GruntiMaps.Models
 {
-    public class MapBoxSource : IMapBoxSource
+    public class MapBoxSource : ISource
     {
         public MapBoxSource(SqliteConnection connection, string serviceName)
         {
