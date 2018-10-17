@@ -73,6 +73,7 @@ namespace GruntiMaps.Models
             GeoJsonContainer = config["Containers:geojson"];
             MbConvQueue = config["Queues:mvtConversion"];
             GdConvQueue = config["Queues:gdalConversion"];
+            JobStatusTable = config["Tables:jobStatus"];
             CheckUpdateTime = ParseConfigInt(config["Services:layerRefresh"]);
             CheckConvertTime = ParseConfigInt(config["Services:convertPolling"]);
         }
@@ -122,6 +123,8 @@ namespace GruntiMaps.Models
         public string GdConvQueue { get; }
 
         public string MbConvQueue { get; }
+
+        public string JobStatusTable { get; }
 
         public int QueueEntryTries { get; set; }
         /* 

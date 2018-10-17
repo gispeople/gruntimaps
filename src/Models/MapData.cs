@@ -46,6 +46,7 @@ namespace GruntiMaps.Models
         public IStorageContainer FontContainer { get; }
         public IQueue MbConversionQueue { get; }
         public IQueue GdConversionQueue { get; }
+        public ITable JobStatusTable { get; }
         public Options CurrentOptions { get; }
 
         public Dictionary<string, ILayer> LayerDict { get; set; } = new Dictionary<string, ILayer>();
@@ -65,6 +66,7 @@ namespace GruntiMaps.Models
                     FontContainer = new AzureStorage(CurrentOptions, CurrentOptions.FontContainer);
                     MbConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.MbConvQueue);
                     GdConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.GdConvQueue);
+                    JobStatusTable = new AzureTable(CurrentOptions, CurrentOptions.JobStatusTable);
                     break;
                 case StorageProviders.Local:
                     PackContainer = new LocalStorage(CurrentOptions, CurrentOptions.StorageContainer);
@@ -74,6 +76,7 @@ namespace GruntiMaps.Models
                     FontContainer = new LocalStorage(CurrentOptions, CurrentOptions.FontContainer);
                     MbConversionQueue = new LocalQueue(CurrentOptions, CurrentOptions.MbConvQueue);
                     GdConversionQueue = new LocalQueue(CurrentOptions, CurrentOptions.GdConvQueue);
+                    JobStatusTable = new LocalTable(CurrentOptions, CurrentOptions.JobStatusTable);
                     break;
                 default:
                     _logger.LogCritical("No valid storage provider set.");
