@@ -73,91 +73,6 @@ namespace GruntiMaps.Controllers
             });
         }
 
-        // V2 root
-        // In the v2 API, maps contain one or more layer-sets, which contain one or more layers. Layers refer to one source each. 
-        // Maps and layer-sets are not required but provide a way to bundle layers/layer-sets.
-        // 
-        [AllowCrossSiteJson]
-        [HttpGet("v2")]
-        public ActionResult GetRootV2()
-        {
-            var baseUrl = GetBaseUrl();
-            return Json(new
-            {
-                links = new List<object>
-                {
-                    new {href = baseUrl, rel = "self"},
-                    new {href = $"{baseUrl}/sources", rel = "collection", title = "sources"},
-                    new {href = $"{baseUrl}/layers", rel = "collection", title = "layers"},
-                    new {href = $"{baseUrl}/layer-sets", rel = "collection", title = "layer sets"},
-                    new {href = $"{baseUrl}/maps", rel = "collection", title = "maps"},
-                    new {href = $"{baseUrl}/fonts", rel = "collection", title = "fonts"},
-                    new {href = $"{baseUrl}/sprites", rel = "collection", title = "sprites"}
-                }
-            });
-        }
-
-        // V2 list of sources
-        [AllowCrossSiteJson]
-        [HttpGet("v2/sources")]
-        public ActionResult GetSourcesV2()
-        {
-            var baseUrl = GetBaseUrl();
-            return Json(new 
-            {
-                links = new List<object>
-                {
-                    new {href = baseUrl, rel = "self"}
-                }
-            });
-        }
-
-        // V2 list of layers
-        [AllowCrossSiteJson]
-        [HttpGet("v2/layers")]
-        public ActionResult GetLayersV2()
-        {
-            var baseUrl = GetBaseUrl();
-            return Json(new 
-            {
-                links = new List<object>
-                {
-                    new {href = baseUrl, rel = "self"}
-                }
-            });
-        }
-
-        // V2 list of layer-sets
-        [AllowCrossSiteJson]
-        [HttpGet("v2/layer-sets")]
-        public ActionResult GetLayerSetsV2()
-        {
-            var baseUrl = GetBaseUrl();
-            return Json(new 
-            {
-                links = new List<object>
-                {
-                    new {href = baseUrl, rel = "self"}
-                }
-            });
-        }
-
-        // V2 list of maps
-        [AllowCrossSiteJson]
-        [HttpGet("v2/maps")]
-        public ActionResult GetMapsV2()
-        {
-            var baseUrl = GetBaseUrl();
-            return Json(new 
-            {
-                links = new List<object>
-                {
-                    new {href = baseUrl, rel = "self"}
-                }
-            });
-
-        }
-
         // RESTful layer list
         [AllowCrossSiteJson]
         [HttpGet("layers")]
@@ -365,7 +280,6 @@ namespace GruntiMaps.Controllers
         // Retrieve a list of all available fonts.
         [AllowCrossSiteJson]
         [HttpGet("fonts")]
-        [HttpGet("v2/fonts")]
         public ActionResult GetFonts()
         {
             var fontDir = new DirectoryInfo(_options.FontPath);
@@ -394,7 +308,6 @@ namespace GruntiMaps.Controllers
         // retrieve possible ranges for mapbox font.
         [AllowCrossSiteJson]
         [HttpGet("fonts/{face}")]
-        [HttpGet("v2/fonts/{face}")]
         public ActionResult Font(string face)
         {
             if (face == null)
@@ -441,7 +354,6 @@ namespace GruntiMaps.Controllers
         // api/fonts/Open%20Sans%20Regular,Arial%20Unicode%20MS%20Regular/0-255 which means try the first font, and if not found, try the second.
         [AllowCrossSiteJson]
         [HttpGet("fonts/{face}/{range}")]
-        [HttpGet("v2/fonts/{face}/{range}")]
         public ActionResult Font(string face, string range)
         {
             var details = new List<RestErrorDetails>();
@@ -479,7 +391,6 @@ namespace GruntiMaps.Controllers
         // return the sprite sets available.
         [AllowCrossSiteJson]
         [HttpGet("sprites")]
-        [HttpGet("v2/sprites")]
         public ActionResult GetSprites()
         {
             var webRootPath = _hostingEnv.WebRootPath;
