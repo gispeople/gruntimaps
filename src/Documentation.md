@@ -69,7 +69,7 @@ This call returns a list of all of the layers configured on the server.
             }
         },
         {
-            "name":"The description for the second layer"
+            "name":"The description for the second layer",
             "links":{
                 "href":"https://demo.gruntimaps.com/api/layers/another_layer",
                 "rel":"collection"
