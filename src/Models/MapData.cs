@@ -39,9 +39,8 @@ namespace GruntiMaps.Models
         private readonly ILogger<MapData> _logger;
         // we need to be able to see the watcher so we can disable it while downloading layers
         private FileSystemWatcher watcher = new FileSystemWatcher();
-        public IStorageContainer PackContainer;
-        public IStorageContainer TileContainer;
-        public IStorageContainer MbtContainer { get; }
+        public IStorageContainer PackContainer { get; }
+        public IStorageContainer TileContainer { get; }
         public IStorageContainer GeojsonContainer { get; }
         public IStorageContainer FontContainer { get; }
         public IQueue MbConversionQueue { get; }
@@ -60,7 +59,6 @@ namespace GruntiMaps.Models
                 case StorageProviders.Azure: 
                     PackContainer = new AzureStorage(CurrentOptions, CurrentOptions.StorageContainer);
                     TileContainer = new AzureStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
-                    MbtContainer = new AzureStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
                     GeojsonContainer = new AzureStorage(CurrentOptions, CurrentOptions.GeoJsonContainer);
                     FontContainer = new AzureStorage(CurrentOptions, CurrentOptions.FontContainer);
                     MbConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.MbConvQueue);

@@ -153,7 +153,7 @@ namespace GruntiMaps.Services
 
                     _logger.LogDebug($"mbtile file is in {mbtileFile}");
                     // now we need to put the converted mbtile file into storage
-                    await _mapdata.MbtContainer.Store($"{mbData.LayerName}.mbtiles", mbtileFile);
+                    await _mapdata.TileContainer.Store($"{mbData.LayerName}.mbtiles", mbtileFile);
                     _logger.LogDebug("Upload of mbtile file to storage complete.");
                     var end = DateTime.UtcNow;
                     var duration = end - start;
