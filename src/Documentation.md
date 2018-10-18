@@ -1,6 +1,6 @@
 # Gruntimaps MapServer RESTful API
 
-The new RESTful API can be navigated from its initial endpoint of `/api`. It aims for compliance with the HATEOAS model.
+The RESTful API can be navigated from its initial endpoint of `/api`. It aims for compliance with the HATEOAS model.
 
 In the examples, the server is referred to as `demo.gruntimaps.com`.
 
