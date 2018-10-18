@@ -69,6 +69,7 @@ namespace GruntiMaps.Models
                 case StorageProviders.Local:
                     PackContainer = new LocalStorage(CurrentOptions, CurrentOptions.StorageContainer);
                     TileContainer = new LocalStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
+                    MbtContainer = new LocalStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
                     GeojsonContainer = new LocalStorage(CurrentOptions, CurrentOptions.GeoJsonContainer);
                     FontContainer = new LocalStorage(CurrentOptions, CurrentOptions.FontContainer);
                     MbConversionQueue = new LocalQueue(CurrentOptions, CurrentOptions.MbConvQueue);
