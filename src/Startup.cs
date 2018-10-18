@@ -55,6 +55,7 @@ namespace GruntiMaps
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<Options>();
             services.AddSingleton<IMapData, MapData>();
+            services.AddSingleton<MapSources>();
             services.AddSingleton<IHostedService, LayerUpdateService>();
             services.AddSingleton<IHostedService, MapBoxConversionService>();
             services.AddSingleton<IHostedService, GdalConversionService>();

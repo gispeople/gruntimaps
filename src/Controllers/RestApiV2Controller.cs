@@ -84,11 +84,13 @@ namespace GruntiMaps.Controllers
         public ActionResult GetSourcesV2()
         {
             var baseUrl = GetBaseUrl();
+            var src = new List<object>();
+            foreach (var source in _sources.AllSources()) {
+                src.Add(new {href = $"{baseUrl}/{source}", rel = "item", title = _sources.SourceJson(source).description ?? source});
+            }
             return Json(new 
             {
-                content = new List<object> {
-                    new {id = "{abcde-f1234-56789-01245}", href = $"{baseUrl}/{{abcde-f1234-56789-01245}}"}
-                },
+                content = src,
                 links = new List<object>
                 {
                     new {href = baseUrl, rel = "self"}
@@ -102,23 +104,15 @@ namespace GruntiMaps.Controllers
         public ActionResult GetSourceJson(string sourceId)
         {
             var baseUrl = GetBaseUrl();
+            var src = _sources.SourceJson(sourceId);
+            src.tiles[0] = $"{baseUrl}/tiles?x={{x}}&y={{y}}&z={{z}}";        
 
-            return Json(new {
-                tilejson = "2.0.0",
-                name = "OS-Road",
-                description = "Ordnance Survey Open Zoomstack 2018.",
-                version = "2",
-                scheme = "xyz",
-                tiles = new List<string> {
-                    $"{baseUrl}/tiles?x={{x}}&y={{y}}&z={{z}}"
-                },
-                minzoom = 0.0,
-                maxzoom = 14.0,
-                bounds = new List<double> { -11.90918, 49.296472, 3.603516, 61.606396 },
-                center = new List<double> { 0.845947, 51.774638, 14.0 },
-                type = "vector",
-                format = "pbf"
-            });
+            // this allows us to return the TileJSON without including empty values.
+            return Content(JsonConvert.SerializeObject(
+                src, 
+                Newtonsoft.Json.Formatting.None, 
+                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore}
+            ));
         }
 
         // Retrieve tile. 

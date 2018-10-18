@@ -24,22 +24,22 @@ namespace GruntiMaps.Models
     // The structure of a TileJSON entry.
     public class TileConfig
     {
-        string tilejson { get; set; }
-        string name { get; set; }
-        string description { get; set; }
-        string version { get; set; }
-        string attribution { get; set; }
+        public string tilejson { get; set; }
+        public string name { get; set; }
+        public string description { get; set; }
+        public string version { get; set; }
+        public string attribution { get; set; }
         string template { get; set; }
         string legend { get; set; }
-        string scheme { get; set; }
-        string[] tiles { get; set; }
+        public string scheme { get; set; }
+        public string[] tiles { get; set; }
         string[] grids { get; set; }
         string[] data { get; set; }
-        double minzoom { get; set; }
-        double maxzoom { get; set; }
-        double[] bounds { get; set; }
-        double[] center { get; set; }
-        string type { get; set; }
-        string format { get; set; }
+        public double minzoom { get; set; }
+        public double maxzoom { get; set; }
+        public double[] bounds { get; set; }
+        public double[] center { get; set; }
+        public string type { get; set; }
+        public string format { get; set; }
     }
 }

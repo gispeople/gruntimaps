@@ -26,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Threading.Tasks;
 using static System.IO.Directory;
 
@@ -34,6 +35,10 @@ namespace GruntiMaps.Models
     public class MapSources
     {
         private Dictionary<string, MapSource> _sources;
+
+        public List<string> AllSources() {
+            return _sources.Select(x => x.Key).ToList();
+        }
 
         public TileConfig SourceJson(string sourceId) {
             return _sources[sourceId].TileJSON;
@@ -51,6 +56,13 @@ namespace GruntiMaps.Models
             _options = options;
             _logger = logger;
             // look for sources and add them to dictionary
+            _sources = new Dictionary<string, MapSource>();
+            var mbtiles = new DirectoryInfo(_options.TilePath);
+            foreach (var mbtile in mbtiles.GetFiles())
+            {
+                var sourceId = Path.GetFileNameWithoutExtension(mbtile.Name);
+                _sources.Add(sourceId, new MapSource(_options, sourceId));
+            }
         }
 
     }
