@@ -56,9 +56,12 @@ namespace GruntiMaps.Models
             var result = new List<string>();
             await Task.Run(() =>
             {
-                foreach (var fileName in Directory.EnumerateFiles(_containerPath))
-                {
-                    result.Add(fileName);
+                DirectoryInfo di = new DirectoryInfo(_containerPath);
+                if (di.Exists) {
+                    foreach (var file in di.GetFiles())
+                    {
+                        result.Add(file.Name);
+                    }
                 }
             });
             return result;
