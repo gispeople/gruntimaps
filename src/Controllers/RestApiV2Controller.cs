@@ -44,11 +44,11 @@ namespace GruntiMaps.Controllers
     [Route("v2")]
     public class RestApiV2Controller : Controller
     {
-        private readonly ISources _sources;
+        private readonly MapSources _sources;
         private readonly Options _options;
         private readonly IHostingEnvironment _hostingEnv;
 
-        public RestApiV2Controller(ISources sources, Options options, IHostingEnvironment hostingEnv)
+        public RestApiV2Controller(MapSources sources, Options options, IHostingEnvironment hostingEnv)
         {
             _options = options;
             _sources = sources;
@@ -347,12 +347,12 @@ namespace GruntiMaps.Controllers
         private byte[] GetTile(string sourceId, int? x, int? y, byte? z)
         {
             //validate input vars
-            if (x == null || y == null || z == null || sourceId == null || !_sources.Sources.ContainsKey(sourceId))
+            if (x == null || y == null || z == null || sourceId == null || !_sources.Exists(sourceId))
                 return new byte[] { 0 };
 
             y = IntPow(2, (byte)z) - 1 - y;
 
-            var conn = _sources.Sources[sourceId].Conn;
+            var conn = _sources.Conn(sourceId);
 
             using (var cmd = conn.CreateCommand())
             {
@@ -371,11 +371,11 @@ namespace GruntiMaps.Controllers
         {
             //validate input vars
             if (x == null || y == null || z == null || sourceId == null ||
-                !_sources.Sources.ContainsKey(sourceId)) return "{}";
+                !_sources.Exists(sourceId)) return "{}";
 
             y = IntPow(2, (byte)z) - 1 - y;
 
-            var conn = _sources.Sources[sourceId].Conn;
+            var conn = _sources.Conn(sourceId);
 
             using (var cmd = conn.CreateCommand())
             {
