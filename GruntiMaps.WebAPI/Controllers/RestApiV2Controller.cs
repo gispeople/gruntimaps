@@ -58,7 +58,6 @@ namespace GruntiMaps.Controllers
         // In the v2 API, maps contain one or more layer-bundles, which contain one or more layers. Layers refer to one source each. 
         // Maps and layer-bundles are not required but provide a way to bundle layers/layer-bundles.
         // 
-        [AllowCrossSiteJson]
         [HttpGet]
         public ActionResult GetRootV2()
         {
@@ -79,7 +78,6 @@ namespace GruntiMaps.Controllers
         }
 
         // V2 list of sources
-        [AllowCrossSiteJson]
         [HttpGet("sources")]
         public ActionResult GetSourcesV2()
         {
@@ -99,7 +97,6 @@ namespace GruntiMaps.Controllers
         }
 
         // V2 retrieve source JSON
-        [AllowCrossSiteJson]
         [HttpGet("sources/{sourceId}")]
         public ActionResult GetSourceJson(string sourceId)
         {
@@ -116,7 +113,6 @@ namespace GruntiMaps.Controllers
         }
 
         // Retrieve tile. 
-        [AllowCrossSiteJson]
         [HttpGet("sources/{sourceId}/tiles")]
         public ActionResult Tile(string sourceId, int? x, int? y, byte? z)
         {
@@ -141,7 +137,6 @@ namespace GruntiMaps.Controllers
         }
 
         // V2 list of layers
-        [AllowCrossSiteJson]
         [HttpGet("layers")]
         public ActionResult GetLayersV2()
         {
@@ -156,7 +151,6 @@ namespace GruntiMaps.Controllers
         }
 
         // V2 list of layer-bundles
-        [AllowCrossSiteJson]
         [HttpGet("layer-bundles")]
         public ActionResult GetLayerBundlesV2()
         {
@@ -171,7 +165,6 @@ namespace GruntiMaps.Controllers
         }
 
         // V2 list of maps
-        [AllowCrossSiteJson]
         [HttpGet("maps")]
         public ActionResult GetMapsV2()
         {
@@ -187,7 +180,6 @@ namespace GruntiMaps.Controllers
         }
 
         // Retrieve a list of all available fonts.
-        [AllowCrossSiteJson]
         [HttpGet("fonts")]
         public ActionResult GetFonts()
         {
@@ -215,7 +207,6 @@ namespace GruntiMaps.Controllers
         }
 
         // retrieve possible ranges for mapbox font.
-        [AllowCrossSiteJson]
         [HttpGet("fonts/{face}")]
         public ActionResult Font(string face)
         {
@@ -261,7 +252,6 @@ namespace GruntiMaps.Controllers
         // retrieve a mapbox font. 
         // needs to support multiple fonts listed, as so:
         // api/fonts/Open%20Sans%20Regular,Arial%20Unicode%20MS%20Regular/0-255 which means try the first font, and if not found, try the second.
-        [AllowCrossSiteJson]
         [HttpGet("fonts/{face}/{range}")]
         public ActionResult Font(string face, string range)
         {
@@ -298,7 +288,6 @@ namespace GruntiMaps.Controllers
         }
 
         // return the sprite sets available.
-        [AllowCrossSiteJson]
         [HttpGet("sprites")]
         public ActionResult GetSprites()
         {
