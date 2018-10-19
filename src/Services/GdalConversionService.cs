@@ -183,17 +183,19 @@ namespace GruntiMaps.Services
                         _logger.LogDebug($"GDALConversion took {duration.TotalMilliseconds} ms.");
 
                         // we created geoJson so we can put a request in for geojson to mvt conversion.
-                        await _mapdata.CreateMbConversionRequest(new ConversionMessageData
+                        var mbRequestId = await _mapdata.CreateMbConversionRequest(new ConversionMessageData
                         {
                             DataLocation = location,
                             Description = gdalData.Description,
                             LayerName = layerName
                         });
+                        await _mapdata.JobStatusTable.AddQueue(mbRequestId, gdalMsg.Id);
                     }
                 }
                 // we completed GDAL conversion and creation of MVT conversion request, so remove the GDAL request from the queue
                 _logger.LogDebug("deleting gdal message from queue");
                 await _mapdata.GdConversionQueue.DeleteMessage(gdalMsg);
+                await _mapdata.JobStatusTable.UpdateQueueStatus(gdalMsg.Id, JobStatus.Finished);
             }
             await Task.Delay(_options.CheckConvertTime);
         }
