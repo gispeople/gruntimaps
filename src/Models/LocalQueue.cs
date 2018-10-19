@@ -23,13 +23,14 @@ namespace GruntiMaps.Models
             _queueDatabase = new SqliteConnection(connStr);
             _queueDatabase.Open();
             string createQueueTable =
-                "CREATE TABLE IF NOT EXISTS Queue(ID INTEGER PRIMARY KEY, PopReceipt NVARCHAR(50) NULL, PopCount INTEGER, Popped NVARCHAR(25) NULL, Content NVARCHAR(2048) NULL)";
+                "CREATE TABLE IF NOT EXISTS Queue(ID NVARCHAR(50) PRIMARY KEY, PopReceipt NVARCHAR(50) NULL, PopCount INTEGER, Popped NVARCHAR(25) NULL, Content NVARCHAR(2048) NULL)";
             SqliteCommand createQueueTableCmd = new SqliteCommand(createQueueTable, _queueDatabase);
             createQueueTableCmd.ExecuteNonQuery();
             string createPoisonTable =
                 "CREATE TABLE IF NOT EXISTS Poison(ID INTEGER PRIMARY KEY, PopReceipt NVARCHAR(50) NULL, PopCount INTEGER, Popped NVARCHAR(25) NULL, Content NVARCHAR(2048) NULL)";
             SqliteCommand createPoisonTableCmd = new SqliteCommand(createPoisonTable, _queueDatabase);
-            createPoisonTableCmd.ExecuteNonQuery();        }
+            createPoisonTableCmd.ExecuteNonQuery();
+        }
 
         public void Clear() // clear the queue of entries - not normally desirable but useful for testing
         {
@@ -40,14 +41,13 @@ namespace GruntiMaps.Models
 
         public Task<string> AddMessage(string message)
         {
-            const string addMsg = "INSERT INTO Queue(PopCount, Content) VALUES(0, $content)";
+            var id = Guid.NewGuid().ToString();
+            const string addMsg = "INSERT INTO Queue(ID, PopCount, Content) VALUES($QueueId, 0, $content)";
             var addMsgCmd = new SqliteCommand(addMsg, _queueDatabase);
             addMsgCmd.Parameters.AddWithValue("$content", message);
+            addMsgCmd.Parameters.AddWithValue("$QueueId", id);
             addMsgCmd.ExecuteScalar();
-            const string getKey = "SELECT last_insert_rowid()";
-            var getKeyCmd = new SqliteCommand(getKey, _queueDatabase);
-            var key = (long)getKeyCmd.ExecuteScalar();
-            return Task.FromResult(key.ToString());
+            return Task.FromResult(id);
         }
 
         public Task<Message> GetMessage()

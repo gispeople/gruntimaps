@@ -161,6 +161,7 @@ namespace GruntiMaps.Services
                 }
                 await _mapdata.MbConversionQueue.DeleteMessage(mbMsg);
                 _logger.LogDebug("Deleted MapBoxConversion message");
+                await _mapdata.JobStatusTable.UpdateQueueStatus(mbMsg.Id, JobStatus.Finished);
             }
             await Task.Delay(_options.CheckConvertTime);
 
