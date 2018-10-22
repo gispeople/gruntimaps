@@ -239,7 +239,6 @@ namespace GruntiMaps.Controllers
             return Json(new { });
         }
 
-        [AllowCrossSiteJson]
         [HttpPost("layers/create")]
         public async Task<ActionResult> CreateNewLayer([FromBody] CreateMapLayerDto dto)
         {
@@ -257,7 +256,6 @@ namespace GruntiMaps.Controllers
             });
         }
 
-        [AllowCrossSiteJson]
         [HttpGet("layers/create/{jobId}")]
         public async Task<ActionResult> GetCreationJobStatus(string jobId) 
         {
