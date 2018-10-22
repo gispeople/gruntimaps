@@ -6,4 +6,4 @@ Info-Control displays the attributes of the object currently under the mouse. It
 
 Scale-Control combines the metric and imperial scales from MapBox into a single control.
 
-Tilt-Control provides a simple icon to switch between a 2D and 3D map.
+Tilt-Control provides a simple button to switch between a 2D and 3D map.
