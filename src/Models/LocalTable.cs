@@ -38,7 +38,7 @@ namespace GruntiMaps.Models
             return Task.CompletedTask;
         }
 
-        public async Task<JobStatus?> GetJobStatus(string jobId)
+        public Task<JobStatus?> GetJobStatus(string jobId)
         {
             const string getRelatedQueueMsg = "SELECT * FROM Queue WHERE JobId = $JobId";
             var getRelatedQueueCmd = new SqliteCommand(getRelatedQueueMsg, _queueDatabase);
@@ -62,15 +62,15 @@ namespace GruntiMaps.Models
             }
             if (hasFailed) 
             {
-                return JobStatus.Failed;
+                return Task.FromResult<JobStatus?>(JobStatus.Failed);
             }
             if (hasQueued)
             {
-                return JobStatus.Queued;
+                return Task.FromResult<JobStatus?>(JobStatus.Queued);
             }
             if (allFinished)
             {
-                return JobStatus.Finished;
+                return Task.FromResult<JobStatus?>(JobStatus.Finished);
             }
             throw new Exception($"Unexpected status for job: {jobId}");
         }
