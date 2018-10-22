@@ -82,5 +82,4 @@ TiltControl.prototype._onClickTilt = function _onClickTilt() {
         this._map.easeTo({ pitch: 60 });
     }
     this._tilt = !this._tilt;
-    $(document).trigger("mapModeChange", this._tilt);
 }
