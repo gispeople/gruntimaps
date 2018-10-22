@@ -21,19 +21,19 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 function ZoomLevelControl() {}
 
 ZoomLevelControl.prototype.onAdd = function (map) {
-    this._map = map;
-    var container = document.createElement("div");
-    container.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
-    container.style += "padding: 10px; padding-top: 10px; padding-left: 10px; padding-right: 10px;";
-    container.innerHTML = `<p>Zoom ${Math.round(map.getZoom() * 100 + Number.EPSILON) / 100}</p>`;
-    map.on("zoomend",
-        function () {
-            container.innerHTML = `<p>Zoom ${Math.round(map.getZoom() * 100 + Number.EPSILON) / 100}</p>`;
-        });
-    return container;
+	this._map = map;
+	var container = document.createElement("div");
+	container.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
+	container.style += "padding: 10px; padding-top: 10px; padding-left: 10px; padding-right: 10px;";
+	container.innerHTML = `<p>Zoom ${Math.round(map.getZoom() * 100 + Number.EPSILON) / 100}</p>`;
+	map.on("zoomend",
+		function () {
+			container.innerHTML = `<p>Zoom ${Math.round(map.getZoom() * 100 + Number.EPSILON) / 100}</p>`;
+		});
+	return container;
 };
 
 ZoomLevelControl.prototype.onRemove = function () {
-    this._container.parentNode.removeChild(this._container);
-    this._map = undefined;
+	this._container.parentNode.removeChild(this._container);
+	this._map = undefined;
 };
