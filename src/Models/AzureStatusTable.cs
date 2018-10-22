@@ -7,14 +7,14 @@ using Microsoft.WindowsAzure.Storage.Table;
 
 namespace GruntiMaps.Models
 {
-    public class AzureTable : ITable
+    public class AzureStatusTable : IStatusTable
     {
         CloudStorageAccount _account { get; }
         CloudTableClient _client { get; }
         CloudTable _table { get; }
 
         public const string Workspace = "Workspace";
-        public AzureTable(Options options, string tableName)
+        public AzureStatusTable(Options options, string tableName)
         {
             _account =
                 new CloudStorageAccount(
@@ -25,14 +25,14 @@ namespace GruntiMaps.Models
             _table.CreateIfNotExistsAsync();
         }
 
-        public async Task AddQueue(string queueId, string jobId)
+        public async Task AddStatus(string queueId, string jobId)
         {
-            await _table.ExecuteAsync(TableOperation.Insert(new QueueEntity(queueId, jobId)));
+            await _table.ExecuteAsync(TableOperation.Insert(new StatusEntity(queueId, jobId)));
         }
 
-        public async Task<JobStatus?> GetJobStatus(string jobId)
+        public async Task<JobStatus?> GetStatus(string jobId)
         {
-            TableQuery<QueueEntity> query = new TableQuery<QueueEntity>().Where(TableQuery.GenerateFilterCondition("JobId", QueryComparisons.Equal, jobId));
+            TableQuery<StatusEntity> query = new TableQuery<StatusEntity>().Where(TableQuery.GenerateFilterCondition("JobId", QueryComparisons.Equal, jobId));
             
             TableContinuationToken token = null;
 
@@ -42,10 +42,10 @@ namespace GruntiMaps.Models
             bool allFinished = true;
             do
             {
-                TableQuerySegment<QueueEntity> resultSegment = await _table.ExecuteQuerySegmentedAsync(query, token);
+                TableQuerySegment<StatusEntity> resultSegment = await _table.ExecuteQuerySegmentedAsync(query, token);
                 token = resultSegment.ContinuationToken;
 
-                foreach (QueueEntity queue in resultSegment.Results)
+                foreach (StatusEntity queue in resultSegment.Results)
                 {
                     hasRecord = true;
                     hasQueued |= queue.Status == JobStatus.Queued.ToString();
@@ -73,20 +73,20 @@ namespace GruntiMaps.Models
             throw new Exception($"Unexpected status for job: {jobId}");
         }
 
-        public async Task UpdateQueueStatus(string queueId, JobStatus status)
+        public async Task UpdateStatus(string queueId, JobStatus status)
         {
             if (status != JobStatus.Failed && status != JobStatus.Finished)
             {
                 throw new Exception($"Queue Status Update only accept {JobStatus.Failed} or {JobStatus.Finished}");
             }
 
-            TableOperation retrieveOperation = TableOperation.Retrieve<QueueEntity>(Workspace, queueId);
+            TableOperation retrieveOperation = TableOperation.Retrieve<StatusEntity>(Workspace, queueId);
 
             TableResult retrievedResult = await _table.ExecuteAsync(retrieveOperation);
 
             if (retrievedResult.Result != null)
             {
-                var queue = (QueueEntity) retrievedResult.Result;
+                var queue = (StatusEntity) retrievedResult.Result;
                 queue.Status = status.ToString();
                 await _table.ExecuteAsync(TableOperation.Replace(queue));
             }
@@ -97,18 +97,18 @@ namespace GruntiMaps.Models
         }
     }
 
-    public class QueueEntity : TableEntity
+    public class StatusEntity : TableEntity
     {
-        public QueueEntity(string queueId, string jobId)
+        public StatusEntity(string queueId, string jobId)
         {
-            PartitionKey = AzureTable.Workspace;
+            PartitionKey = AzureStatusTable.Workspace;
             RowKey = queueId;
             QueueId = queueId;
             JobId = jobId;
             Status = JobStatus.Queued.ToString();
         }
 
-        public QueueEntity() { }
+        public StatusEntity() { }
 
         public string QueueId { get; set; }
 

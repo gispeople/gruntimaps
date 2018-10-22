@@ -261,7 +261,7 @@ namespace GruntiMaps.Controllers
                 Description = dto.Description
             };
             var requestId = await _mapData.CreateGdalConversionRequest(messageData);
-            await _mapData.JobStatusTable.AddQueue(requestId, requestId);
+            await _mapData.JobStatusTable.AddStatus(requestId, requestId);
             return Json(new
             {
                 requestId
@@ -272,7 +272,7 @@ namespace GruntiMaps.Controllers
         [HttpGet("layers/create/{jobId}")]
         public async Task<ActionResult> GetCreationJobStatus(string jobId) 
         {
-            var jobStatus = await _mapData.JobStatusTable.GetJobStatus(jobId);
+            var jobStatus = await _mapData.JobStatusTable.GetStatus(jobId);
             var status = jobStatus.HasValue ? jobStatus.ToString() : null;
             return Json(new
             {

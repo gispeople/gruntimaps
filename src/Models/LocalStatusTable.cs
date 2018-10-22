@@ -5,30 +5,33 @@ using Microsoft.Data.Sqlite;
 
 namespace GruntiMaps.Models
 {
-    public class LocalTable : ITable
+    public class LocalStatusTable : IStatusTable
     {
         private readonly SqliteConnection _queueDatabase;
 
-        public LocalTable(Options options, string queueName)
+        public LocalStatusTable(Options options, string tableName)
         {
             var builder = new SqliteConnectionStringBuilder
             {
                 Mode = SqliteOpenMode.ReadWriteCreate,
                 Cache = SqliteCacheMode.Private,
-                DataSource = System.IO.Path.Combine(options.StoragePath, $"{queueName}.table")
+                DataSource = System.IO.Path.Combine(options.StoragePath, $"{tableName}.table")
             };
             var connStr = builder.ConnectionString;
             _queueDatabase = new SqliteConnection(connStr);
             _queueDatabase.Open();
-            string createQueueTable =
-                "CREATE TABLE IF NOT EXISTS Queue(Id NVARCHAR(50) PRIMARY KEY, JobId NVARCHAR(50) NOT NULL, Status NVARCHAR(50) NOT NULL)";
-            new SqliteCommand(createQueueTable, _queueDatabase).ExecuteNonQuery();
+            string createStatusesTable =
+                "CREATE TABLE IF NOT EXISTS Statuses(Id NVARCHAR(50) PRIMARY KEY, JobId NVARCHAR(50) NOT NULL, Status NVARCHAR(50) NOT NULL)";
+            new SqliteCommand(createStatusesTable, _queueDatabase).ExecuteNonQuery();
+            string createJobIdIndex =
+                "CREATE INDEX IF NOT EXISTS index_JobId ON Statuses(JobId)";
+            new SqliteCommand(createJobIdIndex, _queueDatabase).ExecuteNonQuery();
         }
 
-        public Task AddQueue(string queueId, string jobId)
+        public Task AddStatus(string queueId, string jobId)
         {
 
-            const string addMsg = "INSERT INTO Queue(Id, JobId, Status) VALUES($QueueId, $JobId, $Status)";
+            const string addMsg = "INSERT INTO Statuses(Id, JobId, Status) VALUES($QueueId, $JobId, $Status)";
             var addMsgCmd = new SqliteCommand(addMsg, _queueDatabase);
             addMsgCmd.Parameters.AddWithValue("$QueueId", queueId);
             addMsgCmd.Parameters.AddWithValue("$JobId", jobId);
@@ -38,9 +41,9 @@ namespace GruntiMaps.Models
             return Task.CompletedTask;
         }
 
-        public async Task<JobStatus?> GetJobStatus(string jobId)
+        public async Task<JobStatus?> GetStatus(string jobId)
         {
-            const string getRelatedQueueMsg = "SELECT * FROM Queue WHERE JobId = $JobId";
+            const string getRelatedQueueMsg = "SELECT * FROM Statuses WHERE JobId = $JobId";
             var getRelatedQueueCmd = new SqliteCommand(getRelatedQueueMsg, _queueDatabase);
             getRelatedQueueCmd.Parameters.AddWithValue("$JobId", jobId);
             var relatedQueueReader = getRelatedQueueCmd.ExecuteReader();
@@ -75,20 +78,25 @@ namespace GruntiMaps.Models
             throw new Exception($"Unexpected status for job: {jobId}");
         }
 
-        public Task UpdateQueueStatus(string queueId, JobStatus status)
+        public Task UpdateStatus(string queueId, JobStatus status)
         {
             if (status != JobStatus.Failed && status != JobStatus.Finished)
             {
                 throw new Exception($"Queue Status Update only accept {JobStatus.Failed} or {JobStatus.Finished}");
             }
 
-            const string updateMsg = "UPDATE Queue SET Status = $Status WHERE Id = $QueueId";
+            const string updateMsg = "UPDATE Statuses SET Status = $Status WHERE Id = $QueueId";
             var updateMsgCmd = new SqliteCommand(updateMsg, _queueDatabase);
             updateMsgCmd.Parameters.AddWithValue("$Status", status.ToString());
             updateMsgCmd.Parameters.AddWithValue("$QueueId", queueId);
             updateMsgCmd.ExecuteScalar();
 
             return Task.CompletedTask;
+        }
+
+        public void Clear()
+        {
+            new SqliteCommand("DELETE FROM Statuses", _queueDatabase).ExecuteNonQuery();
         }
     }
 }
