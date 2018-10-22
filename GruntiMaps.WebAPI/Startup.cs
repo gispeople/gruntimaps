@@ -52,7 +52,6 @@ namespace GruntiMaps
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
-
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<Options>();
             services.AddSingleton<IMapData, MapData>();

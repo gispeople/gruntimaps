@@ -42,7 +42,8 @@ namespace GruntiMaps.Controllers
 {
     [Produces("application/json")]
     [Route("v2")]
-    public class RestApiV2Controller : Controller
+    [ApiController]
+    public class RestApiV2Controller : ControllerBase
     {
         private readonly MapSources _sources;
         private readonly Options _options;
@@ -59,10 +60,10 @@ namespace GruntiMaps.Controllers
         // Maps and layer-bundles are not required but provide a way to bundle layers/layer-bundles.
         // 
         [HttpGet]
-        public ActionResult GetRootV2()
+        public ActionResult<object> GetRootV2()
         {
             var baseUrl = GetBaseUrl();
-            return Json(new
+            return new
             {
                 links = new List<object>
                 {
@@ -74,26 +75,26 @@ namespace GruntiMaps.Controllers
                     new {href = $"{baseUrl}/fonts", rel = "collection", title = "fonts"},
                     new {href = $"{baseUrl}/sprites", rel = "collection", title = "sprites"}
                 }
-            });
+            };
         }
 
         // V2 list of sources
         [HttpGet("sources")]
-        public ActionResult GetSourcesV2()
+        public ActionResult<object> GetSourcesV2()
         {
             var baseUrl = GetBaseUrl();
             var src = new List<object>();
             foreach (var source in _sources.AllSources()) {
                 src.Add(new {href = $"{baseUrl}/{source}", rel = "item", title = _sources.SourceJson(source).description ?? source});
             }
-            return Json(new 
+            return new 
             {
                 content = src,
                 links = new List<object>
                 {
                     new {href = baseUrl, rel = "self"}
                 }
-            });
+            };
         }
 
         // V2 retrieve source JSON
@@ -138,50 +139,50 @@ namespace GruntiMaps.Controllers
 
         // V2 list of layers
         [HttpGet("layers")]
-        public ActionResult GetLayersV2()
+        public ActionResult<object> GetLayersV2()
         {
             var baseUrl = GetBaseUrl();
-            return Json(new 
+            return new 
             {
                 links = new List<object>
                 {
                     new {href = baseUrl, rel = "self"}
                 }
-            });
+            };
         }
 
         // V2 list of layer-bundles
         [HttpGet("layer-bundles")]
-        public ActionResult GetLayerBundlesV2()
+        public ActionResult<object> GetLayerBundlesV2()
         {
             var baseUrl = GetBaseUrl();
-            return Json(new 
+            return new 
             {
                 links = new List<object>
                 {
                     new {href = baseUrl, rel = "self"}
                 }
-            });
+            };
         }
 
         // V2 list of maps
         [HttpGet("maps")]
-        public ActionResult GetMapsV2()
+        public ActionResult<object> GetMapsV2()
         {
             var baseUrl = GetBaseUrl();
-            return Json(new 
+            return new 
             {
                 links = new List<object>
                 {
                     new {href = baseUrl, rel = "self"}
                 }
-            });
+            };
 
         }
 
         // Retrieve a list of all available fonts.
         [HttpGet("fonts")]
-        public ActionResult GetFonts()
+        public ActionResult<object> GetFonts()
         {
             var fontDir = new DirectoryInfo(_options.FontPath);
             var dirInfo = fontDir.GetDirectories();
@@ -195,7 +196,7 @@ namespace GruntiMaps.Controllers
                 }
             }).ToList();
             //resources.Add(new RestLink {href = Request.GetDisplayUrl(), rel = "self", title = "self"});
-            return Json(new
+            return new
             {
                 content = resources,
                 links = new
@@ -203,12 +204,12 @@ namespace GruntiMaps.Controllers
                     href = GetBaseUrl(),
                     rel = "self"
                 }
-            });
+            };
         }
 
         // retrieve possible ranges for mapbox font.
         [HttpGet("fonts/{face}")]
-        public ActionResult Font(string face)
+        public ActionResult<object> Font(string face)
         {
             if (face == null)
             {
@@ -238,7 +239,7 @@ namespace GruntiMaps.Controllers
                 }
             }).ToList();
         
-            return Json(new
+            return new
             {
                 content = resources,
                 links = new
@@ -246,7 +247,7 @@ namespace GruntiMaps.Controllers
                     href = GetBaseUrl(),
                     rel = "self"
                 }
-            });
+            };
         }
 
         // retrieve a mapbox font. 
@@ -289,7 +290,7 @@ namespace GruntiMaps.Controllers
 
         // return the sprite sets available.
         [HttpGet("sprites")]
-        public ActionResult GetSprites()
+        public ActionResult<object> GetSprites()
         {
             var webRootPath = _hostingEnv.WebRootPath;
             var spriteDir = new DirectoryInfo(Path.Combine(webRootPath, "sprites"));
@@ -304,7 +305,7 @@ namespace GruntiMaps.Controllers
                     title = Path.GetFileNameWithoutExtension(sp.Name)
                 }).ToList();
             resources.Add(new { href = GetBaseUrl(), rel = "self", title = "self" });
-            return Json(new { links = resources });
+            return new { links = resources };
         }
 
         #region Internals
