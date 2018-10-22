@@ -89,6 +89,9 @@ $(document).ready(function () {
     const zlc = new ZoomLevelControl();
     window.map.addControl(zlc, "bottom-right");
 
+    const tilt = new TiltControl();
+    window.map.addControl(tilt, "top-left");
+
     window.map.on("load", function () {
         // the following empty layers are there to allow the other layers to be added in a predictable order.
         // 
