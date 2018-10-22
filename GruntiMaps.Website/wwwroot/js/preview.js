@@ -80,7 +80,8 @@ $(document).ready(function () {
     //const inf = new InfoControl();
     //window.map.addControl(inf, "top-left");
 
-    const sc = new mapboxgl.ScaleControl();
+//    const sc = new mapboxgl.ScaleControl();
+    const sc = new GruntiMapsScaleControl();
     window.map.addControl(sc, "bottom-left");
 
     const att = new mapboxgl.AttributionControl({customAttribution: "Contains OS data &copy; Crown copyright and database rights 2018<br>Served using <a href='https://www.gruntimaps.com'>GruntiMaps</a>"});

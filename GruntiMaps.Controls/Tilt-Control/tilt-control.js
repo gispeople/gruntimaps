@@ -51,7 +51,7 @@ TiltControl.prototype.onRemove = function onRemove() {
 }
 
 TiltControl.prototype._setupUI = function() {
-    var button = this._tiltButton = domCreate('button', "vmap-tilt-icon", this._container);
+    var button = this._tiltButton = domCreate('button', "tilt-icon", this._container);
     if (this._tilt === true) {
         button.textContent = "3D";
     } else {
