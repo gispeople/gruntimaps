@@ -28,6 +28,7 @@ using static System.IO.File;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Web;
 using GruntiMaps.Interfaces;
 using GruntiMaps.Models;
@@ -44,9 +45,9 @@ namespace GruntiMaps.Controllers
     [Route("api")]
     public class RestApiController : Controller
     {
-        private readonly IMapData _mapData;
-        private readonly Options _options;
-        private readonly IHostingEnvironment _hostingEnv;
+        readonly IMapData _mapData;
+        readonly Options _options;
+        readonly IHostingEnvironment _hostingEnv;
 
         public RestApiController(IMapData mapData, Options options, IHostingEnvironment hostingEnv)
         {
@@ -238,30 +239,31 @@ namespace GruntiMaps.Controllers
             return Json(new { });
         }
 
-        // Upload new GeoJSON for a service.
-        [HttpPost("layers/geojson/{service}")]
-        public ActionResult UploadGeoJson(string service, string dataLocation, string description)
+        [HttpPost("layers/create")]
+        public async Task<ActionResult> CreateNewLayer([FromBody] CreateMapLayerDto dto)
         {
-            List<RestErrorDetails> errors = new List<RestErrorDetails>();
-            if (IsNullOrWhiteSpace(service))
-                errors.Add(new RestErrorDetails { field = "service", issue = "Service name must be supplied" });
-            if (IsNullOrWhiteSpace(dataLocation))
-                errors.Add(new RestErrorDetails { field = "dataLocation", issue = "Data location must be supplied" });
-            if (IsNullOrWhiteSpace(description))
-                errors.Add(new RestErrorDetails { field = "description", issue = "Description must be supplied" });
-            if (errors.Count > 0)
-                return new RestError(400, errors.ToArray()).AsJsonResult();
-
             ConversionMessageData messageData = new ConversionMessageData
             {
-                LayerName = service,
-                DataLocation = dataLocation,
-                Description = description
+                LayerName = dto.Name,
+                DataLocation = dto.DataLocation,
+                Description = dto.Description
             };
-            var requestId = _mapData.CreateGdalConversionRequest(messageData);
+            var requestId = await _mapData.CreateGdalConversionRequest(messageData);
+            await _mapData.JobStatusTable.AddQueue(requestId, requestId);
             return Json(new
             {
                 requestId
+            });
+        }
+
+        [HttpGet("layers/create/{jobId}")]
+        public async Task<ActionResult> GetCreationJobStatus(string jobId) 
+        {
+            var jobStatus = await _mapData.JobStatusTable.GetJobStatus(jobId);
+            var status = jobStatus.HasValue ? jobStatus.ToString() : null;
+            return Json(new
+            {
+                status
             });
         }
 

@@ -31,6 +31,7 @@ namespace GruntiMaps.Interfaces
         IStorageContainer GeojsonContainer { get; }
         IQueue MbConversionQueue { get; }
         IQueue GdConversionQueue { get; }
+        ITable JobStatusTable { get; }
         Options CurrentOptions { get; }
 
         void OpenService(string mbtilefile);
