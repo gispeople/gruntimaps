@@ -75,6 +75,18 @@ namespace GruntiMaps.Models
                                 case "format":
                                     format = rdr.GetString(1);
                                     break;
+                                case "tilejson": 
+                                    tilejson = rdr.GetString(1);
+                                    break;
+                                case "template":
+                                    template = rdr.GetString(1);
+                                    break;
+                                case "scheme":
+                                    scheme = rdr.GetString(1);
+                                    break;
+                                case "data_version":
+                                    data_version = Convert.ToInt16(rdr.GetString(1));
+                                    break;
                             }
                     }
                 }
@@ -83,9 +95,10 @@ namespace GruntiMaps.Models
             {
                 throw new Exception("Problem with metadata", e);
             }
-            tilejson = "2.0.0";
-            scheme = "xyz";
-            type = "vector";
+            if (name == null) name = serviceName;
+            if (tilejson == null) tilejson = "2.0.0";
+            if (scheme == null) scheme = "xyz";
+            if (format == "pbf") type = "vector"; else type = "raster";
             tiles = new string[1];
             tiles[0] = $"#publicHost#/api/layers/tiles/{serviceName}?x={{x}}&y={{y}}&z={{z}}";
         }
@@ -119,6 +132,8 @@ namespace GruntiMaps.Models
         public double[] bounds { get; set; }
 
         public double[] center { get; set; }
+
+        public double data_version {get; set; }
 
         public string type { get; set; }
 
