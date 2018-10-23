@@ -2,14 +2,23 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build server",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/src/GruntiMaps.csproj"
+                "${workspaceFolder}/GruntiMaps.WebAPI/GruntiMaps.WebAPI.csproj"
             ],
             "problemMatcher": "$msCompile"
-        }
-    ]
+        },
+        {
+            "label": "build website",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/GruntiMaps.Website/GruntiMaps.Website.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },    ]
 }

@@ -5,14 +5,46 @@
    "version": "0.2.0",
    "configurations": [
         {
-            "name": ".NET Core Launch (web)",
+            "name": "Launch Server",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
+            "preLaunchTask": "build server",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/bin/Debug/netcoreapp2.1/GruntiMaps.dll",
+            "program": "${workspaceFolder}/GruntiMaps.WebAPI/bin/Debug/netcoreapp2.1/GruntiMaps.WebAPI.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/src",
+            "cwd": "${workspaceFolder}/GruntiMaps.WebAPI",
+            "stopAtEntry": false,
+            "internalConsoleOptions": "openOnSessionStart",
+            "launchBrowser": {
+                "enabled": true,
+                "args": "${auto-detect-url}",
+                "windows": {
+                    "command": "cmd.exe",
+                    "args": "/C start ${auto-detect-url}"
+                },
+                "osx": {
+                    "command": "open"
+                },
+                "linux": {
+                    "command": "xdg-open"
+                }
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
+            "name": "Launch Website",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build website",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/GruntiMaps.Website/bin/Debug/netcoreapp2.1/GruntiMaps.Website.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/GruntiMaps.Website",
             "stopAtEntry": false,
             "internalConsoleOptions": "openOnSessionStart",
             "launchBrowser": {
