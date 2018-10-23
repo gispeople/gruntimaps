@@ -18,11 +18,12 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
+
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     public class Options
     {

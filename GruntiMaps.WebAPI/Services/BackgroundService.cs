@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 
-namespace GruntiMaps.Services
+namespace GruntiMaps.WebAPI.Services
 {
     // Copyright (c) .NET Foundation. Licensed under the Apache License, Version 2.0. 
     /// <summary>

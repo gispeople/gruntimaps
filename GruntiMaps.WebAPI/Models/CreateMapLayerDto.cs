@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     public class CreateMapLayerDto
     {

@@ -19,7 +19,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
 // ReSharper disable InconsistentNaming - need to match intended JSON
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     internal class RestErrorDetails
     {

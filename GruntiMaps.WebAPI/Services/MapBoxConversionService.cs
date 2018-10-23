@@ -18,19 +18,18 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-using GruntiMaps.Interfaces;
-using GruntiMaps.Models;
-using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage.Blob;
-using Newtonsoft.Json;
+
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using IMapData = GruntiMaps.Interfaces.IMapData;
+using GruntiMaps.WebAPI.Models;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using IMapData = GruntiMaps.WebAPI.Interfaces.IMapData;
 
-namespace GruntiMaps.Services
+namespace GruntiMaps.WebAPI.Services
 {
     /// <summary>
     ///     MapBoxConversionService monitors azure queue and performs data conversions via MapBox Tippecanoe
@@ -67,101 +66,109 @@ namespace GruntiMaps.Services
             var mbMsg = await _mapdata.MbConversionQueue.GetMessage();
             if (mbMsg != null) // if no message, don't try
             {
-                ConversionMessageData mbData;
                 try
                 {
-                    mbData = JsonConvert.DeserializeObject<ConversionMessageData>(mbMsg.Content);
-                }
-                catch (JsonReaderException e)
-                {
-                    _logger.LogError($"failed to decode JSON message on queue {e}");
-                    return;
-                }
-                if (mbData.DataLocation != null && mbData.LayerName != null && mbData.Description != null)
-                // if the mbData had missing values, don't process it, just delete it from queue.
-                {
-                    // convert the geoJSON to a mapbox dataset
-                    var start = DateTime.UtcNow;
-                    var randomFolderName = Path.GetRandomFileName();
-                    _logger.LogDebug($"folder name = {randomFolderName}");
-                    // it will be in the system's temporary directory
-                    var tempPath = Path.Combine(Path.GetTempPath(), randomFolderName);
-                    _logger.LogDebug($"temporary path = {tempPath}");
-
-                    // If the directory already existed, throw an error - this should never happen, but just in case.
-                    if (Directory.Exists(tempPath))
+                    ConversionMessageData mbData;
+                    try
                     {
-                        _logger.LogError($"The temporary path '{tempPath}' already existed.");
-                        throw new Exception("The temporary path already existed.");
+                        mbData = JsonConvert.DeserializeObject<ConversionMessageData>(mbMsg.Content);
                     }
-
-                    // Try to create the directory.
-                    Directory.CreateDirectory(tempPath);
-                    _logger.LogDebug($"The directory was created successfully at {Directory.GetCreationTime(tempPath)}.");
-
-                    // retrieve the geoJSON file from the supplied URI 
-                    var geoJsonFilename = $"{mbData.LayerName}.geojson";
-                    var inputFile = Path.Combine(tempPath, geoJsonFilename);
-                    _logger.LogDebug($"Downloading {mbData.DataLocation} to {inputFile}");
-                    WebClient myWebClient = new WebClient();
-                    myWebClient.DownloadFile(mbData.DataLocation, inputFile);
-                    var mbtilesFilename = $"{mbData.LayerName}.mbtiles";
-                    var mbtileFile = Path.Combine(tempPath, mbtilesFilename);
-                    var tippecanoe = new Process
+                    catch (JsonReaderException e)
                     {
-                        // TODO: need to consider whether *all* of these arguments are good for us *all* of the time.
-                        // e.g. detect shared borders isn't what we want for building footprints. 
-                        // we also don't want to drop point data at all, in general.
-                        // max zoom should be -zg sometimes as well?
-
-                        StartInfo =
-                {
-                    FileName = "tippecanoe",
-                    Arguments =
-                        $"-o {mbtileFile} " + //$"--output={outputFile} " + 
-                        $"-n \"{mbData.LayerName}\" " + // $"--name=\"{name}\" "+
-                        $"-N \"{mbData.Description}\" " + // $"--description=\"{description}\" "+
-                        $"-l \"{mbData.LayerName}\" " + // $"--layer=\"{name}\" " + 
-//                        "-z18 " + // $"--maximum-zoom=18 " + 
-                        "-zg " + // $"--maximum-zoom=g " + // let's go back to guessing. It's insanely slow for z18 with big datasets.
-                        "-Bg " + // $"--base-zoom=g " +
-                        "-rg " + // $"--drop-rate=g " + 
-                        "-ae " + // $"--extend-zooms-if-still-dropping " + 
-                        "-as " + // $"--drop-densest-as-needed " +
-                        "-pS " + // $"--simplify-only-low-zooms "+
-                        "-ab " + // $"--detect-shared-borders "+
-                        "-aw " + // $"--detect-longitude-wraparound "
-                        $"{inputFile}",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-                    };
-                    _logger.LogDebug($"Tippecanoe arguments are {tippecanoe.StartInfo.Arguments}");
-                    tippecanoe.Start();
-                    var errmsg = "";
-                    while (!tippecanoe.StandardError.EndOfStream) errmsg += tippecanoe.StandardError.ReadLine();
-                    tippecanoe.WaitForExit();
-                    var exitCode = tippecanoe.ExitCode;
-                    _logger.LogDebug($"Tippecanoe returned exit code {exitCode}");
-                    if (exitCode != 0)
-                    {
-                        _logger.LogError($"GeoJSON to mbtiles conversion failed (errcode={exitCode}), msgs = {errmsg}");
-                        throw new Exception($"GeoJSON to mbtiles conversion failed. {errmsg}");
+                        _logger.LogError($"failed to decode JSON message on queue {e}");
+                        return;
                     }
+                    if (mbData.DataLocation != null && mbData.LayerName != null && mbData.Description != null)
+                    // if the mbData had missing values, don't process it, just delete it from queue.
+                    {
+                        // convert the geoJSON to a mapbox dataset
+                        var start = DateTime.UtcNow;
+                        var randomFolderName = Path.GetRandomFileName();
+                        _logger.LogDebug($"folder name = {randomFolderName}");
+                        // it will be in the system's temporary directory
+                        var tempPath = Path.Combine(Path.GetTempPath(), randomFolderName);
+                        _logger.LogDebug($"temporary path = {tempPath}");
 
-                    _logger.LogDebug($"mbtile file is in {mbtileFile}");
-                    // now we need to put the converted mbtile file into storage
-                    await _mapdata.TileContainer.Store($"{mbData.LayerName}.mbtiles", mbtileFile);
-                    _logger.LogDebug("Upload of mbtile file to storage complete.");
-                    var end = DateTime.UtcNow;
-                    var duration = end - start;
-                    _logger.LogDebug($"MapBoxConversion took {duration.TotalMilliseconds} ms.");
+                        // If the directory already existed, throw an error - this should never happen, but just in case.
+                        if (Directory.Exists(tempPath))
+                        {
+                            _logger.LogError($"The temporary path '{tempPath}' already existed.");
+                            throw new Exception("The temporary path already existed.");
+                        }
+
+                        // Try to create the directory.
+                        Directory.CreateDirectory(tempPath);
+                        _logger.LogDebug($"The directory was created successfully at {Directory.GetCreationTime(tempPath)}.");
+
+                        // retrieve the geoJSON file from the supplied URI 
+                        var geoJsonFilename = $"{mbData.LayerName}.geojson";
+                        var inputFile = Path.Combine(tempPath, geoJsonFilename);
+                        _logger.LogDebug($"Downloading {mbData.DataLocation} to {inputFile}");
+                        WebClient myWebClient = new WebClient();
+                        myWebClient.DownloadFile(mbData.DataLocation, inputFile);
+                        var mbtilesFilename = $"{mbData.LayerName}.mbtiles";
+                        var mbtileFile = Path.Combine(tempPath, mbtilesFilename);
+                        var tippecanoe = new Process
+                        {
+                            // TODO: need to consider whether *all* of these arguments are good for us *all* of the time.
+                            // e.g. detect shared borders isn't what we want for building footprints. 
+                            // we also don't want to drop point data at all, in general.
+                            // max zoom should be -zg sometimes as well?
+
+                            StartInfo =
+                            {
+                                FileName = "tippecanoe",
+                                Arguments =
+                                    $"-o {mbtileFile} " + //$"--output={outputFile} " + 
+                                    $"-n \"{mbData.LayerName}\" " + // $"--name=\"{name}\" "+
+                                    $"-N \"{mbData.Description}\" " + // $"--description=\"{description}\" "+
+                                    $"-l \"{mbData.LayerName}\" " + // $"--layer=\"{name}\" " + 
+                                    // "-z18 " + // $"--maximum-zoom=18 " + 
+                                    "-zg " + // $"--maximum-zoom=g " + // let's go back to guessing. It's insanely slow for z18 with big datasets.
+                                    "-Bg " + // $"--base-zoom=g " +
+                                    "-rg " + // $"--drop-rate=g " + 
+                                    "-ae " + // $"--extend-zooms-if-still-dropping " + 
+                                    "-as " + // $"--drop-densest-as-needed " +
+                                    "-pS " + // $"--simplify-only-low-zooms "+
+                                    "-ab " + // $"--detect-shared-borders "+
+                                    "-aw " + // $"--detect-longitude-wraparound "
+                                    $"{inputFile}",
+                                UseShellExecute = false,
+                                RedirectStandardOutput = true,
+                                RedirectStandardError = true,
+                                CreateNoWindow = true
+                            }
+                        };
+                        _logger.LogDebug($"Tippecanoe arguments are {tippecanoe.StartInfo.Arguments}");
+                        tippecanoe.Start();
+                        var errmsg = "";
+                        while (!tippecanoe.StandardError.EndOfStream) errmsg += tippecanoe.StandardError.ReadLine();
+                        tippecanoe.WaitForExit();
+                        var exitCode = tippecanoe.ExitCode;
+                        _logger.LogDebug($"Tippecanoe returned exit code {exitCode}");
+                        if (exitCode != 0)
+                        {
+                            _logger.LogError($"GeoJSON to mbtiles conversion failed (errcode={exitCode}), msgs = {errmsg}");
+                            throw new Exception($"GeoJSON to mbtiles conversion failed. {errmsg}");
+                        }
+
+                        _logger.LogDebug($"mbtile file is in {mbtileFile}");
+                        // now we need to put the converted mbtile file into storage
+                        await _mapdata.TileContainer.Store($"{mbData.LayerName}.mbtiles", mbtileFile);
+                        _logger.LogDebug("Upload of mbtile file to storage complete.");
+                        var end = DateTime.UtcNow;
+                        var duration = end - start;
+                        _logger.LogDebug($"MapBoxConversion took {duration.TotalMilliseconds} ms.");
+                    }
+                    await _mapdata.MbConversionQueue.DeleteMessage(mbMsg);
+                    _logger.LogDebug("Deleted MapBoxConversion message");
+                    await _mapdata.JobStatusTable.UpdateStatus(mbMsg.Id, JobStatus.Finished);
                 }
-                await _mapdata.MbConversionQueue.DeleteMessage(mbMsg);
-                _logger.LogDebug("Deleted MapBoxConversion message");
-                await _mapdata.JobStatusTable.UpdateQueueStatus(mbMsg.Id, JobStatus.Finished);
+                catch (Exception)
+                {
+                    await _mapdata.JobStatusTable.UpdateStatus(mbMsg.Id, JobStatus.Failed);
+                    throw;
+                }
             }
             await Task.Delay(_options.CheckConvertTime);
 

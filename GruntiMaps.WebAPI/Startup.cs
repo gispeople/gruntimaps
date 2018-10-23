@@ -19,9 +19,9 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-using GruntiMaps.Interfaces;
-using GruntiMaps.Models;
-using GruntiMaps.Services;
+using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.WebAPI.Models;
+using GruntiMaps.WebAPI.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -30,7 +30,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace GruntiMaps
+namespace GruntiMaps.WebAPI
 {
     public class Startup
     {

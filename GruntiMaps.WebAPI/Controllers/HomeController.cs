@@ -19,10 +19,10 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
 
+using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using GruntiMaps.Interfaces;
 
-namespace GruntiMaps.Controllers
+namespace GruntiMaps.WebAPI.Controllers
 {
     public class HomeController : Controller
     {

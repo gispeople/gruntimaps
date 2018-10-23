@@ -18,18 +18,18 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-using GruntiMaps.Interfaces;
-using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
-using static System.IO.Directory;
+using GruntiMaps.WebAPI.Interfaces;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     /// <summary>
     ///     MapData provides methods and properties related to the map store's location and contents.
@@ -45,7 +45,7 @@ namespace GruntiMaps.Models
         public IStorageContainer FontContainer { get; }
         public IQueue MbConversionQueue { get; }
         public IQueue GdConversionQueue { get; }
-        public ITable JobStatusTable { get; }
+        public IStatusTable JobStatusTable { get; }
         public Options CurrentOptions { get; }
 
         public Dictionary<string, ILayer> LayerDict { get; set; } = new Dictionary<string, ILayer>();
@@ -64,7 +64,7 @@ namespace GruntiMaps.Models
                     FontContainer = new AzureStorage(CurrentOptions, CurrentOptions.FontContainer);
                     MbConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.MbConvQueue);
                     GdConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.GdConvQueue);
-                    JobStatusTable = new AzureTable(CurrentOptions, CurrentOptions.JobStatusTable);
+                    JobStatusTable = new AzureStatusTable(CurrentOptions, CurrentOptions.JobStatusTable);
                     break;
                 case StorageProviders.Local:
                     PackContainer = new LocalStorage(CurrentOptions, CurrentOptions.StorageContainer);
@@ -73,7 +73,7 @@ namespace GruntiMaps.Models
                     FontContainer = new LocalStorage(CurrentOptions, CurrentOptions.FontContainer);
                     MbConversionQueue = new LocalQueue(CurrentOptions, CurrentOptions.MbConvQueue);
                     GdConversionQueue = new LocalQueue(CurrentOptions, CurrentOptions.GdConvQueue);
-                    JobStatusTable = new LocalTable(CurrentOptions, CurrentOptions.JobStatusTable);
+                    JobStatusTable = new LocalStatusTable(CurrentOptions, CurrentOptions.JobStatusTable);
                     break;
                 default:
                     _logger.LogCritical("No valid storage provider set.");
@@ -231,7 +231,7 @@ namespace GruntiMaps.Models
                             else
                             {
                                 var dir = Path.Combine(CurrentOptions.FontPath, entry.FullName);
-                                CreateDirectory(dir);
+                                Directory.CreateDirectory(dir);
                             }
                     }
 
@@ -242,11 +242,11 @@ namespace GruntiMaps.Models
 
         private void CheckDirectories()
         {
-            if (!Exists(CurrentOptions.RootDir)) CreateDirectory(CurrentOptions.RootDir);
-            if (!Exists(CurrentOptions.TilePath)) CreateDirectory(CurrentOptions.TilePath);
-            if (!Exists(CurrentOptions.PackPath)) CreateDirectory(CurrentOptions.PackPath);
-            if (!Exists(CurrentOptions.StylePath)) CreateDirectory(CurrentOptions.StylePath);
-            if (!Exists(CurrentOptions.FontPath)) CreateDirectory(CurrentOptions.FontPath);
+            if (!Directory.Exists(CurrentOptions.RootDir)) Directory.CreateDirectory(CurrentOptions.RootDir);
+            if (!Directory.Exists(CurrentOptions.TilePath)) Directory.CreateDirectory(CurrentOptions.TilePath);
+            if (!Directory.Exists(CurrentOptions.PackPath)) Directory.CreateDirectory(CurrentOptions.PackPath);
+            if (!Directory.Exists(CurrentOptions.StylePath)) Directory.CreateDirectory(CurrentOptions.StylePath);
+            if (!Directory.Exists(CurrentOptions.FontPath)) Directory.CreateDirectory(CurrentOptions.FontPath);
         }
 
         /// <summary>
@@ -256,7 +256,7 @@ namespace GruntiMaps.Models
         private void OpenTiles()
         {
             LayerDict = new Dictionary<string, ILayer>();
-            var mbtiles = GetFiles(CurrentOptions.TilePath, "*.mbtiles");
+            var mbtiles = Directory.GetFiles(CurrentOptions.TilePath, "*.mbtiles");
 
             foreach (var file in mbtiles)
             {

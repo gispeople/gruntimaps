@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
-using GruntiMaps.Interfaces;
+using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.Data.Sqlite;
 
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     public class LocalQueue: IQueue
     {
