@@ -18,36 +18,29 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-using GruntiMaps.Interfaces;
-using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Threading.Tasks;
-using static System.IO.Directory;
 
-namespace GruntiMaps.Models
+using System;
+using System.IO;
+using Microsoft.Data.Sqlite;
+
+namespace GruntiMaps.WebAPI.Models
 {
     public class MapSource
     {
-        private TileConfig _tileJson;
-        private SqliteConnection _conn;
-        private Options _options;
-        private string Path;
-        private string _sourceId;
-        public SqliteConnection Conn {get => _conn; }
-        public TileConfig TileJSON {get => _tileJson; }
+        private readonly Options _options;
+        private string _path;
+        private readonly string _sourceId;
+        public SqliteConnection Conn { get; }
+        public TileConfig TileJson { get; }
+
         public MapSource(Options options, string sourceId) {
             _options = options;
             _sourceId = sourceId;
             // open db connection
-            _conn = GetConnection();
+            Conn = GetConnection();
             // get metadata and populate tileJson
             
-            _tileJson = GetTileConfig();
+            TileJson = GetTileConfig();
         }
 
         private TileConfig GetTileConfig()
@@ -55,7 +48,7 @@ namespace GruntiMaps.Models
             TileConfig result = new TileConfig();
             try
             {
-                using (var metaCmd = _conn.CreateCommand())
+                using (var metaCmd = Conn.CreateCommand())
                 {
                     metaCmd.CommandText = "select name, value from metadata";
                     using (var rdr = metaCmd.ExecuteReader())
@@ -124,14 +117,14 @@ namespace GruntiMaps.Models
             {
                 // we need a sourceId
                 if (_sourceId == null) return null;
-                Path = System.IO.Path.Combine(_options.TileDir, $"{_sourceId}.mbtiles");
+                _path = Path.Combine(_options.TileDir, $"{_sourceId}.mbtiles");
                 // we need to have a mbtiles file
-                if (!File.Exists(Path)) return null;
+                if (!File.Exists(_path)) return null;
                 var builder = new SqliteConnectionStringBuilder
                 {
                     Mode = SqliteOpenMode.ReadOnly,
                     Cache = SqliteCacheMode.Shared,
-                    DataSource = Path
+                    DataSource = _path
                 };
                 connStr = builder.ConnectionString;
                 var dbConnection = new SqliteConnection(connStr);

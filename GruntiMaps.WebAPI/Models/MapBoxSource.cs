@@ -103,6 +103,7 @@ namespace GruntiMaps.WebAPI.Models
             tiles = new string[1];
             tiles[0] = $"#publicHost#/api/layers/tiles/{serviceName}?x={{x}}&y={{y}}&z={{z}}";
         }
+#pragma warning disable IDE1006 // Naming Styles
 
         public string tilejson { get; set; }
 
@@ -136,5 +137,6 @@ namespace GruntiMaps.WebAPI.Models
         public double data_version {get; set; }
         public string type { get; set; }
         public string format { get; set; }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

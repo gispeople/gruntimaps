@@ -18,19 +18,14 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-using GruntiMaps.Interfaces;
-using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System;
+
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Threading.Tasks;
-using static System.IO.Directory;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     public class MapSources
     {
@@ -41,7 +36,7 @@ namespace GruntiMaps.Models
         }
 
         public TileConfig SourceJson(string sourceId) {
-            return _sources[sourceId].TileJSON;
+            return _sources[sourceId].TileJson;
         }
         public SqliteConnection Conn(string sourceId) {
             return _sources[sourceId].Conn;
@@ -51,7 +46,7 @@ namespace GruntiMaps.Models
         }
 
         private readonly Options _options;
-        ILogger<MapSources> _logger;
+        readonly ILogger<MapSources> _logger;
         public MapSources(ILogger<MapSources> logger, Options options) {
             _options = options;
             _logger = logger;

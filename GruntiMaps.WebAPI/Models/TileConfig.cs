@@ -19,11 +19,12 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
 // ReSharper disable InconsistentNaming (these are used to generate/parse mapbox json styles etc)
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     // The structure of a TileJSON entry.
     public class TileConfig
     {
+#pragma warning disable IDE1006 // Naming Styles
         public string tilejson { get; set; }
         public string name { get; set; }
         public string description { get; set; }
@@ -41,5 +42,6 @@ namespace GruntiMaps.Models
         public double[] center { get; set; }
         public string type { get; set; }
         public string format { get; set; }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

@@ -165,8 +165,8 @@ namespace GruntiMaps.WebAPI.Controllers
             {
                 var bytes = GetTile(service, x, y, z);
                 switch (_mapData.LayerDict[service].Source.format) {
-                    case "png": return File(bytes, "image/png"); break;
-                    case "jpg": return File(bytes, "image/jpg"); break;
+                    case "png": return File(bytes, "image/png"); 
+                    case "jpg": return File(bytes, "image/jpg"); 
                     case "pbf": return File(Decompress(bytes), "application/vnd.mapbox-vector-tile");
                 }
             }
