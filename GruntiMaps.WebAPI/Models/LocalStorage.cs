@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using GruntiMaps.Interfaces;
+using GruntiMaps.WebAPI.Interfaces;
 
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     public class LocalStorage: IStorageContainer
     {

@@ -24,7 +24,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 
-namespace GruntiMaps
+namespace GruntiMaps.WebAPI
 {
     public class Program
     {

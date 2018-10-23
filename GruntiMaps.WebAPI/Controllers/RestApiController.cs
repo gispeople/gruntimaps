@@ -24,22 +24,20 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
-using static System.IO.File;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
-using GruntiMaps.Interfaces;
-using GruntiMaps.Models;
+using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.WebAPI.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
-using static System.String;
 
-namespace GruntiMaps.Controllers
+namespace GruntiMaps.WebAPI.Controllers
 {
     [Produces("application/json")]
     [Route("api")]
@@ -137,7 +135,7 @@ namespace GruntiMaps.Controllers
         [HttpGet("layers/mappack/{service}")]
         public ActionResult MapPack(string service)
         {
-            if (IsNullOrEmpty(service))
+            if (String.IsNullOrEmpty(service))
             {
                 return new RestError(400, new[] {
                     new RestErrorDetails { field = "service", issue = "Service name must be supplied" }
@@ -147,11 +145,11 @@ namespace GruntiMaps.Controllers
             var zipFileName = service;
             if (!zipFileName.EndsWith(".zip", true, CultureInfo.CurrentCulture)) zipFileName += ".zip";
             var path = Path.Combine(_options.PackPath, $@"{zipFileName}");
-            if (!Exists(path))
+            if (!System.IO.File.Exists(path))
                 return new RestError(404, new[] {
                     new RestErrorDetails { field = "service", issue = "Service does not exist" }
                 }).AsJsonResult();
-            var result = new FileContentResult(ReadAllBytes(path), "application/zip")
+            var result = new FileContentResult(System.IO.File.ReadAllBytes(path), "application/zip")
             {
                 // assign a file name to the download
                 FileDownloadName = $"{zipFileName}"
@@ -249,7 +247,7 @@ namespace GruntiMaps.Controllers
                 Description = dto.Description
             };
             var requestId = await _mapData.CreateGdalConversionRequest(messageData);
-            await _mapData.JobStatusTable.AddQueue(requestId, requestId);
+            await _mapData.JobStatusTable.AddStatus(requestId, requestId);
             return Json(new
             {
                 requestId
@@ -259,7 +257,7 @@ namespace GruntiMaps.Controllers
         [HttpGet("layers/create/{jobId}")]
         public async Task<ActionResult> GetCreationJobStatus(string jobId) 
         {
-            var jobStatus = await _mapData.JobStatusTable.GetJobStatus(jobId);
+            var jobStatus = await _mapData.JobStatusTable.GetStatus(jobId);
             var status = jobStatus.HasValue ? jobStatus.ToString() : null;
             return Json(new
             {
@@ -365,8 +363,8 @@ namespace GruntiMaps.Controllers
                 if (details.Count > 0) continue;
 
                 var path = Path.Combine(_options.FontPath, $@"{fontChoice}", $"{range}.pbf");
-                if (Exists(path))
-                    return new FileContentResult(ReadAllBytes(path), "application/x-protobuf");
+                if (System.IO.File.Exists(path))
+                    return new FileContentResult(System.IO.File.ReadAllBytes(path), "application/x-protobuf");
             }
             if (details.Count > 0) return new RestError(400, details.ToArray()).AsJsonResult();
             return new RestError(404, new[]
@@ -536,10 +534,10 @@ namespace GruntiMaps.Controllers
         private string GetBaseHost()
         {
             // if X-Forwarded-Proto or X-Forwarded-Host headers are set, use them to build the self-referencing URLs
-            var proto = IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Proto"])
+            var proto = String.IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Proto"])
                 ? Request.Scheme
                 :(string) Request.Headers["X-Forwarded-Proto"];
-            var host = IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Host"])
+            var host = String.IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Host"])
                 ? Request.Host.ToUriComponent()
                 : (string) Request.Headers["X-Forwarded-Host"];
             return $"{proto}://{host}";

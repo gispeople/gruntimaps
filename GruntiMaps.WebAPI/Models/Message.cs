@@ -1,4 +1,4 @@
-﻿namespace GruntiMaps.Models
+﻿namespace GruntiMaps.WebAPI.Models
 {
     public class Message
     {

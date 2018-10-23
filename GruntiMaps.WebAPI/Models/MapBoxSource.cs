@@ -18,11 +18,12 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
+
 using System;
-using GruntiMaps.Interfaces;
+using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.Data.Sqlite;
 
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     public class MapBoxSource : IMapBoxSource
     {
