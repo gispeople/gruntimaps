@@ -25,6 +25,7 @@ using GruntiMaps.WebAPI.Models;
 
 namespace GruntiMaps.WebAPI.Services
 {
+    /// <inheritdoc />
     /// <summary>
     ///     Service to poll for changes to available map layers and update the available list.
     /// </summary>

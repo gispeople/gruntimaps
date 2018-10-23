@@ -38,9 +38,9 @@ namespace GruntiMaps.WebAPI.Models
     {
         private readonly ILogger<MapData> _logger;
         // we need to be able to see the watcher so we can disable it while downloading layers
-        private FileSystemWatcher watcher = new FileSystemWatcher();
+        private readonly FileSystemWatcher _watcher = new FileSystemWatcher();
         public IStorageContainer PackContainer;
-        public IStorageContainer TileContainer;
+        public IStorageContainer TileContainer { get; }
         public IStorageContainer GeojsonContainer { get; }
         public IStorageContainer FontContainer { get; }
         public IQueue MbConversionQueue { get; }
@@ -101,7 +101,7 @@ namespace GruntiMaps.WebAPI.Models
             // we don't want to do this more than once at the same time so we will need to track that.
 
             // stop watching for filesystem changes while we download 
-            watcher.EnableRaisingEvents = false;
+            _watcher.EnableRaisingEvents = false;
 
             // check for map packs first.
             _logger.LogDebug("Starting Refreshing layers");
@@ -110,36 +110,30 @@ namespace GruntiMaps.WebAPI.Models
             foreach (var pack in packs)
             {
                 var thispackfile = Path.Combine(CurrentOptions.PackPath, pack);
-                if (await PackContainer.GetIfNewer(pack, thispackfile))
+                if (!await PackContainer.GetIfNewer(pack, thispackfile)) continue;
+                // extract pack to appropriate places
+                using (var zip = ZipFile.OpenRead(thispackfile))
                 {
-                    // extract pack to appropriate places
-                    using (var zip = ZipFile.OpenRead(thispackfile))
+                    foreach (var entry in zip.Entries)
                     {
-                        foreach (var entry in zip.Entries)
+                        var fn = Path.GetFileName(entry.FullName);
+                        var ext = Path.GetExtension(fn);
+                        if (ext.Equals(".json"))
                         {
-                            var fn = Path.GetFileName(entry.FullName);
-                            var ext = Path.GetExtension(fn);
-                            if (ext.Equals(".json"))
+                            var style = Path.Combine(CurrentOptions.StylePath, fn);
+                            if (NeedToExtract(style, entry.Length))
                             {
-                                var style = Path.Combine(CurrentOptions.StylePath, fn);
-                                if (NeedToExtract(style, entry.Length))
-                                {
-                                    _logger.LogDebug($"Extracting {style}.");
-                                    entry.ExtractToFile(style, true);
-                                }
-                            }
-
-                            if (ext.Equals(".mbtiles"))
-                            {
-                                var tile = Path.Combine(CurrentOptions.TilePath, fn);
-                                if (NeedToExtract(tile, entry.Length))
-                                {
-                                    _logger.LogDebug($"Extracting {tile}.");
-                                    entry.ExtractToFile(tile, true);
-                                    OpenService(tile);
-                                }
+                                _logger.LogDebug($"Extracting {style}.");
+                                entry.ExtractToFile(style, true);
                             }
                         }
+
+                        if (!ext.Equals(".mbtiles")) continue;
+                        var tile = Path.Combine(CurrentOptions.TilePath, fn);
+                        if (!NeedToExtract(tile, entry.Length)) continue;
+                        _logger.LogDebug($"Extracting {tile}.");
+                        entry.ExtractToFile(tile, true);
+                        OpenService(tile);
                     }
                 }
             }
@@ -158,7 +152,7 @@ namespace GruntiMaps.WebAPI.Models
             }
 
             // reenable watching for filesystem changes 
-            watcher.EnableRaisingEvents = true;
+            _watcher.EnableRaisingEvents = true;
 
             _logger.LogDebug("Ending Refreshing layers");
 
@@ -179,21 +173,19 @@ namespace GruntiMaps.WebAPI.Models
         public void OpenService(string mbtilefile)
         {
             // don't try to open the file if it's locked, or if it doesn't pass basic mbtile file requirements
-            if (!IsFileLocked(mbtilefile) && IsValidMbTile(mbtilefile))
+            if (IsFileLocked(mbtilefile) || !IsValidMbTile(mbtilefile)) return;
+            var name = Path.GetFileNameWithoutExtension(mbtilefile);
+            if (name == null || LayerDict.ContainsKey(name)) return;
+
+            try
             {
-                var name = Path.GetFileNameWithoutExtension(mbtilefile);
-                if (name == null || LayerDict.ContainsKey(name)) return;
+                var layer = new Layer(CurrentOptions, name);
+                LayerDict.Add(layer.Name, layer);
 
-                try
-                {
-                    var layer = new Layer(CurrentOptions, name);
-                    LayerDict.Add(layer.Name, layer);
-
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("Could not create layer", e);
-                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Could not create layer", e);
             }
         }
 
@@ -202,11 +194,9 @@ namespace GruntiMaps.WebAPI.Models
         {
             var result = true;
             // don't retrieve pack if we already have it (TODO: check should probably be more than just size)
-            if (File.Exists(filepath))
-            {
-                var fi = new FileInfo(filepath);
-                if (fi.Length == expectedLength) result = false;
-            }
+            if (!File.Exists(filepath)) return true;
+            var fi = new FileInfo(filepath);
+            if (fi.Length == expectedLength) result = false;
 
             return result;
         }
@@ -218,23 +208,20 @@ namespace GruntiMaps.WebAPI.Models
             foreach (var fontPack in fontPacks)
             {
                 var thisFontPack = Path.Combine(CurrentOptions.FontPath, fontPack);
-                if (await FontContainer.GetIfNewer(fontPack, thisFontPack))
+                if (!await FontContainer.GetIfNewer(fontPack, thisFontPack)) continue;
+                using (var zip = ZipFile.OpenRead(thisFontPack))
                 {
-                    using (var zip = ZipFile.OpenRead(thisFontPack))
-                    {
-                        foreach (var entry in zip.Entries)
-                            if (entry.Length != 0)
-                            {
-                                var fontFile = Path.Combine(CurrentOptions.FontPath, entry.FullName);
-                                if (NeedToExtract(fontFile, entry.Length)) entry.ExtractToFile(fontFile, true);
-                            }
-                            else
-                            {
-                                var dir = Path.Combine(CurrentOptions.FontPath, entry.FullName);
-                                Directory.CreateDirectory(dir);
-                            }
-                    }
-
+                    foreach (var entry in zip.Entries)
+                        if (entry.Length != 0)
+                        {
+                            var fontFile = Path.Combine(CurrentOptions.FontPath, entry.FullName);
+                            if (NeedToExtract(fontFile, entry.Length)) entry.ExtractToFile(fontFile, true);
+                        }
+                        else
+                        {
+                            var dir = Path.Combine(CurrentOptions.FontPath, entry.FullName);
+                            Directory.CreateDirectory(dir);
+                        }
                 }
             }
 
@@ -264,17 +251,17 @@ namespace GruntiMaps.WebAPI.Models
             }
 
             //var watcher = new FileSystemWatcher();
-            watcher.Path = CurrentOptions.TilePath;
-            watcher.Filter = "*.mbtiles";
-            watcher.NotifyFilter = NotifyFilters.Size | NotifyFilters.FileName | NotifyFilters.CreationTime |
+            _watcher.Path = CurrentOptions.TilePath;
+            _watcher.Filter = "*.mbtiles";
+            _watcher.NotifyFilter = NotifyFilters.Size | NotifyFilters.FileName | NotifyFilters.CreationTime |
                                NotifyFilters.DirectoryName | NotifyFilters.LastWrite;
-            watcher.Created += Watcher_Created;
-            watcher.EnableRaisingEvents = true;
+            _watcher.Created += Watcher_Created;
+            _watcher.EnableRaisingEvents = true;
 
         }
 
         // function to check if a file is openable. We use this below.
-        private bool IsFileLocked(string filepath)
+        private static bool IsFileLocked(string filepath)
         {
             FileStream stream = null;
             try

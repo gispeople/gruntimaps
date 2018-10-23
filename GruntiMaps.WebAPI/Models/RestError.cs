@@ -33,7 +33,7 @@ namespace GruntiMaps.WebAPI.Models
             public string name;
             public string message;
         }
-        private readonly Dictionary<int, HttpErr> _errs = new Dictionary<int, HttpErr>()
+        private readonly Dictionary<int, HttpErr> _errs = new Dictionary<int, HttpErr>
         {
             {
                 404,

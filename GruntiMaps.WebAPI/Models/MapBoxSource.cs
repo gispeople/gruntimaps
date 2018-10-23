@@ -99,11 +99,12 @@ namespace GruntiMaps.WebAPI.Models
             if (name == null) name = serviceName;
             if (tilejson == null) tilejson = "2.0.0";
             if (scheme == null) scheme = "xyz";
-            if (format == "pbf") type = "vector"; else type = "raster";
+            type = format == "pbf" ? "vector" : "raster";
             tiles = new string[1];
             tiles[0] = $"#publicHost#/api/layers/tiles/{serviceName}?x={{x}}&y={{y}}&z={{z}}";
         }
 
+#pragma warning disable IDE1006 // Naming Styles
         public string tilejson { get; set; }
 
         public string name { get; set; }
@@ -133,8 +134,10 @@ namespace GruntiMaps.WebAPI.Models
         public double[] bounds { get; set; }
 
         public double[] center { get; set; }
+        // ReSharper disable once InconsistentNaming
         public double data_version {get; set; }
         public string type { get; set; }
         public string format { get; set; }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

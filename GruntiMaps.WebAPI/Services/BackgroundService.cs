@@ -5,8 +5,9 @@ using Microsoft.Extensions.Hosting;
 namespace GruntiMaps.WebAPI.Services
 {
     // Copyright (c) .NET Foundation. Licensed under the Apache License, Version 2.0. 
+    /// <inheritdoc />
     /// <summary>
-    ///     Base class for implementing a long running <see cref="IHostedService" />.
+    ///     Base class for implementing a long running <see cref="T:Microsoft.Extensions.Hosting.IHostedService" />.
     /// </summary>
     public abstract class BackgroundService : IHostedService
     {
@@ -28,10 +29,8 @@ namespace GruntiMaps.WebAPI.Services
 
             // If the task is completed then return it, 
             // this will bubble cancellation and failure to the caller
-            if (_executingTask.IsCompleted) return _executingTask;
-
             // Otherwise it's running
-            return Task.CompletedTask;
+            return _executingTask.IsCompleted ? _executingTask : Task.CompletedTask;
         }
 
         public virtual async Task StopAsync(CancellationToken cancellationToken)

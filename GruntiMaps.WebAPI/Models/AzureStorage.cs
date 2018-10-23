@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.WindowsAzure.Storage;
@@ -38,29 +39,23 @@ namespace GruntiMaps.WebAPI.Models
 
         public async Task<bool> GetIfNewer(string fileName, string outputPath)
         {
-            var result = false;
             CloudBlockBlob blob = (CloudBlockBlob)AzureContainer.GetBlobReference(fileName);
-            if (!MatchesLength(fileName, blob.Properties.Length))
+            if (MatchesLength(fileName, blob.Properties.Length)) return false;
+            using (var fileStream = File.OpenWrite(outputPath))
             {
-                using (var fileStream = File.OpenWrite(outputPath))
-                {
-                    await blob.DownloadToStreamAsync(fileStream);
-                    result = true;
-                }
+                await blob.DownloadToStreamAsync(fileStream);
             }
 
-            return result;
+            return true;
         }
 
         private static bool MatchesLength(string filepath, long expectedLength)
         {
             var result = false;
             // don't retrieve pack if we already have it (TODO: check should probably be more than just size)
-            if (File.Exists(filepath))
-            {
-                var fi = new FileInfo(filepath);
-                if (fi.Length == expectedLength) result = true;
-            }
+            if (!File.Exists(filepath)) return false;
+            var fi = new FileInfo(filepath);
+            if (fi.Length == expectedLength) result = true;
 
             return result;
         }
@@ -74,11 +69,7 @@ namespace GruntiMaps.WebAPI.Models
                 var response = await AzureContainer.ListBlobsSegmentedAsync(continuationToken);
                 continuationToken = response.ContinuationToken;
 
-                foreach (var item in response.Results)
-                    if (item.GetType() == typeof(CloudBlockBlob))
-                    {
-                        result.Add(((CloudBlockBlob)item).Name);
-                    }
+                result.AddRange(from item in response.Results where item.GetType() == typeof(CloudBlockBlob) select ((CloudBlockBlob) item).Name);
             } while (continuationToken != null);
 
             return result;

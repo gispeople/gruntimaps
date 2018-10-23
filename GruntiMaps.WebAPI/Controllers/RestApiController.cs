@@ -43,9 +43,9 @@ namespace GruntiMaps.WebAPI.Controllers
     [Route("api")]
     public class RestApiController : Controller
     {
-        readonly IMapData _mapData;
-        readonly Options _options;
-        readonly IHostingEnvironment _hostingEnv;
+        private readonly IMapData _mapData;
+        private readonly Options _options;
+        private readonly IHostingEnvironment _hostingEnv;
 
         public RestApiController(IMapData mapData, Options options, IHostingEnvironment hostingEnv)
         {
@@ -135,7 +135,7 @@ namespace GruntiMaps.WebAPI.Controllers
         [HttpGet("layers/mappack/{service}")]
         public ActionResult MapPack(string service)
         {
-            if (String.IsNullOrEmpty(service))
+            if (string.IsNullOrEmpty(service))
             {
                 return new RestError(400, new[] {
                     new RestErrorDetails { field = "service", issue = "Service name must be supplied" }
@@ -161,14 +161,13 @@ namespace GruntiMaps.WebAPI.Controllers
         [HttpGet("layers/tiles/{service}")]
         public ActionResult Tile(string service, int? x, int? y, byte? z)
         {
-            if (x.HasValue && y.HasValue && z.HasValue)
-            {
-                var bytes = GetTile(service, x, y, z);
-                switch (_mapData.LayerDict[service].Source.format) {
-                    case "png": return File(bytes, "image/png"); break;
-                    case "jpg": return File(bytes, "image/jpg"); break;
-                    case "pbf": return File(Decompress(bytes), "application/vnd.mapbox-vector-tile");
-                }
+            if (!x.HasValue || !y.HasValue || !z.HasValue)
+                return new RestError(400, IdentifyMissingCoordinates(x, y, z)).AsJsonResult();
+            var bytes = GetTile(service, x, y, z);
+            switch (_mapData.LayerDict[service].Source.format) {
+                case "png": return File(bytes, "image/png"); 
+                case "jpg": return File(bytes, "image/jpg"); 
+                case "pbf": return File(Decompress(bytes), "application/vnd.mapbox-vector-tile");
             }
             return new RestError(400, IdentifyMissingCoordinates(x, y, z)).AsJsonResult();
         }
@@ -535,10 +534,10 @@ namespace GruntiMaps.WebAPI.Controllers
         private string GetBaseHost()
         {
             // if X-Forwarded-Proto or X-Forwarded-Host headers are set, use them to build the self-referencing URLs
-            var proto = String.IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Proto"])
+            var proto = string.IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Proto"])
                 ? Request.Scheme
                 :(string) Request.Headers["X-Forwarded-Proto"];
-            var host = String.IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Host"])
+            var host = string.IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Host"])
                 ? Request.Host.ToUriComponent()
                 : (string) Request.Headers["X-Forwarded-Host"];
             return $"{proto}://{host}";

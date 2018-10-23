@@ -10,13 +10,13 @@ namespace GruntiMaps.Tests
     public class LocalQueueTest: IDisposable
     {
         private readonly LocalQueue _queue;
-        private readonly ITestOutputHelper output;
+        private readonly ITestOutputHelper _output;
         public LocalQueueTest(ITestOutputHelper output)
         {
-            this.output = output;
-            var options = new Options(Path.GetTempPath());
-            options.QueueTimeLimit = 1; // set the time limit to 1 minute so we can check that expiry works
-            options.QueueEntryTries = 2; // try twice in our tests.
+            _output = output;
+            var options = new Options(Path.GetTempPath()) {QueueTimeLimit = 1, QueueEntryTries = 2};
+            // set the time limit to 1 minute so we can check that expiry works
+            // try twice in our tests.
             _queue = new LocalQueue(options, "testQueue");
         }
         
@@ -24,7 +24,7 @@ namespace GruntiMaps.Tests
         public async void AddMessage()
         {
             _queue.Clear();
-            var msgString = "a new message";
+            const string msgString = "a new message";
             var msgId = await _queue.AddMessage(msgString);
             var message = await _queue.GetMessage();
             Assert.Equal(msgId, message.Id);
@@ -35,7 +35,7 @@ namespace GruntiMaps.Tests
         public async void DeleteMessage()
         {
             _queue.Clear();
-            var msgString = "another message";
+            const string msgString = "another message";
             var msgId = await _queue.AddMessage(msgString);
             var message = await _queue.GetMessage();
             Assert.NotNull(message); // we just added a message so we should be able to get one!
@@ -51,7 +51,7 @@ namespace GruntiMaps.Tests
         {
             Stopwatch swAdd = new Stopwatch();
             Stopwatch swGet = new Stopwatch();
-            int total = 500;
+            const int total = 500;
             // first, add messages
             for (int i = 0; i < total; i++)
             {
@@ -59,7 +59,7 @@ namespace GruntiMaps.Tests
                 swAdd.Start();
                 var msgId = await _queue.AddMessage(msgString);
                 swAdd.Stop();
-                output.WriteLine($"Add msg {msgId}");
+                _output.WriteLine($"Add msg {msgId}");
             }
             // now get them 
             for (int j = 0; j < total; j++)
@@ -67,13 +67,10 @@ namespace GruntiMaps.Tests
                 swGet.Start();
                 var message = await _queue.GetMessage();
                 swGet.Stop();
-                if (message != null)
-                    output.WriteLine($"retrieved message {message.Id}");
-                else 
-                    output.WriteLine("No message available");
+                _output.WriteLine(message != null ? $"retrieved message {message.Id}" : "No message available");
             }
-            output.WriteLine($"{total} adds took {swAdd.Elapsed}");
-            output.WriteLine($"{total} gets took {swGet.Elapsed}");
+            _output.WriteLine($"{total} adds took {swAdd.Elapsed}");
+            _output.WriteLine($"{total} gets took {swGet.Elapsed}");
 
         }
         public void Dispose()

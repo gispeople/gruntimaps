@@ -20,11 +20,9 @@ namespace GruntiMaps.WebAPI.Models
             var connStr = builder.ConnectionString;
             _queueDatabase = new SqliteConnection(connStr);
             _queueDatabase.Open();
-            string createStatusesTable =
-                "CREATE TABLE IF NOT EXISTS Statuses(Id NVARCHAR(50) PRIMARY KEY, JobId NVARCHAR(50) NOT NULL, Status NVARCHAR(50) NOT NULL)";
+            const string createStatusesTable = "CREATE TABLE IF NOT EXISTS Statuses(Id NVARCHAR(50) PRIMARY KEY, JobId NVARCHAR(50) NOT NULL, Status NVARCHAR(50) NOT NULL)";
             new SqliteCommand(createStatusesTable, _queueDatabase).ExecuteNonQuery();
-            string createJobIdIndex =
-                "CREATE INDEX IF NOT EXISTS index_JobId ON Statuses(JobId)";
+            const string createJobIdIndex = "CREATE INDEX IF NOT EXISTS index_JobId ON Statuses(JobId)";
             new SqliteCommand(createJobIdIndex, _queueDatabase).ExecuteNonQuery();
         }
 

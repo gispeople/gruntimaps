@@ -22,23 +22,23 @@ function InfoControl() {}
 
 InfoControl.prototype.onAdd = function (map) {
     this._map = map;
-    var container = document.createElement("pre");
+    const container = document.createElement("pre");
     container.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
     container.style += "position: absolute; top: 200px; width: 300px; overflow: auto;background: rgba(255,255,255,0.8);";
     container.id = "info-container";
-    container.innerHTML = '{}';
+    container.innerHTML = "{}";
     this._container = container;
     map.on("mousemove", function(e) {
-        var properties = map.queryRenderedFeatures(e.point);
+        const properties = map.queryRenderedFeatures(e.point);
         if (properties.length !== 0) {
-            var props = [];
-            for (var prop of properties) {
+            const props = [];
+            for (let prop of properties) {
                 if (Object.keys(prop.properties).length>0)
                     props.push(prop.properties);
             }
             document.getElementById("info-container").innerHTML = JSON.stringify(props, null, 2);
         } else {
-            document.getElementById("info-container").innerHTML = '[]';
+            document.getElementById("info-container").innerHTML = "[]";
         }
     });
     return container;
@@ -46,6 +46,6 @@ InfoControl.prototype.onAdd = function (map) {
 
 InfoControl.prototype.onRemove = function () {
     this._container.parentNode.removeChild(this._container);
-    this._map.off("mousemove")
+    this._map.off("mousemove");
     this._map = undefined;
 };

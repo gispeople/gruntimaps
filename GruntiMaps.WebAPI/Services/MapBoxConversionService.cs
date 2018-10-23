@@ -31,6 +31,7 @@ using IMapData = GruntiMaps.WebAPI.Interfaces.IMapData;
 
 namespace GruntiMaps.WebAPI.Services
 {
+    /// <inheritdoc />
     /// <summary>
     ///     MapBoxConversionService monitors azure queue and performs data conversions via MapBox Tippecanoe
     /// </summary>

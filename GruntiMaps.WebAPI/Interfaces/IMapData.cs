@@ -31,6 +31,7 @@ namespace GruntiMaps.WebAPI.Interfaces
         //CloudStorageAccount CloudAccount { get; }
         //CloudBlobClient CloudClient { get; }
         //CloudBlobContainer GeojsonContainer { get; }
+        IStorageContainer TileContainer { get; }
         IStorageContainer GeojsonContainer { get; }
         IQueue MbConversionQueue { get; }
         IQueue GdConversionQueue { get; }
