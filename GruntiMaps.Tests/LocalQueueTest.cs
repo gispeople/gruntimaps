@@ -1,7 +1,7 @@
-using GruntiMaps.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
+using GruntiMaps.WebAPI.Models;
 using Xunit;
 using Xunit.Abstractions;
 

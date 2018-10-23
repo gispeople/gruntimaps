@@ -18,7 +18,7 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     // Message sent to data converter that describes the work to be done.
     public class ConversionMessageData

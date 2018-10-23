@@ -18,11 +18,12 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-using System.Threading.Tasks;
-using GruntiMaps.Interfaces;
-using GruntiMaps.Models;
 
-namespace GruntiMaps.Services
+using System.Threading.Tasks;
+using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.WebAPI.Models;
+
+namespace GruntiMaps.WebAPI.Services
 {
     /// <summary>
     ///     Service to poll for changes to available map layers and update the available list.

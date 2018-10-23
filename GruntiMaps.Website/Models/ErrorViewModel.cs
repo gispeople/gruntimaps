@@ -1,5 +1,3 @@
-using System;
-
 namespace GruntiMaps.Website.Models
 {
     public class ErrorViewModel

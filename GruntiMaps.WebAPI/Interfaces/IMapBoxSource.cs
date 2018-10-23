@@ -19,7 +19,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
 // ReSharper disable InconsistentNaming (these are used to generate/parse mapbox json styles etc)
-namespace GruntiMaps.Interfaces
+namespace GruntiMaps.WebAPI.Interfaces
 {
     public interface IMapBoxSource
     {

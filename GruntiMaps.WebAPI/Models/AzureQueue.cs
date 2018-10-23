@@ -1,11 +1,11 @@
 ﻿using System.Threading.Tasks;
-using GruntiMaps.Interfaces;
+using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Queue;
 using Newtonsoft.Json;
 
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     public class AzureQueue: IQueue
     {
