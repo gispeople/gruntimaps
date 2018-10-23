@@ -18,11 +18,13 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
+
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+
 // ReSharper disable InconsistentNaming as the names have to match our intended JSON
 
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     internal class RestError
     {

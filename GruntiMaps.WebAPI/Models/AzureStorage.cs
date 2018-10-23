@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using GruntiMaps.Interfaces;
+using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 
-namespace GruntiMaps.Models
+namespace GruntiMaps.WebAPI.Models
 {
     public class AzureStorage: IStorageContainer
     {        

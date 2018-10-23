@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace GruntiMaps.Interfaces
+namespace GruntiMaps.WebAPI.Interfaces
 {
     public interface IStorageContainer
     {

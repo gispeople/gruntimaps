@@ -18,11 +18,12 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using GruntiMaps.Models;
+using GruntiMaps.WebAPI.Models;
 
-namespace GruntiMaps.Interfaces
+namespace GruntiMaps.WebAPI.Interfaces
 {
     public interface IMapData
     {
@@ -35,7 +36,7 @@ namespace GruntiMaps.Interfaces
         IStorageContainer GeojsonContainer { get; }
         IQueue MbConversionQueue { get; }
         IQueue GdConversionQueue { get; }
-        ITable JobStatusTable { get; }
+        IStatusTable JobStatusTable { get; }
         Options CurrentOptions { get; }
 
         void OpenService(string mbtilefile);

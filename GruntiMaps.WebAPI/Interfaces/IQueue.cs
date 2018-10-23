@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using GruntiMaps.Models;
+using GruntiMaps.WebAPI.Models;
 
-namespace GruntiMaps.Interfaces
+namespace GruntiMaps.WebAPI.Interfaces
 {
     public interface IQueue
     {
