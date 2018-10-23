@@ -1,0 +1,19 @@
+{
+  "name": "gruntimaps.controls",
+  "version": "1.0.0",
+  "description": "MapBox-GL-JS compatible controls",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gispeople/gruntimaps.git"
+  },
+  "author": "GIS People Pty Ltd",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/gispeople/gruntimaps/issues"
+  },
+  "homepage": "https://github.com/gispeople/gruntimaps#readme"
+}

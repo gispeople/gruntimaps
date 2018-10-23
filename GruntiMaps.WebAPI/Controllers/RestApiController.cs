@@ -166,10 +166,11 @@ namespace GruntiMaps.Controllers
             if (x.HasValue && y.HasValue && z.HasValue)
             {
                 var bytes = GetTile(service, x, y, z);
-                if (bytes[0] == 0x89 && bytes[1] == 'P' && bytes[2] == 'N' && bytes[3] == 'G' && bytes[4] == 0x0d &&
-                    bytes[5] == 0x0a && bytes[6] == 0x1a && bytes[7] == 0x0a)
-                    return File(bytes, "image/png");
-                return File(Decompress(bytes), "application/vnd.mapbox-vector-tile");
+                switch (_mapData.LayerDict[service].Source.format) {
+                    case "png": return File(bytes, "image/png"); break;
+                    case "jpg": return File(bytes, "image/jpg"); break;
+                    case "pbf": return File(Decompress(bytes), "application/vnd.mapbox-vector-tile");
+                }
             }
             return new RestError(400, IdentifyMissingCoordinates(x, y, z)).AsJsonResult();
         }
