@@ -133,6 +133,7 @@ namespace GruntiMaps.Models
             {
                 _name = Convert.ToString(result);
             }
+            if (_name == null) _name = DbName;
             return _name;
         }
         private void SetName(string value) {
@@ -192,13 +193,13 @@ namespace GruntiMaps.Models
             var cmd = Conn.CreateCommand();
             cmd.CommandText = "select value from metadata where name='json'";
             var result = cmd.ExecuteScalar();
-            if (result != null)
+            if (result != null && (string)result != "")
             {
                 _dataJson = JObject.Parse(Convert.ToString(result));
             }
             else
             {
-                // if there's no data_version key, ExecuteScalar() returns null
+                // if there's no json key, ExecuteScalar() returns null
                 _dataJson = new JObject();
             }
 
