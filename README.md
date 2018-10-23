@@ -6,4 +6,4 @@ See www.gruntimaps.com for details and a demo.
 
 Some useful mapbox-gl-js controls we have developed can be found [here](../master/Gruntify.Controls)
 
-[Documentation on the current API](../master/Gruntify.WebAPI/Documentation.md)
+[Documentation on the current API](../master/GruntiMaps.WebAPI/Documentation.md)

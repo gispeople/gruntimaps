@@ -132,11 +132,8 @@ namespace GruntiMaps.Models
         public double[] bounds { get; set; }
 
         public double[] center { get; set; }
-
         public double data_version {get; set; }
-
         public string type { get; set; }
-
         public string format { get; set; }
     }
 }
