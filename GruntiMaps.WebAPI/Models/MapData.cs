@@ -41,7 +41,6 @@ namespace GruntiMaps.WebAPI.Models
         private FileSystemWatcher watcher = new FileSystemWatcher();
         public IStorageContainer PackContainer;
         public IStorageContainer TileContainer;
-        public IStorageContainer MbtContainer { get; }
         public IStorageContainer GeojsonContainer { get; }
         public IStorageContainer FontContainer { get; }
         public IQueue MbConversionQueue { get; }
@@ -61,7 +60,6 @@ namespace GruntiMaps.WebAPI.Models
                 case StorageProviders.Azure: 
                     PackContainer = new AzureStorage(CurrentOptions, CurrentOptions.StorageContainer);
                     TileContainer = new AzureStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
-                    MbtContainer = new AzureStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
                     GeojsonContainer = new AzureStorage(CurrentOptions, CurrentOptions.GeoJsonContainer);
                     FontContainer = new AzureStorage(CurrentOptions, CurrentOptions.FontContainer);
                     MbConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.MbConvQueue);
@@ -71,7 +69,6 @@ namespace GruntiMaps.WebAPI.Models
                 case StorageProviders.Local:
                     PackContainer = new LocalStorage(CurrentOptions, CurrentOptions.StorageContainer);
                     TileContainer = new LocalStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
-                    MbtContainer = new LocalStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
                     GeojsonContainer = new LocalStorage(CurrentOptions, CurrentOptions.GeoJsonContainer);
                     FontContainer = new LocalStorage(CurrentOptions, CurrentOptions.FontContainer);
                     MbConversionQueue = new LocalQueue(CurrentOptions, CurrentOptions.MbConvQueue);
