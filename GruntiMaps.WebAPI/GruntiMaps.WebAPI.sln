@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28010.2041
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GruntiMaps", "GruntiMaps.csproj", "{73732EAB-52FC-4EE4-A0AC-EA23EE8DB240}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GruntiMaps.WebAPI", "GruntiMaps.WebAPI.csproj", "{73732EAB-52FC-4EE4-A0AC-EA23EE8DB240}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GruntiMaps.Tests", "..\GruntiMaps.Tests\GruntiMaps.Tests.csproj", "{191C4F5A-0E05-4A61-9A2B-00D67FD8EC5A}"
 EndProject
