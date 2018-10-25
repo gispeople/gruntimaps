@@ -8,7 +8,7 @@
 };
 
 function domCreate(tagName, className, container) {
-    var el = window.document.createElement(tagName);
+    const el = window.document.createElement(tagName);
     if (className) el.className = className;
     if (container) container.appendChild(el);
     return el;
@@ -20,50 +20,50 @@ function domRemove(node) {
     }
 };
 
-var TiltControl = function TiltControl(defaultMapMode) {
+var TiltControl = function(defaultMapMode) {
     if (defaultMapMode === 0 || defaultMapMode === undefined) {
         this._tilt = false;
     }
     else {
         this._tilt = true;
     }
-    utilBindAll(['_onClickTilt','_updatePitch'], this);
-    this._className = 'mapboxgl-ctrl';
+    utilBindAll(["_onClickTilt","_updatePitch"], this);
+    this._className = "mapboxgl-ctrl";
 }
 
-TiltControl.prototype.getDefaultPosition = function getDefaultPosition() {
-    return 'top-left';
+TiltControl.prototype.getDefaultPosition = function() {
+    return "top-left";
 }
 
-TiltControl.prototype.onAdd = function onAdd(map) {
+TiltControl.prototype.onAdd = function(map) {
     this._map = map;
     this._mapContainer = this._map.getContainer();
-    this._container = domCreate('div', 'mapboxgl-ctrl mapboxgl-ctrl-group');
+    this._container = domCreate("div", "mapboxgl-ctrl mapboxgl-ctrl-group");
     this._setupUI();
     return this._container;
 }
 
-TiltControl.prototype.onRemove = function onRemove() {
-    this._map.off('pitchend', this._updatePitch);
+TiltControl.prototype.onRemove = function() {
+    this._map.off("pitchend", this._updatePitch);
     this._tiltButton.removeEventListener("click", this._onClickTilt);
     domRemove(this._container);
     this._map = (null);
 }
 
 TiltControl.prototype._setupUI = function() {
-    var button = this._tiltButton = domCreate('button', "tilt-icon", this._container);
+    const button = this._tiltButton = domCreate("button", "tilt-icon", this._container);
     if (this._tilt === true) {
         button.textContent = "3D";
     } else {
         button.textContent = "2D";
     }
     button.setAttribute("aria-label", "Toggle 3D");
-    button.type = 'button';
-    this._tiltButton.addEventListener('click', this._onClickTilt);
-    this._map.on('pitchend', this._updatePitch);
+    button.type = "button";
+    this._tiltButton.addEventListener("click", this._onClickTilt);
+    this._map.on("pitchend", this._updatePitch);
 }
 
-TiltControl.prototype._updatePitch = function _updatePitch() {
+TiltControl.prototype._updatePitch = function() {
     if (this._map.getPitch() === 0) {
         this._tilt = false;
         this._tiltButton.textContent = "2D";
@@ -73,7 +73,7 @@ TiltControl.prototype._updatePitch = function _updatePitch() {
     }
 }
 
-TiltControl.prototype._onClickTilt = function _onClickTilt() {
+TiltControl.prototype._onClickTilt = function() {
     if (this._tilt) {
         this._tiltButton.textContent = "2D";
         this._map.easeTo({ pitch: 0 });

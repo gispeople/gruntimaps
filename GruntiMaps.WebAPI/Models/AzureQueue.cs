@@ -34,12 +34,10 @@ namespace GruntiMaps.WebAPI.Models
             Message result = new Message();
             // if there is a job on the queue, process it.
             var msg = await QueueRef.GetMessageAsync();
-            if (msg != null) // if no message, don't try
-            {
-                result.Id = msg.Id;
-                result.Content = msg.AsString;
-                result.PopReceipt = msg.PopReceipt;
-            }
+            if (msg == null) return result;
+            result.Id = msg.Id;
+            result.Content = msg.AsString;
+            result.PopReceipt = msg.PopReceipt;
 
             return result;
         }

@@ -14,7 +14,7 @@ main code and run as separate processes on other hosts.
 
 ## Setting up the VMs
 
-GruntiMaps is designed to be able to run from multiple redundant servers. The setup script used to establish a Development environment in Azure is as follows:
+GruntiMaps is designed to be able to run from multiple redundant servers. The setup script used to establish a multi-server Development environment in Azure is as follows:
 
 ```bash
 #!/bin/bash
@@ -163,6 +163,8 @@ done
 ```
 Choose a user to own the app. For the purposes of this document we will call that user `gruntimaps`.
 
+Of course, you can simply set up a single instance server instead.
+
 The configuration below assumes Ubuntu 18.04 LTS
 (i.e. it expects a `systemd`-based install). If you are using a non-`systemd` Linux you will
 need to use a different mechanism to configure and manage the Apache HTTPd and ASP.NET Core
@@ -214,9 +216,16 @@ cd ..
 
 Install GDAL to each server. GDAL is used to convert spatial file formats (other than GeoJSON) into GeoJSON, so that they can be converted into MapBox formats by Tippecanoe.
 
+If you want the most up-to-date GDAL you might want to consider doing this first:
+
 ```bash
 sudo add-apt-repository ppa:ubuntugis/ppa
 sudo apt-get update
+```
+
+Either way, install GDAL with:
+
+```bash
 sudo apt-get install gdal-bin
 ```
 
@@ -259,8 +268,8 @@ ServerName gruntimaps.com
   SSLEngine on
   SSLProtocol all -SSLv2
   SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:!RC4+RSA:+HIGH:+MEDIUM:!LOW:!RC4
-  SSLCertificateFile /etc/pki/tls/certs/gruntimaps.pem
-  SSLCertificateKeyFile /etc/pki/tls/private/private.pem
+  SSLCertificateFile /etc/ssl/certs/gruntimaps.pem
+  SSLCertificateKeyFile /etc/ssl/private/private.pem
 </VirtualHost>
 
 <Location "/sprites">
@@ -294,8 +303,8 @@ Enter the following into the gruntimaps.service file.
 Description=GruntiMaps
 
 [Service]
-WorkingDirectory=/home/gruntimaps/gruntimaps
-ExecStart=/usr/bin/dotnet /home/gruntimaps/gruntimaps/GruntiMaps.dll
+WorkingDirectory=/home/gruntimaps/gruntimaps.server
+ExecStart=/usr/bin/dotnet /home/gruntimaps/gruntimaps.server/GruntiMaps.WebAPI.dll
 Restart=always
 RestartSec=10
 SyslogIdentifier=gruntimaps
@@ -313,8 +322,8 @@ the ASP.NET Core web server, we can configure and start the Apache reverse proxy
 without problems, so we will do that.
 
 Firstly we need to get the SSL certificate and key, and put them where Apache will
-find them. The certificate should be in `/etc/pki/tls/certs/gruntimaps.pem` and
-the private key should be in `/etc/pki/tls/private/private.pem`.
+find them. The certificate should be in `/etc/ssl/certs/gruntimaps.pem` and
+the private key should be in `/etc/ssl/private/private.pem`.
 
 Once they are in place we can enable the necessary mods, enable the site we specified
 earlier, and start the service.
@@ -354,10 +363,13 @@ Retrieve the repository, publish the code, and deploy it.
 
 ```bash
 git clone https://github.com/gispeople/gruntimaps.git
-cd gruntimaps/src
+cd gruntimaps/GruntiMaps.WebAPI
 dotnet restore
-dotnet publish -c Release -o ../gruntimaps
+dotnet publish -c Release -o ~/gruntimaps.server
 ```
+### Edit configuration file
+
+In the `gruntimaps.server` directory, edit `appsettings.json` to specify the location for your data, etc.
 
 ### Install existing map data
 
@@ -367,27 +379,12 @@ corresponding offline map packs, you will need to obtain these files and install
 Even if you are going to only serve newly-created layers, you will need to install font
 glyphs, otherwise symbol layers that use text will not render anything.
 
-The current code expects to find these files under the web root, in the `mbroot`
-directory. A future revision should retrieve the location of the map pack root from an
-external configuration file.
-
-The directory structure looks like this:
-
-```bash
-mbroot
- ├─fonts    (contains font files)
- ├─json     (mapbox layer styles in JSON format)
- ├─mbtiles  (mapbox tile databases)
- └─zip      (offline map packs)
-
-```
-
 If a full set of fonts is desired:
 
 ```bash
 cd ~
 git clone https://github.com/lukasmartinelli/glfonts.git
-cp -r glfonts/fonts/* maps/mbroot/fonts
+cp -r glfonts/fonts/* <wherever_you_configured_your_font_directory>
 ```
 
 #### Enable the ASP.NET server

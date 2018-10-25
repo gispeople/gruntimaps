@@ -22,12 +22,10 @@ namespace GruntiMaps.WebAPI.Models
             var connStr = builder.ConnectionString;
             _queueDatabase = new SqliteConnection(connStr);
             _queueDatabase.Open();
-            string createQueueTable =
-                "CREATE TABLE IF NOT EXISTS Queue(ID NVARCHAR(50) PRIMARY KEY, PopReceipt NVARCHAR(50) NULL, PopCount INTEGER, Popped NVARCHAR(25) NULL, Content NVARCHAR(2048) NULL)";
+            const string createQueueTable = "CREATE TABLE IF NOT EXISTS Queue(ID NVARCHAR(50) PRIMARY KEY, PopReceipt NVARCHAR(50) NULL, PopCount INTEGER, Popped NVARCHAR(25) NULL, Content NVARCHAR(2048) NULL)";
             SqliteCommand createQueueTableCmd = new SqliteCommand(createQueueTable, _queueDatabase);
             createQueueTableCmd.ExecuteNonQuery();
-            string createPoisonTable =
-                "CREATE TABLE IF NOT EXISTS Poison(ID INTEGER PRIMARY KEY, PopReceipt NVARCHAR(50) NULL, PopCount INTEGER, Popped NVARCHAR(25) NULL, Content NVARCHAR(2048) NULL)";
+            const string createPoisonTable = "CREATE TABLE IF NOT EXISTS Poison(ID INTEGER PRIMARY KEY, PopReceipt NVARCHAR(50) NULL, PopCount INTEGER, Popped NVARCHAR(25) NULL, Content NVARCHAR(2048) NULL)";
             SqliteCommand createPoisonTableCmd = new SqliteCommand(createPoisonTable, _queueDatabase);
             createPoisonTableCmd.ExecuteNonQuery();
         }
@@ -79,8 +77,7 @@ namespace GruntiMaps.WebAPI.Models
             updateMsgCmd.Parameters.AddWithValue("$popReceipt", msg.PopReceipt);
             updateMsgCmd.Parameters.AddWithValue("$popCount", popCount1);
             updateMsgCmd.ExecuteReader();
-            if (string.IsNullOrWhiteSpace(msg.Id)) return Task.FromResult<Message>(null); // if there was no result send back an empty message - conforms with Azure's approach
-            else return Task.FromResult(msg);
+            return string.IsNullOrWhiteSpace(msg.Id) ? Task.FromResult<Message>(null) : Task.FromResult(msg);
         }
 
         private void CheckExpiredMessages()

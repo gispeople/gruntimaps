@@ -33,9 +33,9 @@ $(document).ready(function () {
         $.get(source.metadata.gruntimaps.styles, function (styles) {
             for (let style of styles) {
                 if (window.map.getLayer(style.id) === undefined) {
-                    let thisType = style.type;
-                    let mapStyle = window.map.getStyle();
-                    let existingLayerOfType = mapStyle.layers.find(function(e) { return e.type === thisType; });
+                    const thisType = style.type;
+                    const mapStyle = window.map.getStyle();
+                    const existingLayerOfType = mapStyle.layers.find(function(e) { return e.type === thisType; });
                     if (existingLayerOfType !== undefined && existingLayerOfType !== null) window.map.addLayer(style, existingLayerOfType.id); else window.map.addLayer(style);
                     window.map.setLayoutProperty(style.id, "visibility", "visible");
                     const layer = document.createElement("a");
@@ -55,7 +55,7 @@ $(document).ready(function () {
                             window.map.setLayoutProperty(clickedLayer, "visibility", "visible");
                         }
                     };
-                    var layerGroup = document.getElementById(style.source);
+                    const layerGroup = document.getElementById(style.source);
 
                     layerGroup.appendChild(layer);
                 }
@@ -65,7 +65,7 @@ $(document).ready(function () {
 
     // create preview map
     mapboxgl.config.REQUIRE_ACCESS_TOKEN = false;
-    var host = window.location.protocol + "//" + window.location.host;
+    const host = window.location.protocol + "//" + window.location.host;
     window.map = new mapboxgl.Map({
         container: "map",
         style: {
@@ -91,8 +91,8 @@ $(document).ready(function () {
     const sc = new mapboxgl.ScaleControl();
     window.map.addControl(sc, "bottom-left");
 
-    const att = new mapboxgl.AttributionControl({customAttribution: "Contains OS data &copy; Crown copyright and database rights 2018<br>Served using <a href='https://www.gruntimaps.com'>GruntiMaps</a>"});
-    window.map.addControl(att, "bottom-right");
+    // const att = new mapboxgl.AttributionControl({customAttribution: "Contains OS data &copy; Crown copyright and database rights 2018<br>Served using <a href='https://www.gruntimaps.com'>GruntiMaps</a>"});
+    // window.map.addControl(att, "bottom-right");
 
     const zlc = new ZoomLevelControl();
     window.map.addControl(zlc, "bottom-right");
@@ -117,7 +117,7 @@ $(document).ready(function () {
         $.get("/api/layers", function (layers) {
             for (let l of layers.content) {
                 $.get(l.links.href, function (layerProps) {
-                    var source = layerProps.source;
+                    const source = layerProps.source;
                     var style = layerProps.style;
                     $.get(source, function (src) {
                         src.metadata = { gruntimaps: { styles: style } };
@@ -136,10 +136,10 @@ $(document).ready(function () {
                     layerGroup.id = e.sourceId;
                     layerGroup.textContent = e.source.description;
                     layerGroup.className = "active";
-                    layerGroup.onclick = function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        for (let c of e.target.children) {
+                    layerGroup.onclick = function(f) {
+                        f.preventDefault();
+                        f.stopPropagation();
+                        for (let c of f.target.children) {
                             console.log(c);
                             if (window.map.getLayoutProperty(c.text, "visibility") === "visible") {
                                 window.map.setLayoutProperty(c.text, "visibility", "none");

@@ -54,18 +54,19 @@ namespace GruntiMaps.WebAPI.Models
                         break;
                 }
             }
-            if (StorageProvider == StorageProviders.Local)
+            switch (StorageProvider)
             {
-                StoragePath = config["Provider:LocalSettings:Path"] ?? env.ContentRootPath;
-                QueueEntryTries = int.Parse(config["Provider:LocalSettings:queueEntryLife"] ?? "5");
-                QueueTimeLimit = int.Parse(config["Provider:LocalSettings:queueTimeLimit"] ?? "30");
+                case StorageProviders.Local:
+                    StoragePath = config["Provider:LocalSettings:Path"] ?? env.ContentRootPath;
+                    QueueEntryTries = int.Parse(config["Provider:LocalSettings:queueEntryLife"] ?? "5");
+                    QueueTimeLimit = int.Parse(config["Provider:LocalSettings:queueTimeLimit"] ?? "30");
+                    break;
+                case StorageProviders.Azure:
+                    StorageAccount = config["Provider:AzureSettings:globalStorageAccount"];
+                    StorageKey = config["Provider:AzureSettings:globalStorageKey"];
+                    break;
             }
 
-            if (StorageProvider == StorageProviders.Azure)
-            {
-                StorageAccount = config["Provider:AzureSettings:globalStorageAccount"];
-                StorageKey = config["Provider:AzureSettings:globalStorageKey"];
-            }
             StorageContainer = config["Containers:storage"];
             FontContainer = config["Containers:fonts"];
             PacksContainer = config["Containers:packs"];
@@ -81,7 +82,7 @@ namespace GruntiMaps.WebAPI.Models
 
 
 
-        private int ParseConfigInt(string configValue, int defaultSeconds = 10)
+        private static int ParseConfigInt(string configValue, int defaultSeconds = 10)
         {
             int val;
             if (!string.IsNullOrEmpty(configValue) && (val = int.Parse(configValue)) != 0)

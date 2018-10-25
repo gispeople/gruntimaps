@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using GruntiMaps.WebAPI.Interfaces;
 
@@ -33,22 +34,20 @@ namespace GruntiMaps.WebAPI.Models
         {
             var inputPath = Path.Combine(_containerPath, fileName);
             // if the source doesn't exist, not much to do
-            if (File.Exists(inputPath)) {
-                // if the dest doesn't exist, no need to check length
-                if (File.Exists(outputPath)) {
-                    var inputAttrs = new FileInfo(inputPath);
-                    var outputAttrs = new FileInfo(outputPath);
-                    if (inputAttrs.Length == outputAttrs.Length) {
-                        return false;
-                    }
+            if (!File.Exists(inputPath)) return false;
+            // if the dest doesn't exist, no need to check length
+            if (File.Exists(outputPath)) {
+                var inputAttrs = new FileInfo(inputPath);
+                var outputAttrs = new FileInfo(outputPath);
+                if (inputAttrs.Length == outputAttrs.Length) {
+                    return false;
                 }
-                await Task.Run(() =>
-                {
-                    File.Copy(inputPath, outputPath);
-                });
-                return true;
             }
-            return false;
+            await Task.Run(() =>
+            {
+                File.Copy(inputPath, outputPath);
+            });
+            return true;
         }
 
         public async Task<List<string>> List()
@@ -57,12 +56,8 @@ namespace GruntiMaps.WebAPI.Models
             await Task.Run(() =>
             {
                 DirectoryInfo di = new DirectoryInfo(_containerPath);
-                if (di.Exists) {
-                    foreach (var file in di.GetFiles())
-                    {
-                        result.Add(file.Name);
-                    }
-                }
+                if (!di.Exists) return;
+                result.AddRange(di.GetFiles().Select(file => file.Name));
             });
             return result;
         }
