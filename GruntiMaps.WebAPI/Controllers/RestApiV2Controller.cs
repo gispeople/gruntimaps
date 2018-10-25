@@ -93,20 +93,14 @@ namespace GruntiMaps.WebAPI.Controllers
             };
         }
 
-        // V2 retrieve source JSON
+        // V2 retrieve source TileJSON
         [HttpGet("sources/{sourceId}")]
         public ActionResult GetSourceJson(string sourceId)
         {
             var baseUrl = GetBaseUrl();
             var src = _sources.SourceJson(sourceId);
             src.tiles[0] = $"{baseUrl}/tiles?x={{x}}&y={{y}}&z={{z}}";        
-
-            // this allows us to return the TileJSON without including empty values.
-            return Content(JsonConvert.SerializeObject(
-                src, 
-                Newtonsoft.Json.Formatting.None, 
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore}
-            ));
+            return src;
         }
 
         // Retrieve tile. 
@@ -121,7 +115,7 @@ namespace GruntiMaps.WebAPI.Controllers
                     return File(bytes, "image/png");
                 return File(Decompress(bytes), "application/vnd.mapbox-vector-tile");
             }
-            return new RestError(400, IdentifyMissingCoordinates(x, y, z)).AsJsonResult();
+            return new RestError(400, IdentifyMissingCoordinates(x, y, z));
         }
 
         private static RestErrorDetails[] IdentifyMissingCoordinates(int? x, int? y, byte? z)
@@ -211,7 +205,7 @@ namespace GruntiMaps.WebAPI.Controllers
             {
                 return new RestError(400, new[] {
                     new RestErrorDetails { field = "face", issue = "Font face must be supplied" }
-                }).AsJsonResult();
+                });
             }
 
             var faceFile = HttpUtility.UrlDecode(face);
@@ -220,7 +214,7 @@ namespace GruntiMaps.WebAPI.Controllers
             {
                 return new RestError(400, new[] {
                     new RestErrorDetails { field = "face", issue = "Font face is invalid" }
-                }).AsJsonResult();
+                });
             }
 
             var rangeDir = new DirectoryInfo(Path.Combine(_options.FontPath, faceFile));
@@ -257,7 +251,7 @@ namespace GruntiMaps.WebAPI.Controllers
             {
                 if (face == null) details.Add(new RestErrorDetails { field = "face", issue = "Face must be supplied" });
                 if (range == null) details.Add(new RestErrorDetails { field = "range", issue = "Range must be supplied" });
-                return new RestError(400, details.ToArray()).AsJsonResult();
+                return new RestError(400, details.ToArray());
             }
 
             var faceFile = HttpUtility.UrlDecode(face);
@@ -277,11 +271,11 @@ namespace GruntiMaps.WebAPI.Controllers
                 if (System.IO.File.Exists(path))
                     return new FileContentResult(System.IO.File.ReadAllBytes(path), "application/x-protobuf");
             }
-            if (details.Count > 0) return new RestError(400, details.ToArray()).AsJsonResult();
+            if (details.Count > 0) return new RestError(400, details.ToArray());
             return new RestError(404, new[]
             {
                 new RestErrorDetails {field = "face", issue = "Font resource not found"}
-            }).AsJsonResult();
+            });
         }
 
         // return the sprite sets available.
@@ -305,23 +299,6 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         #region Internals
-
-        public static string JsonPrettify(string json)
-        {
-            if (json == null)
-            {
-                return "{}";
-            }
-
-            using (var stringReader = new StringReader(json))
-            using (var stringWriter = new StringWriter())
-            {
-                var jsonReader = new JsonTextReader(stringReader);
-                var jsonWriter = new JsonTextWriter(stringWriter) { Formatting = Formatting.Indented };
-                jsonWriter.WriteToken(jsonReader);
-                return stringWriter.ToString();
-            }
-        }
 
         // Get a tile from a mapbox tile database.
         private byte[] GetTile(string sourceId, int? x, int? y, byte? z)
