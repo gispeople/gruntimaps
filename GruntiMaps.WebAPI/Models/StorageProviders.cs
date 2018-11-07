@@ -22,6 +22,7 @@ namespace GruntiMaps.WebAPI.Models
 {
     public enum StorageProviders
     {
-        Azure, Local
+        Azure, 
+        Local
     }
 }

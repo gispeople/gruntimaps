@@ -11,6 +11,7 @@ namespace GruntiMaps.WebAPI.Models
     {
         public CloudStorageAccount CloudAccount { get; }
         private CloudQueue QueueRef { get; }
+
         public AzureQueue(Options options, string queueName)
         {
             CloudAccount =
@@ -20,6 +21,7 @@ namespace GruntiMaps.WebAPI.Models
             QueueRef = queueClient.GetQueueReference(queueName);
             QueueRef.CreateIfNotExistsAsync();
         }
+
         public async Task<string> AddMessage(string messageData)
         {
 
