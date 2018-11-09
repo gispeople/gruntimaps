@@ -25,10 +25,12 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
+using GruntiMaps.WebAPI.DataContracts;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.AspNetCore.Hosting;
@@ -83,7 +85,7 @@ namespace GruntiMaps.WebAPI.Controllers
             {
                 layerResources.Add(new
                 {
-                    name = layer.Value.Source.description,
+                    name = layer.Value.Source.name,
                     links = new
                     {
                         href = $"{baseUrl}/{layer.Key}",
@@ -100,49 +102,50 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // RESTful layer information
-        [HttpGet("layers/{service}")]
-        public ActionResult GetService(string service)
+        [HttpGet("layers/{id}")]
+        public async Task<LayerDto> GetService(string id)
         {
             var baseUrl = $"{GetBaseHost()}/api/layers";
-            if (!_mapData.LayerDict.ContainsKey(service))
+            if (!_mapData.LayerDict.ContainsKey(id))
             {
-                return new RestError(404, new[] {
-                    new RestErrorDetails { field = "service", issue = "Service does not exist" }
-                }).AsJsonResult();
+                throw new HttpRequestException("Not found");
             }
-            return Json(new
-            {
-                source = $"{baseUrl}/source/{service}",
-                style = $"{baseUrl}/style/{service}",
-                mappack = $"{baseUrl}/mappack/{service}",
-                tiles = $"{baseUrl}/tiles/{service}",
-                grid = $"{baseUrl}/grid/{service}",
-                metadata = $"{baseUrl}/metadata/{service}",
-                geojson = $"{baseUrl}/geojson/{service}",
-                links = new List<object> {
-                    new { href = $"{baseUrl}/{service}", rel = "self" }
-                }
-            });
-        }
 
-        [HttpPost("layers/{service}")]
-        public ActionResult CreateLayer(string service)
-        {
-            return Json(new { });
+            var layer = (Layer)_mapData.LayerDict[id];
+
+            var status = await _mapData.JobStatusTable.GetStatus(id);
+
+            return new LayerDto()
+            {
+                Id = layer.Id,
+                Name = layer.Name,
+                Description = layer.Source.description,
+                Status = status ?? LayerStatus.Finished,
+                Links = new List<LinkDto>
+                {
+                    new LinkDto(LinkRelations.Source, $"{baseUrl}/{id}/source"),
+                    new LinkDto(LinkRelations.Style, $"{baseUrl}/{id}/style"),
+                    new LinkDto(LinkRelations.Mappack, $"{baseUrl}/{id}/mappack"),
+                    new LinkDto(LinkRelations.Tiles, $"{baseUrl}/{id}/tiles"),
+                    new LinkDto(LinkRelations.Grid, $"{baseUrl}/{id}/grid"),
+                    new LinkDto(LinkRelations.Metadata, $"{baseUrl}/{id}/metadata"),
+                    new LinkDto(LinkRelations.Geojson, $"{baseUrl}/{id}/geojson")
+                }
+            };
         }
 
         // RESTful retrieve offline map pack.
-        [HttpGet("layers/mappack/{service}")]
-        public ActionResult MapPack(string service)
+        [HttpGet("layers/{id}/mappack")]
+        public ActionResult MapPack(string id)
         {
-            if (string.IsNullOrEmpty(service))
+            if (string.IsNullOrEmpty(id))
             {
                 return new RestError(400, new[] {
                     new RestErrorDetails { field = "service", issue = "Service name must be supplied" }
                 }).AsJsonResult();
             }
 
-            var zipFileName = service;
+            var zipFileName = id;
             if (!zipFileName.EndsWith(".zip", true, CultureInfo.CurrentCulture)) zipFileName += ".zip";
             var path = Path.Combine(_options.PackPath, $@"{zipFileName}");
             if (!System.IO.File.Exists(path))
@@ -158,13 +161,13 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Retrieve tile. 
-        [HttpGet("layers/tiles/{service}")]
-        public ActionResult Tile(string service, int? x, int? y, byte? z)
+        [HttpGet("layers/{id}/tiles")]
+        public ActionResult Tile(string id, int? x, int? y, byte? z)
         {
             if (!x.HasValue || !y.HasValue || !z.HasValue)
                 return new RestError(400, IdentifyMissingCoordinates(x, y, z)).AsJsonResult();
-            var bytes = GetTile(service, x, y, z);
-            switch (_mapData.LayerDict[service].Source.format) {
+            var bytes = GetTile(id, x, y, z);
+            switch (_mapData.LayerDict[id].Source.format) {
                 case "png": return File(bytes, "image/png"); 
                 case "jpg": return File(bytes, "image/jpg"); 
                 case "pbf": return File(Decompress(bytes), "application/vnd.mapbox-vector-tile");
@@ -182,46 +185,46 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Get a mapbox grid.
-        [HttpGet("layers/grid/{service}")]
-        public ActionResult Grid(string service, int? x, int? y, byte? z)
+        [HttpGet("layers/{id}/grid")]
+        public ActionResult Grid(string id, int? x, int? y, byte? z)
         {
-            if (x.HasValue && y.HasValue && z.HasValue) return Content(GetGrid(service, x, y, z), "application/json");
+            if (x.HasValue && y.HasValue && z.HasValue) return Content(GetGrid(id, x, y, z), "application/json");
             return new RestError(400, IdentifyMissingCoordinates(x, y, z)).AsJsonResult();
 
         }
 
         // Retrieve the style snippet for this map service. 
-        [HttpGet("layers/style/{service}")]
-        public ActionResult Style(string service)
+        [HttpGet("layers/{id}/style")]
+        public ActionResult Style(string id)
         {
-            if (!_mapData.LayerDict.ContainsKey(service))
+            if (!_mapData.LayerDict.ContainsKey(id))
                 return new RestError(404, new[] {
                     new RestErrorDetails{ field = "service", issue = "Service does not exist" }
                 }).AsJsonResult();
-            return Content(JsonPrettify(JsonConvert.SerializeObject(_mapData.LayerDict[service].Style)),
+            return Content(JsonPrettify(JsonConvert.SerializeObject(_mapData.LayerDict[id].Style)),
                 "application/json");
         }
 
         // Retrieve the data json to help with setting up initial styling
-        [HttpGet("layers/metadata/{service}")]
-        public ActionResult DataJson(string service)
+        [HttpGet("layers/{id}/metadata")]
+        public ActionResult DataJson(string id)
         {
-            if (!_mapData.LayerDict.ContainsKey(service))
+            if (!_mapData.LayerDict.ContainsKey(id))
                 return new RestError(404, new[] {
                     new RestErrorDetails{ field = "service", issue = "Service does not exist" }
                 }).AsJsonResult();
-            return Content(JsonPrettify(_mapData.LayerDict[service].DataJson.ToString()), "application/json");
+            return Content(JsonPrettify(_mapData.LayerDict[id].DataJson.ToString()), "application/json");
         }
 
         // Retrieve a json snippet that defines the mapbox 'source' for this service
-        [HttpGet("layers/source/{service}")]
-        public ActionResult Source(string service)
+        [HttpGet("layers/{id}/source")]
+        public ActionResult Source(string id)
         {
-            if (GetBaseUrl() == null || service == null || !_mapData.LayerDict.ContainsKey(service))
+            if (GetBaseUrl() == null || id == null || !_mapData.LayerDict.ContainsKey(id))
                 return new RestError(404, new[] {
                     new RestErrorDetails{ field = "service", issue = "Service does not exist" }
                 }).AsJsonResult();
-            var src = _mapData.LayerDict[service].Source;
+            var src = _mapData.LayerDict[id].Source;
             src.tiles[0] = src.tiles[0].Replace("#publicHost#", GetBaseHost());
             return Content(JsonConvert.SerializeObject(
                 src,
@@ -235,23 +238,6 @@ namespace GruntiMaps.WebAPI.Controllers
         {
             // not yet implemented
             return Json(new { });
-        }
-
-        [HttpPost("layers/create")]
-        public async Task<ActionResult> CreateNewLayer([FromBody] CreateMapLayerDto dto)
-        {
-            ConversionMessageData messageData = new ConversionMessageData
-            {
-                LayerName = dto.Name,
-                DataLocation = dto.DataLocation,
-                Description = dto.Description
-            };
-            var requestId = await _mapData.CreateGdalConversionRequest(messageData);
-            await _mapData.JobStatusTable.AddStatus(requestId, requestId);
-            return Json(new
-            {
-                requestId
-            });
         }
 
         [HttpGet("layers/create/{jobId}")]

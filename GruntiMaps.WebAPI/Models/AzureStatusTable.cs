@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
+using GruntiMaps.WebAPI.DataContracts;
 using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
@@ -23,62 +25,25 @@ namespace GruntiMaps.WebAPI.Models
             _table.CreateIfNotExistsAsync();
         }
 
-        public async Task AddStatus(string queueId, string jobId)
+        public async Task<LayerStatus?> GetStatus(string id)
         {
-            await _table.ExecuteAsync(TableOperation.Insert(new StatusEntity(queueId, jobId)));
-        }
+            TableOperation retrieveOperation = TableOperation.Retrieve<StatusEntity>(Workspace, id);
 
-        public async Task<JobStatus?> GetStatus(string jobId)
-        {
-            TableQuery<StatusEntity> query = new TableQuery<StatusEntity>().Where(TableQuery.GenerateFilterCondition("JobId", QueryComparisons.Equal, jobId));
-            
-            TableContinuationToken token = null;
+            TableResult retrievedResult = await _table.ExecuteAsync(retrieveOperation);
 
-            bool hasRecord = false;
-            bool hasQueued = false;
-            bool hasFailed = false;
-            bool allFinished = true;
-            do
-            {
-                TableQuerySegment<StatusEntity> resultSegment = await _table.ExecuteQuerySegmentedAsync(query, token);
-                token = resultSegment.ContinuationToken;
-
-                foreach (StatusEntity queue in resultSegment.Results)
-                {
-                    hasRecord = true;
-                    hasQueued |= queue.Status == JobStatus.Queued.ToString();
-                    hasFailed |= queue.Status == JobStatus.Failed.ToString();
-                    allFinished &= queue.Status == JobStatus.Finished.ToString();
-                }
-            } while (token != null);
-
-            if (!hasRecord)
+            if (retrievedResult.Result == null)
             {
                 return null;
             }
-            if (hasFailed)
-            {
-                return JobStatus.Failed;
-            }
-            if (hasQueued)
-            {
-                return JobStatus.Queued;
-            }
-            if (allFinished)
-            {
-                return JobStatus.Finished;
-            }
-            throw new Exception($"Unexpected status for job: {jobId}");
+
+            Enum.TryParse(((StatusEntity)retrievedResult.Result).Status, out LayerStatus status);
+            return status;
         }
 
-        public async Task UpdateStatus(string queueId, JobStatus status)
+        public async Task UpdateStatus(string id, LayerStatus status)
         {
-            if (status != JobStatus.Failed && status != JobStatus.Finished)
-            {
-                throw new Exception($"Queue Status Update only accept {JobStatus.Failed} or {JobStatus.Finished}");
-            }
 
-            TableOperation retrieveOperation = TableOperation.Retrieve<StatusEntity>(Workspace, queueId);
+            TableOperation retrieveOperation = TableOperation.Retrieve<StatusEntity>(Workspace, id);
 
             TableResult retrievedResult = await _table.ExecuteAsync(retrieveOperation);
 
@@ -90,27 +55,24 @@ namespace GruntiMaps.WebAPI.Models
             }
             else
             {
-                throw new Exception();
+                await _table.ExecuteAsync(TableOperation.Insert(new StatusEntity(id)));
             }
         }
     }
 
     public class StatusEntity : TableEntity
     {
-        public StatusEntity(string queueId, string jobId)
+        public StatusEntity(string id)
         {
             PartitionKey = AzureStatusTable.Workspace;
-            RowKey = queueId;
-            QueueId = queueId;
-            JobId = jobId;
-            Status = JobStatus.Queued.ToString();
+            RowKey = id;
+            Id = id;
+            Status = LayerStatus.Processing.ToString();
         }
 
         public StatusEntity() { }
 
-        public string QueueId { get; set; }
-
-        public string JobId { get; set; }
+        public string Id { get; set; }
 
         public string Status { get; set; }
     }

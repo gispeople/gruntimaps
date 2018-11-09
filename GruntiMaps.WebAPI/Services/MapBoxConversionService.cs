@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using GruntiMaps.WebAPI.DataContracts;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -67,9 +68,9 @@ namespace GruntiMaps.WebAPI.Services
             var mbMsg = await _mapdata.MbConversionQueue.GetMessage();
             if (mbMsg != null) // if no message, don't try
             {
+                ConversionMessageData mbData = null;
                 try
                 {
-                    ConversionMessageData mbData;
                     try
                     {
                         mbData = JsonConvert.DeserializeObject<ConversionMessageData>(mbMsg.Content);
@@ -102,12 +103,12 @@ namespace GruntiMaps.WebAPI.Services
                         _logger.LogDebug($"The directory was created successfully at {Directory.GetCreationTime(tempPath)}.");
 
                         // retrieve the geoJSON file from the supplied URI 
-                        var geoJsonFilename = $"{mbData.LayerName}.geojson";
+                        var geoJsonFilename = $"{mbData.LayerId}.geojson";
                         var inputFile = Path.Combine(tempPath, geoJsonFilename);
                         _logger.LogDebug($"Downloading {mbData.DataLocation} to {inputFile}");
                         WebClient myWebClient = new WebClient();
                         myWebClient.DownloadFile(mbData.DataLocation, inputFile);
-                        var mbtilesFilename = $"{mbData.LayerName}.mbtiles";
+                        var mbtilesFilename = $"{mbData.LayerId}.mbtiles";
                         var mbtileFile = Path.Combine(tempPath, mbtilesFilename);
                         var tippecanoe = new Process
                         {
@@ -155,7 +156,7 @@ namespace GruntiMaps.WebAPI.Services
 
                         _logger.LogDebug($"mbtile file is in {mbtileFile}");
                         // now we need to put the converted mbtile file into storage
-                        await _mapdata.TileContainer.Store($"{mbData.LayerName}.mbtiles", mbtileFile);
+                        await _mapdata.TileContainer.Store($"{mbData.LayerId}.mbtiles", mbtileFile);
                         _logger.LogDebug("Upload of mbtile file to storage complete.");
                         var end = DateTime.UtcNow;
                         var duration = end - start;
@@ -163,11 +164,14 @@ namespace GruntiMaps.WebAPI.Services
                     }
                     await _mapdata.MbConversionQueue.DeleteMessage(mbMsg);
                     _logger.LogDebug("Deleted MapBoxConversion message");
-                    await _mapdata.JobStatusTable.UpdateStatus(mbMsg.Id, JobStatus.Finished);
+                    await _mapdata.JobStatusTable.UpdateStatus(mbData.LayerId, LayerStatus.Finished);
                 }
                 catch (Exception)
                 {
-                    await _mapdata.JobStatusTable.UpdateStatus(mbMsg.Id, JobStatus.Failed);
+                    if (mbData != null)
+                    {
+                        await _mapdata.JobStatusTable.UpdateStatus(mbData.LayerId, LayerStatus.Failed);
+                    }
                     throw;
                 }
             }

@@ -27,8 +27,9 @@ namespace GruntiMaps.WebAPI.Models
 {
     public class MapBoxSource : IMapBoxSource
     {
-        public MapBoxSource(SqliteConnection connection, string serviceName)
+        public MapBoxSource(SqliteConnection connection, string serviceName, string id)
         {
+            this.id = id;
             try
             {
                 using (var metaCmd = connection.CreateCommand())
@@ -101,10 +102,12 @@ namespace GruntiMaps.WebAPI.Models
             if (scheme == null) scheme = "xyz";
             type = format == "pbf" ? "vector" : "raster";
             tiles = new string[1];
-            tiles[0] = $"#publicHost#/api/layers/tiles/{serviceName}?x={{x}}&y={{y}}&z={{z}}";
+            tiles[0] = $"#publicHost#/api/layers/tiles/{id}?x={{x}}&y={{y}}&z={{z}}";
         }
 
 #pragma warning disable IDE1006 // Naming Styles
+        public string id { get; set; }
+
         public string tilejson { get; set; }
 
         public string name { get; set; }

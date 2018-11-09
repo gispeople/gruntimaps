@@ -23,9 +23,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Net;
 using System.Threading.Tasks;
+using GruntiMaps.WebAPI.DataContracts;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.Logging;
@@ -38,6 +38,7 @@ namespace GruntiMaps.WebAPI.Services
         private readonly ILogger<GdalConversionService> _logger;
         private readonly IMapData _mapdata;
         private readonly Options _options;
+        private readonly List<string> _supportedFileTypes;
 //        private static DocumentClient _client;
 
         /// <summary>
@@ -51,6 +52,7 @@ namespace GruntiMaps.WebAPI.Services
             _logger = logger;
             _mapdata = mapdata;
             _options = options;
+            _supportedFileTypes = new List<string> { ".shp", ".geojson", ".gdb" };
 //            var EndpointUrl = "https://localhost:8081";
 //            var AuthorisationKey = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
 //            _client = new DocumentClient(new Uri(EndpointUrl), AuthorisationKey);
@@ -68,9 +70,9 @@ namespace GruntiMaps.WebAPI.Services
             var gdalMsg = await _mapdata.GdConversionQueue.GetMessage();
             if (gdalMsg != null) // if no message, don't try
             {
+                ConversionMessageData gdalData = null;
                 try
                 {
-                    ConversionMessageData gdalData;
                     try
                     {
                         gdalData = JsonConvert.DeserializeObject<ConversionMessageData>(gdalMsg.Content);
@@ -112,97 +114,78 @@ namespace GruntiMaps.WebAPI.Services
                     {
                         // retrieve the source data file from the supplied URI 
                         var remoteUri = new Uri(gdalData.DataLocation);
-                        // we will need to know if this is a zip file later so that we can tell GDAL to use the zip virtual file system.
-                        var isZip = Path.GetExtension(remoteUri.AbsolutePath).ToUpper() == ".ZIP";
+                        // we will need to know if this is a supported file type
+                        var fileType = Path.GetExtension(remoteUri.AbsolutePath).ToLower();
+                        if (!_supportedFileTypes.Contains(fileType))
+                        {
+                            throw new Exception($"Unsupported file type: {fileType}");
+                        }
+
                         var localFile = Path.Combine(sourcePath, Path.GetFileName(remoteUri.AbsolutePath));
                         WebClient myWebClient = new WebClient();
                         _logger.LogDebug($"Downloading {gdalData.DataLocation} to {localFile}");
                         myWebClient.DownloadFile(gdalData.DataLocation, localFile);
-                        List<string> filesToProcess = new List<string>();   // a list of files to convert 
-                                                                            // There could be multiple files if we were given a zip file - currently we look for shp and gdb. 
-                        if (isZip)
-                        {
-                            // if it was a zip file we will extract it and use the content as the input.
-                            using (var zip = ZipFile.OpenRead(localFile))
-                            {
-                                zip.ExtractToDirectory(sourcePath);
-                            }
-                            // Shape files are handled differently because there are usually multiple files per shape and we don't want to process the supporting files.
-                            filesToProcess.AddRange(Directory.GetFiles(sourcePath, "*.shp"));
-                            // GDB is also processed differently because they are actually directories, not files, but are treated by GDAL like they were files.
-                            filesToProcess.AddRange(Directory.GetDirectories(sourcePath, "*.gdb"));
-                            // for the moment we'll add geojson too. There's bound to be others we'll want to support but this should get us going.
-                            filesToProcess.AddRange(Directory.GetFiles(sourcePath, "*.geojson"));
-                        }
-                        else
-                        {
-                            // not a zip file so we will assume that it's a single file to convert.
-                            filesToProcess.Add(localFile);
-                        }
 
-                        foreach (var sourceFile in filesToProcess)
+                        var geoJsonFile = Path.Combine(destPath, $"{gdalData.LayerId}.geojson");
+                        var gdalProcess = new Process
                         {
-                            var layerName = Path.GetFileNameWithoutExtension(sourceFile);
-
-                            var geoJsonFile = Path.Combine(destPath, $"{layerName}.geojson");
-                            var gdalProcess = new Process
-                            {
-                                StartInfo = {
+                            StartInfo = {
                                 FileName = "ogr2ogr",
                                 Arguments =
                                     "-f \"GeoJSON\" " +    // always converting to GeoJSON
-                                    $"-nln \"{layerName}\" " +
+                                    $"-nln \"{gdalData.LayerName}\" " +
                                     "-t_srs \"EPSG:4326\" " +  // always transform to WGS84
                                     $"{geoJsonFile} " +
-                                    $"{sourceFile}",
+                                    $"{localFile}",
                                 UseShellExecute = false,
                                 RedirectStandardOutput = true,
                                 RedirectStandardError = true,
                                 CreateNoWindow = true
                             }
-                            };
-                            _logger.LogDebug($"ogr2ogr arguments are {gdalProcess.StartInfo.Arguments}");
+                        };
+                        _logger.LogDebug($"ogr2ogr arguments are {gdalProcess.StartInfo.Arguments}");
 
-                            gdalProcess.Start();
-                            var errmsg = "";
-                            while (!gdalProcess.StandardError.EndOfStream) errmsg += gdalProcess.StandardError.ReadLine();
-                            gdalProcess.WaitForExit();
-                            var exitCode = gdalProcess.ExitCode;
-                            _logger.LogDebug($"og2ogr returned exit code {exitCode}");
-                            if (exitCode != 0)
-                            {
-                                _logger.LogError($"Spatial data to GeoJSON conversion failed (errcode={exitCode}), msgs = {errmsg}");
-                                throw new Exception($"Spatial data to GeoJSON conversion failed. {errmsg}");
-                            }
-
-
-                            _logger.LogDebug($"geojson file is in {geoJsonFile}");
-                            // now we need to put the converted geojson file into storage
-                            var location = await _mapdata.GeojsonContainer.Store($"{layerName}.geojson", geoJsonFile);
-                            _logger.LogDebug("Upload of geojson file to storage complete.");
-
-                            var end = DateTime.UtcNow;
-                            var duration = end - start;
-                            _logger.LogDebug($"GDALConversion took {duration.TotalMilliseconds} ms.");
-
-                            // we created geoJson so we can put a request in for geojson to mvt conversion.
-                            var mbRequestId = await _mapdata.CreateMbConversionRequest(new ConversionMessageData
-                            {
-                                DataLocation = location,
-                                Description = gdalData.Description,
-                                LayerName = layerName
-                            });
-                            await _mapdata.JobStatusTable.AddStatus(mbRequestId, gdalMsg.Id);
+                        gdalProcess.Start();
+                        var errmsg = "";
+                        while (!gdalProcess.StandardError.EndOfStream) errmsg += gdalProcess.StandardError.ReadLine();
+                        gdalProcess.WaitForExit();
+                        var exitCode = gdalProcess.ExitCode;
+                        _logger.LogDebug($"og2ogr returned exit code {exitCode}");
+                        if (exitCode != 0)
+                        {
+                            _logger.LogError($"Spatial data to GeoJSON conversion failed (errcode={exitCode}), msgs = {errmsg}");
+                            throw new Exception($"Spatial data to GeoJSON conversion failed. {errmsg}");
                         }
+
+
+                        _logger.LogDebug($"geojson file is in {geoJsonFile}");
+                        // now we need to put the converted geojson file into storage
+                        var location = await _mapdata.GeojsonContainer.Store($"{gdalData.LayerId}.geojson", geoJsonFile);
+                        _logger.LogDebug("Upload of geojson file to storage complete.");
+
+                        var end = DateTime.UtcNow;
+                        var duration = end - start;
+                        _logger.LogDebug($"GDALConversion took {duration.TotalMilliseconds} ms.");
+
+                        // we created geoJson so we can put a request in for geojson to mvt conversion.
+                        await _mapdata.CreateMbConversionRequest(new ConversionMessageData
+                        {
+                            LayerId = gdalData.LayerId,
+                            DataLocation = location,
+                            Description = gdalData.Description,
+                            LayerName = gdalData.LayerName
+                        });
                     }
                     // we completed GDAL conversion and creation of MVT conversion request, so remove the GDAL request from the queue
                     _logger.LogDebug("deleting gdal message from queue");
                     await _mapdata.GdConversionQueue.DeleteMessage(gdalMsg);
-                    await _mapdata.JobStatusTable.UpdateStatus(gdalMsg.Id, JobStatus.Finished);
                 }
                 catch (Exception)
                 {
-                    await _mapdata.JobStatusTable.UpdateStatus(gdalMsg.Id, JobStatus.Failed);
+                    if (gdalData != null)
+                    {
+                        await _mapdata.JobStatusTable.UpdateStatus(gdalData.LayerId, LayerStatus.Failed);
+                    }
                     throw;
                 }
             }

@@ -85,14 +85,14 @@ namespace GruntiMaps.WebAPI.Models
             OpenTiles();
         }
 
-        public async Task<string> CreateGdalConversionRequest(ConversionMessageData messageData)
+        public async Task CreateGdalConversionRequest(ConversionMessageData messageData)
         {
-            return await GdConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
+            await GdConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
         }
 
-        public async Task<string> CreateMbConversionRequest(ConversionMessageData messageData)
+        public async Task CreateMbConversionRequest(ConversionMessageData messageData)
         {
-            return await MbConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
+            await MbConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
         }
 
         // retrieve global and per-instance tile packs 
@@ -145,7 +145,7 @@ namespace GruntiMaps.WebAPI.Models
             foreach (var mbtile in mbtiles)
             {
                 var thismbtile = Path.Combine(CurrentOptions.TilePath, mbtile);
-                if (await PackContainer.GetIfNewer(mbtile, thismbtile))
+                if (await TileContainer.GetIfNewer(mbtile, thismbtile))
                 {
                     OpenService(thismbtile);
                 }
@@ -174,13 +174,13 @@ namespace GruntiMaps.WebAPI.Models
         {
             // don't try to open the file if it's locked, or if it doesn't pass basic mbtile file requirements
             if (IsFileLocked(mbtilefile) || !IsValidMbTile(mbtilefile)) return;
-            var name = Path.GetFileNameWithoutExtension(mbtilefile);
-            if (name == null || LayerDict.ContainsKey(name)) return;
+            var id = Path.GetFileNameWithoutExtension(mbtilefile);
+            if (id == null || LayerDict.ContainsKey(id)) return;
 
             try
             {
-                var layer = new Layer(CurrentOptions, name);
-                LayerDict.Add(layer.Name, layer);
+                var layer = new Layer(CurrentOptions, id);
+                LayerDict.Add(id, layer);
 
             }
             catch (Exception e)

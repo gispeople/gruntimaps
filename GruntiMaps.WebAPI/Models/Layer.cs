@@ -48,15 +48,15 @@ namespace GruntiMaps.WebAPI.Models
             "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", 
             "#8DB600", "#654522", "#E25822", "#2B3D26", "#F2F3F4" };
 
-        public Layer(Options options, string dbname)
+        public Layer(Options options, string id)
         {
             _options = options;
             try
             {
-                DbName = dbname;
+                Id = id;
 //                var dataName = DataJson["vector_layers"][0]["id"].ToString();
 //                Name = dataName;
-                Source = new MapBoxSource(Conn, Name);
+                Source = new MapBoxSource(Conn, Name, id);
             }
             catch (Exception e)
             {
@@ -69,7 +69,7 @@ namespace GruntiMaps.WebAPI.Models
             set => SetName(value); 
         }
 
-        public string DbName { get; set; }
+        public string Id { get; set; }
 
         public string Path { get; set; }
 
@@ -100,12 +100,12 @@ namespace GruntiMaps.WebAPI.Models
             var connStr = "";
             try
             {
-                if (DbName == null) return null;
+                if (Id == null) return null;
                 var builder = new SqliteConnectionStringBuilder
                 {
                     Mode = SqliteOpenMode.ReadOnly,
                     Cache = SqliteCacheMode.Shared,
-                    DataSource = System.IO.Path.Combine(_options.TileDir, $"{DbName}.mbtiles")
+                    DataSource = System.IO.Path.Combine(_options.TileDir, $"{Id}.mbtiles")
                 };
                 Path = builder.DataSource;
                 if (writeable) builder.Mode = SqliteOpenMode.ReadWrite;
@@ -117,7 +117,7 @@ namespace GruntiMaps.WebAPI.Models
             catch (Exception e)
             {
                 throw new Exception(
-                    $"Failed to open database for service {DbName} (connection string={connStr}) exception={e}", e);
+                    $"Failed to open database for service {Id} (connection string={connStr}) exception={e}", e);
             }
         }
 
@@ -132,7 +132,7 @@ namespace GruntiMaps.WebAPI.Models
                 _name = Convert.ToString(result);
             }
 
-            return _name ?? (_name = DbName);
+            return _name ?? (_name = Id);
         }
         private void SetName(string value) {
             using (var rwConn = GetConnection(true)) {
@@ -207,7 +207,7 @@ namespace GruntiMaps.WebAPI.Models
         private JArray GetStyle()
         {
 //            if (_style != null) return _style;
-            var styleFile = System.IO.Path.Combine(_options.StyleDir, $"{DbName}.json");
+            var styleFile = System.IO.Path.Combine(_options.StyleDir, $"{Id}.json");
             if (!File.Exists(styleFile))
             {
                 _style = new JArray();

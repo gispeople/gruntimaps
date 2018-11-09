@@ -23,6 +23,7 @@ namespace GruntiMaps.WebAPI.Models
     // Message sent to data converter that describes the work to be done.
     public class ConversionMessageData
     {
+        public string LayerId;
         public string Description;
         public string DataLocation;
         public string LayerName;
