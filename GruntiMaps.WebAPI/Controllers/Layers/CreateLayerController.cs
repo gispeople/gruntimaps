@@ -30,8 +30,26 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
             await _mapData.JobStatusTable.UpdateStatus(messageData.LayerId, LayerStatus.Processing);
             return new LayerCreationDto()
             {
-                LayerId = messageData.LayerId
+                LayerId = messageData.LayerId,
+                Link = GetLayerLink(messageData.LayerId)
             };
+        }
+
+        public LinkDto GetLayerLink(string id)
+        {
+            return new LinkDto(LinkRelations.Self, $"{GetBaseHost()}/api/layers/{id}");
+        }
+
+        private string GetBaseHost()
+        {
+            // if X-Forwarded-Proto or X-Forwarded-Host headers are set, use them to build the self-referencing URLs
+            var proto = string.IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Proto"])
+                ? Request.Scheme
+                : (string)Request.Headers["X-Forwarded-Proto"];
+            var host = string.IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Host"])
+                ? Request.Host.ToUriComponent()
+                : (string)Request.Headers["X-Forwarded-Host"];
+            return $"{proto}://{host}";
         }
     }
 }
