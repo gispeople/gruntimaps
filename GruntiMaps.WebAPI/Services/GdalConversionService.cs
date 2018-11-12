@@ -180,13 +180,13 @@ namespace GruntiMaps.WebAPI.Services
                     _logger.LogDebug("deleting gdal message from queue");
                     await _mapdata.GdConversionQueue.DeleteMessage(gdalMsg);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     if (gdalData != null)
                     {
                         await _mapdata.JobStatusTable.UpdateStatus(gdalData.LayerId, LayerStatus.Failed);
                     }
-                    throw;
+                    throw ex;
                 }
             }
             await Task.Delay(_options.CheckConvertTime);

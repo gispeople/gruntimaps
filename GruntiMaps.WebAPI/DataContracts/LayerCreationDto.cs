@@ -3,6 +3,5 @@
     public class LayerCreationDto
     {
         public string LayerId { get; set; }
-        public string RequestId { get; set; }
     }
 }

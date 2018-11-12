@@ -106,14 +106,24 @@ namespace GruntiMaps.WebAPI.Controllers
         public async Task<LayerDto> GetService(string id)
         {
             var baseUrl = $"{GetBaseHost()}/api/layers";
+            var status = await _mapData.JobStatusTable.GetStatus(id);
             if (!_mapData.LayerDict.ContainsKey(id))
             {
-                throw new HttpRequestException("Not found");
+                if (status.HasValue) 
+                {
+                    return new LayerDto()
+                    {
+                        Id = id,
+                        Status = status.Value
+                    };
+                }
+                else
+                {
+                    throw new HttpRequestException("Not found");
+                }
             }
 
             var layer = (Layer)_mapData.LayerDict[id];
-
-            var status = await _mapData.JobStatusTable.GetStatus(id);
 
             return new LayerDto()
             {

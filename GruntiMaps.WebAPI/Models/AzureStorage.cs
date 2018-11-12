@@ -27,7 +27,7 @@ namespace GruntiMaps.WebAPI.Models
         // returns the location of the created file 
         public async Task<string> Store(string fileName, string inputPath)
         {
-            CloudBlockBlob blob = (CloudBlockBlob)AzureContainer.GetBlobReference(fileName);
+            var blob = AzureContainer.GetBlockBlobReference(fileName);
 
             using (var fileStream = File.OpenRead(inputPath))
             {
@@ -39,7 +39,7 @@ namespace GruntiMaps.WebAPI.Models
 
         public async Task<bool> GetIfNewer(string fileName, string outputPath)
         {
-            CloudBlockBlob blob = (CloudBlockBlob)AzureContainer.GetBlobReference(fileName);
+            CloudBlockBlob blob = AzureContainer.GetBlockBlobReference(fileName);
             if (MatchesLength(fileName, blob.Properties.Length)) return false;
             using (var fileStream = File.OpenWrite(outputPath))
             {

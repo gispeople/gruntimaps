@@ -50,7 +50,7 @@ namespace GruntiMaps.WebAPI.Models
             if (!currentStatus.HasValue)
             {
                 // create one if status doesn't exist
-                msg = "INSERT INTO Statuses (Id, Status) VALUES($Id, #Status)";
+                msg = "INSERT INTO Statuses (Id, Status) VALUES($Id, $Status)";
             }
             else
             {
@@ -59,7 +59,7 @@ namespace GruntiMaps.WebAPI.Models
             }
             var cmd = new SqliteCommand(msg, _queueDatabase);
             cmd.Parameters.AddWithValue("$Status", status.ToString());
-            cmd.Parameters.AddWithValue("$QueueId", id);
+            cmd.Parameters.AddWithValue("$Id", id);
             cmd.ExecuteScalar();
         }
 

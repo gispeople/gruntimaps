@@ -30,8 +30,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
             await _mapData.JobStatusTable.UpdateStatus(messageData.LayerId, LayerStatus.Processing);
             return new LayerCreationDto()
             {
-                LayerId = messageData.LayerId,
-                RequestId = ""
+                LayerId = messageData.LayerId
             };
         }
     }
