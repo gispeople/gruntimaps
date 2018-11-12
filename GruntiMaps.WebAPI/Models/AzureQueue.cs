@@ -24,9 +24,7 @@ namespace GruntiMaps.WebAPI.Models
 
         public async Task<string> AddMessage(string messageData)
         {
-
-            var jsonMsg = JsonConvert.SerializeObject(messageData);
-            CloudQueueMessage message = new CloudQueueMessage(jsonMsg);
+            CloudQueueMessage message = new CloudQueueMessage(messageData);
             await QueueRef.AddMessageAsync(message);
             return message.Id;
         }
@@ -44,7 +42,7 @@ namespace GruntiMaps.WebAPI.Models
                 return new Message
                 {
                     Id = msg.Id,
-                    Content = JsonConvert.DeserializeObject<string>(msg.AsString),
+                    Content = msg.AsString,
                     PopReceipt = msg.PopReceipt,
                 };
             }
