@@ -24,24 +24,28 @@ namespace GruntiMaps.WebAPI.Models
 
         public async Task<string> AddMessage(string messageData)
         {
-
-            var jsonMsg = JsonConvert.SerializeObject(messageData);
-            CloudQueueMessage message = new CloudQueueMessage(jsonMsg);
+            CloudQueueMessage message = new CloudQueueMessage(messageData);
             await QueueRef.AddMessageAsync(message);
             return message.Id;
         }
 
         public async Task<Message> GetMessage()
         {
-            Message result = new Message();
             // if there is a job on the queue, process it.
             var msg = await QueueRef.GetMessageAsync();
-            if (msg == null) return result;
-            result.Id = msg.Id;
-            result.Content = msg.AsString;
-            result.PopReceipt = msg.PopReceipt;
-
-            return result;
+            if (msg == null) 
+            {
+                return null;
+            }
+            else
+            {
+                return new Message
+                {
+                    Id = msg.Id,
+                    Content = msg.AsString,
+                    PopReceipt = msg.PopReceipt,
+                };
+            }
         }
 
         public async Task DeleteMessage(Message message)

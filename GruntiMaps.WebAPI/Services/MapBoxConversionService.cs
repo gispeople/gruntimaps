@@ -166,13 +166,13 @@ namespace GruntiMaps.WebAPI.Services
                     _logger.LogDebug("Deleted MapBoxConversion message");
                     await _mapdata.JobStatusTable.UpdateStatus(mbData.LayerId, LayerStatus.Finished);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     if (mbData != null)
                     {
                         await _mapdata.JobStatusTable.UpdateStatus(mbData.LayerId, LayerStatus.Failed);
                     }
-                    throw;
+                    throw ex;
                 }
             }
             await Task.Delay(_options.CheckConvertTime);
