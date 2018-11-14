@@ -37,6 +37,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace GruntiMaps.WebAPI.Controllers
@@ -48,12 +49,14 @@ namespace GruntiMaps.WebAPI.Controllers
         private readonly IMapData _mapData;
         private readonly Options _options;
         private readonly IHostingEnvironment _hostingEnv;
+        private readonly ILogger _logger;
 
-        public RestApiController(IMapData mapData, Options options, IHostingEnvironment hostingEnv)
+        public RestApiController(IMapData mapData, Options options, IHostingEnvironment hostingEnv, ILogger<RestApiController> logger)
         {
             _options = options;
             _mapData = mapData;
             _hostingEnv = hostingEnv;
+            _logger = logger;
         }
 
         // RESTful api root
@@ -162,12 +165,19 @@ namespace GruntiMaps.WebAPI.Controllers
                 return new RestError(404, new[] {
                     new RestErrorDetails { field = "id", issue = "Pack does not exist" }
                 }).AsJsonResult();
-            var result = new FileContentResult(System.IO.File.ReadAllBytes(path), "application/zip")
-            {
-                // assign a file name to the download
-                FileDownloadName = $"{zipFileName}"
-            };
-            return result;
+            try {
+                var result = new FileContentResult(System.IO.File.ReadAllBytes(path), "application/zip")
+                {
+                    // assign a file name to the download
+                    FileDownloadName = $"{zipFileName}"
+                };
+                return result;
+            } catch (Exception ex) {
+                _logger.LogError($"Failed to read from existing zip file ({path}). {ex}");
+                return new RestError(404, new[] {
+                    new RestErrorDetails { field = "id", issue = "Pack does not exist" }
+                }).AsJsonResult();
+            }
         }
 
         // Retrieve tile. 
@@ -360,7 +370,11 @@ namespace GruntiMaps.WebAPI.Controllers
 
                 var path = Path.Combine(_options.FontPath, $@"{fontChoice}", $"{range}.pbf");
                 if (System.IO.File.Exists(path))
+                try {
                     return new FileContentResult(System.IO.File.ReadAllBytes(path), "application/x-protobuf");
+                } catch (Exception ex) {
+                    _logger.LogError($"Unexpectedly could not read font file at {path}");
+                }
             }
             if (details.Count > 0) return new RestError(400, details.ToArray()).AsJsonResult();
             return new RestError(404, new[]

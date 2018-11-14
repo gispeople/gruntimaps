@@ -58,10 +58,10 @@ namespace GruntiMaps.WebAPI.Models
             switch (options.StorageProvider)
             {
                 case StorageProviders.Azure: 
-                    PackContainer = new AzureStorage(CurrentOptions, CurrentOptions.StorageContainer);
-                    TileContainer = new AzureStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
-                    GeojsonContainer = new AzureStorage(CurrentOptions, CurrentOptions.GeoJsonContainer);
-                    FontContainer = new AzureStorage(CurrentOptions, CurrentOptions.FontContainer);
+                    PackContainer = new AzureStorage(CurrentOptions, CurrentOptions.StorageContainer, logger);
+                    TileContainer = new AzureStorage(CurrentOptions, CurrentOptions.MbTilesContainer, logger);
+                    GeojsonContainer = new AzureStorage(CurrentOptions, CurrentOptions.GeoJsonContainer, logger);
+                    FontContainer = new AzureStorage(CurrentOptions, CurrentOptions.FontContainer, logger);
                     MbConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.MbConvQueue);
                     GdConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.GdConvQueue);
                     JobStatusTable = new AzureStatusTable(CurrentOptions, CurrentOptions.JobStatusTable);

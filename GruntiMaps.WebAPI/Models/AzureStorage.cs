@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using GruntiMaps.WebAPI.Interfaces;
+using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -14,8 +16,10 @@ namespace GruntiMaps.WebAPI.Models
         public CloudStorageAccount CloudAccount { get; }
         public CloudBlobClient CloudClient { get; }
         private CloudBlobContainer AzureContainer { get; }
-        public AzureStorage(Options options, string containerName)
+        private readonly ILogger _logger;
+        public AzureStorage(Options options, string containerName, ILogger logger)
         {
+            _logger = logger;
             CloudAccount =
                 new CloudStorageAccount(
                     new StorageCredentials(options.StorageAccount, options.StorageKey), true);
@@ -28,24 +32,32 @@ namespace GruntiMaps.WebAPI.Models
         public async Task<string> Store(string fileName, string inputPath)
         {
             var blob = AzureContainer.GetBlockBlobReference(fileName);
+            try {
+                using (var fileStream = File.OpenRead(inputPath))
+                {
+                    await blob.UploadFromStreamAsync(fileStream);
+                }
 
-            using (var fileStream = File.OpenRead(inputPath))
-            {
-                await blob.UploadFromStreamAsync(fileStream);
+                return blob.Uri.ToString();
+            } catch (Exception ex) {
+                _logger.LogError($"Could not read input file at {inputPath}. {ex}");
+                return null;
             }
-
-            return blob.Uri.ToString();
         }
 
         public async Task<bool> GetIfNewer(string fileName, string outputPath)
         {
             CloudBlockBlob blob = AzureContainer.GetBlockBlobReference(fileName);
             if (MatchesLength(fileName, blob.Properties.Length)) return false;
-            using (var fileStream = File.OpenWrite(outputPath))
-            {
-                await blob.DownloadToStreamAsync(fileStream);
+            try {
+                using (var fileStream = File.OpenWrite(outputPath))
+                {
+                    await blob.DownloadToStreamAsync(fileStream);
+                }
+            } catch (Exception ex) {
+                _logger.LogError($"Could not write to output file at {outputPath}. {ex}");
+                return false;
             }
-
             return true;
         }
 

@@ -214,6 +214,9 @@ namespace GruntiMaps.WebAPI.Models
 
                 JObject data = GetDataJson();
                 JObject tilestats = (JObject)data["tilestats"];
+                // if no tilestats, we have nothing to base our style on
+                if (tilestats == null) return _style;
+                // if no layers represented in tilestats, still nothing to base on
                 if ((int) tilestats["layerCount"] <= 0) return _style;
                 JArray layers = (JArray)tilestats["layers"];
                 foreach (var layer in layers)
