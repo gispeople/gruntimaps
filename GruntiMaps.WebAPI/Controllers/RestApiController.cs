@@ -373,7 +373,7 @@ namespace GruntiMaps.WebAPI.Controllers
                 try {
                     return new FileContentResult(System.IO.File.ReadAllBytes(path), "application/x-protobuf");
                 } catch (Exception ex) {
-                    _logger.LogError($"Unexpectedly could not read font file at {path}");
+                    _logger.LogError($"Unexpectedly could not read font file at {path}. {ex}");
                 }
             }
             if (details.Count > 0) return new RestError(400, details.ToArray()).AsJsonResult();
