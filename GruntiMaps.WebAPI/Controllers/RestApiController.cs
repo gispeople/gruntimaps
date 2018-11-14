@@ -181,18 +181,16 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Retrieve tile. 
-        [HttpGet("layers/{id}/tiles")]
-        public ActionResult Tile(string id, int? x, int? y, byte? z)
+        [HttpGet("layers/{id}/tiles/{x}/{y}/{z}")]
+        public ActionResult Tile(string id, int x, int y, int z)
         {
-            if (!x.HasValue || !y.HasValue || !z.HasValue)
-                return new RestError(400, IdentifyMissingCoordinates(x, y, z)).AsJsonResult();
             var bytes = GetTile(id, x, y, z);
             switch (_mapData.LayerDict[id].Source.format) {
                 case "png": return File(bytes, "image/png"); 
                 case "jpg": return File(bytes, "image/jpg"); 
                 case "pbf": return File(Decompress(bytes), "application/vnd.mapbox-vector-tile");
             }
-            return new RestError(400, IdentifyMissingCoordinates(x, y, z)).AsJsonResult();
+            return new RestError(400, IdentifyMissingCoordinates(x, y, (byte)z)).AsJsonResult();
         }
 
         private static RestErrorDetails[] IdentifyMissingCoordinates(int? x, int? y, byte? z)
@@ -423,17 +421,9 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Get a tile from a mapbox tile database.
-        private byte[] GetTile(string id, int? x, int? y, byte? z)
+        private byte[] GetTile(string id, int x, int y, int z)
         {
-            //validate input vars
-            if (x == null || y == null || z == null || id == null || !_mapData.LayerDict.ContainsKey(id))
-                return new byte[] { 0 };
-
-            y = IntPow(2, (byte)z) - 1 - y;
-
-            var conn = _mapData.LayerDict[id].Conn;
-
-            using (var cmd = conn.CreateCommand())
+            using (var cmd = _mapData.LayerDict[id].Conn.CreateCommand())
             {
                 var command =
                     $"select tile_data as t from tiles where zoom_level={z} and tile_column={x} and tile_row={y}";
