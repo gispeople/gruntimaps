@@ -151,7 +151,7 @@ namespace GruntiMaps.WebAPI.Controllers
             if (string.IsNullOrEmpty(id))
             {
                 return new RestError(400, new[] {
-                    new RestErrorDetails { field = "service", issue = "Service name must be supplied" }
+                    new RestErrorDetails { field = "id", issue = "Pack ID must be supplied" }
                 }).AsJsonResult();
             }
 
@@ -160,7 +160,7 @@ namespace GruntiMaps.WebAPI.Controllers
             var path = Path.Combine(_options.PackPath, $@"{zipFileName}");
             if (!System.IO.File.Exists(path))
                 return new RestError(404, new[] {
-                    new RestErrorDetails { field = "service", issue = "Service does not exist" }
+                    new RestErrorDetails { field = "id", issue = "Pack does not exist" }
                 }).AsJsonResult();
             var result = new FileContentResult(System.IO.File.ReadAllBytes(path), "application/zip")
             {
@@ -203,13 +203,13 @@ namespace GruntiMaps.WebAPI.Controllers
 
         }
 
-        // Retrieve the style snippet for this map service. 
+        // Retrieve the style snippet for this map id. 
         [HttpGet("layers/{id}/style")]
         public ActionResult Style(string id)
         {
             if (!_mapData.LayerDict.ContainsKey(id))
                 return new RestError(404, new[] {
-                    new RestErrorDetails{ field = "service", issue = "Service does not exist" }
+                    new RestErrorDetails{ field = "id", issue = "Layer ID does not exist" }
                 }).AsJsonResult();
             return Content(JsonPrettify(JsonConvert.SerializeObject(_mapData.LayerDict[id].Style)),
                 "application/json");
@@ -221,18 +221,18 @@ namespace GruntiMaps.WebAPI.Controllers
         {
             if (!_mapData.LayerDict.ContainsKey(id))
                 return new RestError(404, new[] {
-                    new RestErrorDetails{ field = "service", issue = "Service does not exist" }
+                    new RestErrorDetails{ field = "id", issue = "Layer ID does not exist" }
                 }).AsJsonResult();
             return Content(JsonPrettify(_mapData.LayerDict[id].DataJson.ToString()), "application/json");
         }
 
-        // Retrieve a json snippet that defines the mapbox 'source' for this service
+        // Retrieve a json snippet that defines the mapbox 'source' for this layer
         [HttpGet("layers/{id}/source")]
         public ActionResult Source(string id)
         {
             if (GetBaseUrl() == null || id == null || !_mapData.LayerDict.ContainsKey(id))
                 return new RestError(404, new[] {
-                    new RestErrorDetails{ field = "service", issue = "Service does not exist" }
+                    new RestErrorDetails{ field = "id", issue = "Layer ID does not exist" }
                 }).AsJsonResult();
             var src = _mapData.LayerDict[id].Source;
             src.tiles[0] = src.tiles[0].Replace("#publicHost#", GetBaseHost());
@@ -242,9 +242,9 @@ namespace GruntiMaps.WebAPI.Controllers
                 new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }), "application/json");
         }
 
-        // Retrieve the GeoJSON associated with this service
-        [HttpGet("layers/geojson/{service}")]
-        public ActionResult GeoJson(string service)
+        // Retrieve the GeoJSON associated with this id
+        [HttpGet("layers/geojson/{id}")]
+        public ActionResult GeoJson(string id)
         {
             // not yet implemented
             return Json(new { });
@@ -409,15 +409,15 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Get a tile from a mapbox tile database.
-        private byte[] GetTile(string service, int? x, int? y, byte? z)
+        private byte[] GetTile(string id, int? x, int? y, byte? z)
         {
             //validate input vars
-            if (x == null || y == null || z == null || service == null || !_mapData.LayerDict.ContainsKey(service))
+            if (x == null || y == null || z == null || id == null || !_mapData.LayerDict.ContainsKey(id))
                 return new byte[] { 0 };
 
             y = IntPow(2, (byte)z) - 1 - y;
 
-            var conn = _mapData.LayerDict[service].Conn;
+            var conn = _mapData.LayerDict[id].Conn;
 
             using (var cmd = conn.CreateCommand())
             {
@@ -432,15 +432,15 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Get a grid from the database.
-        private string GetGrid(string service, int? x, int? y, byte? z)
+        private string GetGrid(string id, int? x, int? y, byte? z)
         {
             //validate input vars
-            if (x == null || y == null || z == null || service == null ||
-                !_mapData.LayerDict.ContainsKey(service)) return "{}";
+            if (x == null || y == null || z == null || id == null ||
+                !_mapData.LayerDict.ContainsKey(id)) return "{}";
 
             y = IntPow(2, (byte)z) - 1 - y;
 
-            var conn = _mapData.LayerDict[service].Conn;
+            var conn = _mapData.LayerDict[id].Conn;
 
             using (var cmd = conn.CreateCommand())
             {
