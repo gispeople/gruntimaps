@@ -184,6 +184,7 @@ namespace GruntiMaps.WebAPI.Controllers
         [HttpGet("layers/{id}/tiles/{x}/{y}/{z}")]
         public ActionResult Tile(string id, int x, int y, int z)
         {
+            y = (1 << z) - y - 1;
             var bytes = GetTile(id, x, y, z);
             switch (_mapData.LayerDict[id].Source.format) {
                 case "png": return File(bytes, "image/png"); 
