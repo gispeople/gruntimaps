@@ -23,17 +23,20 @@ namespace GruntiMaps.Tests
         [Fact]
         public async void AddMessage()
         {
+            _output.WriteLine("Adding a message");
             _queue.Clear();
             const string msgString = "a new message";
             var msgId = await _queue.AddMessage(msgString);
             var message = await _queue.GetMessage();
             Assert.Equal(msgId, message.Id);
             Assert.Equal(msgString, message.Content);
+            _output.WriteLine("Finished adding a message");
         }
 
         [Fact]
         public async void DeleteMessage()
         {
+            _output.WriteLine("Deleting a message");
             _queue.Clear();
             const string msgString = "another message";
             var msgId = await _queue.AddMessage(msgString);
@@ -44,11 +47,14 @@ namespace GruntiMaps.Tests
             await _queue.DeleteMessage(message); // delete the message from the queue
             var message2 = await _queue.GetMessage();
             Assert.Null(message2);  // we started with an empty queue so message2 should have nothing in it.
+            _output.WriteLine("Finished deleting a message");
         }
 
         [Fact]
         public async void PoisonMessage()
         {
+            _output.WriteLine("Poisoning a message");
+           
             Stopwatch swAdd = new Stopwatch();
             Stopwatch swGet = new Stopwatch();
             const int total = 500;
@@ -71,6 +77,7 @@ namespace GruntiMaps.Tests
             }
             _output.WriteLine($"{total} adds took {swAdd.Elapsed}");
             _output.WriteLine($"{total} gets took {swGet.Elapsed}");
+            _output.WriteLine("Finished poisoning a message");
 
         }
         public void Dispose()
