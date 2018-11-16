@@ -24,7 +24,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using GruntiMaps.WebAPI.DataContracts;
+using GruntiMaps.Common.Enums;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;

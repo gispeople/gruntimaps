@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace GruntiMaps.WebAPI.DataContracts
+namespace GruntiMaps.Api.DataContracts.V2.Layers
 {
-    public class CreateLayerDto
+    public class UpdateLayerDto
     {
         [Required]
         public string Name { get; set; }

@@ -19,6 +19,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+using GruntiMaps.WebAPI.Filters;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Models;
 using GruntiMaps.WebAPI.Services;
@@ -29,6 +30,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using GruntiMaps.WebAPI.DependencyInjection;
 
 namespace GruntiMaps.WebAPI
 {
@@ -53,7 +55,10 @@ namespace GruntiMaps.WebAPI
             });
 
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc(options => { options.Filters.Add(new DomainExceptionFilter()); })
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddDomainServices();
             services.AddSingleton<Options>();
             services.AddSingleton<IMapData, MapData>();
             services.AddSingleton<IHostedService, LayerUpdateService>();

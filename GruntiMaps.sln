@@ -9,6 +9,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GruntiMaps.WebAPI", "Grunti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GruntiMaps.Tests", "GruntiMaps.Tests\GruntiMaps.Tests.csproj", "{6C653298-C155-4379-8F9D-1EE5629327A2}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GruntiMaps.Api.DataContracts", "GruntiMaps.Api.DataContracts\GruntiMaps.Api.DataContracts.csproj", "{2653CD2F-48B6-4443-825D-782E08C0A093}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GruntiMaps.Common", "GruntiMaps.Common\GruntiMaps.Common.csproj", "{1BF614AB-BC62-4991-8150-F4A1AE36A70D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GruntiMaps.Domain.Common", "GruntiMaps.Domain.Common\GruntiMaps.Domain.Common.csproj", "{31DB818F-4EB4-49F2-A1F9-6336EF70362F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gruntify.Api.Common", "Gruntify.Api.Common\Gruntify.Api.Common.csproj", "{B05D45F0-4AE9-4704-92F9-88EE8E6A4E4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +35,22 @@ Global
 		{6C653298-C155-4379-8F9D-1EE5629327A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C653298-C155-4379-8F9D-1EE5629327A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C653298-C155-4379-8F9D-1EE5629327A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2653CD2F-48B6-4443-825D-782E08C0A093}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2653CD2F-48B6-4443-825D-782E08C0A093}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2653CD2F-48B6-4443-825D-782E08C0A093}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2653CD2F-48B6-4443-825D-782E08C0A093}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BF614AB-BC62-4991-8150-F4A1AE36A70D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BF614AB-BC62-4991-8150-F4A1AE36A70D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BF614AB-BC62-4991-8150-F4A1AE36A70D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BF614AB-BC62-4991-8150-F4A1AE36A70D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31DB818F-4EB4-49F2-A1F9-6336EF70362F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31DB818F-4EB4-49F2-A1F9-6336EF70362F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31DB818F-4EB4-49F2-A1F9-6336EF70362F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31DB818F-4EB4-49F2-A1F9-6336EF70362F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B05D45F0-4AE9-4704-92F9-88EE8E6A4E4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B05D45F0-4AE9-4704-92F9-88EE8E6A4E4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B05D45F0-4AE9-4704-92F9-88EE8E6A4E4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B05D45F0-4AE9-4704-92F9-88EE8E6A4E4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

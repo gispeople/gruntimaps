@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using GruntiMaps.WebAPI.DataContracts;
+using GruntiMaps.Common.Enums;
 
 namespace GruntiMaps.WebAPI.Interfaces
 {
