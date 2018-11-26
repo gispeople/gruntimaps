@@ -1,5 +1,4 @@
-﻿using System;
-namespace GruntiMaps.WebAPI.DataContracts
+﻿namespace GruntiMaps.Api.DataContracts.V2
 {
     public class LinkDto
     {

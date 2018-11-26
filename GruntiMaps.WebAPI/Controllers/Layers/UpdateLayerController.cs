@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Common.Enums;
@@ -10,22 +9,21 @@ using Gruntify.Api.Common.Services;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers
 {
-    public class CreateLayerController : ApiControllerBase
+    public class UpdateLayerController : ApiControllerBase
     {
         private readonly IMapData _mapData;
         private readonly IResourceLinksGenerator _resourceLinksGenerator;
 
-        public CreateLayerController(IMapData mapData,
+        public UpdateLayerController(IMapData mapData,
             IResourceLinksGenerator resourceLinksGenerator)
         {
             _mapData = mapData;
             _resourceLinksGenerator = resourceLinksGenerator;
         }
 
-        [HttpPost(Resources.Layers)]
-        public async Task<LayerDto> Invoke([FromBody] CreateLayerDto dto)
+        [HttpPatch(Resources.Layers + "/{id}")]
+        public async Task<LayerDto> Invoke(string id, [FromBody] UpdateLayerDto dto)
         {
-            var id = Guid.NewGuid().ToString();
             ConversionMessageData messageData = new ConversionMessageData
             {
                 LayerId = id,
@@ -34,7 +32,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
                 Description = dto.Description
             };
             await _mapData.CreateGdalConversionRequest(messageData);
-            await _mapData.JobStatusTable.UpdateStatus(id, LayerStatus.Processing);
+            await _mapData.JobStatusTable.UpdateStatus(messageData.LayerId, LayerStatus.Processing);
             return new LayerDto()
             {
                 Id = id,

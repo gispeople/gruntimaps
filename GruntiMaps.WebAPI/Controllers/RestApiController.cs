@@ -18,7 +18,6 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -30,7 +29,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
-using GruntiMaps.WebAPI.DataContracts;
+using GruntiMaps.Api.DataContracts.V2.Layers;
+using GruntiMaps.Common.Enums;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.AspNetCore.Hosting;
@@ -39,6 +39,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Gruntify.Api.Common.Services;
+using Gruntify.Api.Common.Resources;
 
 namespace GruntiMaps.WebAPI.Controllers
 {
@@ -50,13 +52,19 @@ namespace GruntiMaps.WebAPI.Controllers
         private readonly Options _options;
         private readonly IHostingEnvironment _hostingEnv;
         private readonly ILogger _logger;
+        private readonly IResourceLinksGenerator _resourceLinksGenerator;
 
-        public RestApiController(IMapData mapData, Options options, IHostingEnvironment hostingEnv, ILogger<RestApiController> logger)
+        public RestApiController(IMapData mapData,
+                                 Options options,
+                                 IHostingEnvironment hostingEnv,
+                                 ILogger<RestApiController> logger,
+                                 IResourceLinksGenerator resourceLinksGenerator)
         {
             _options = options;
             _mapData = mapData;
             _hostingEnv = hostingEnv;
             _logger = logger;
+            _resourceLinksGenerator = resourceLinksGenerator;
         }
 
         // RESTful api root
@@ -105,14 +113,14 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // RESTful layer information
-        [HttpGet("layers/{id}")]
-        public async Task<LayerDto> GetService(string id)
+        [HttpGet("layers/{id}", Name = RouteNames.GetLayer)]
+        public async Task<LayerDto> GetLayer(string id)
         {
             var baseUrl = $"{GetBaseHost()}/api/layers";
             var status = await _mapData.JobStatusTable.GetStatus(id);
             if (!_mapData.LayerDict.ContainsKey(id))
             {
-                if (status.HasValue) 
+                if (status.HasValue)
                 {
                     return new LayerDto()
                     {
@@ -128,28 +136,21 @@ namespace GruntiMaps.WebAPI.Controllers
 
             var layer = (Layer)_mapData.LayerDict[id];
 
+            var links = _resourceLinksGenerator.GenerateResourceLinks(id);
+
             return new LayerDto()
             {
                 Id = layer.Id,
                 Name = layer.Name,
                 Description = layer.Source.description,
                 Status = status ?? LayerStatus.Finished,
-                Links = new List<LinkDto>
-                {
-                    new LinkDto(LinkRelations.Source, $"{baseUrl}/{id}/source"),
-                    new LinkDto(LinkRelations.Style, $"{baseUrl}/{id}/style"),
-                    new LinkDto(LinkRelations.Mappack, $"{baseUrl}/{id}/mappack"),
-                    new LinkDto(LinkRelations.Tiles, $"{baseUrl}/{id}/tiles"),
-                    new LinkDto(LinkRelations.Grid, $"{baseUrl}/{id}/grid"),
-                    new LinkDto(LinkRelations.Metadata, $"{baseUrl}/{id}/metadata"),
-                    new LinkDto(LinkRelations.Geojson, $"{baseUrl}/{id}/geojson")
-                }
+                Links = _resourceLinksGenerator.GenerateResourceLinks(id)
             };
         }
 
         // RESTful retrieve offline map pack.
-        [HttpGet("layers/{id}/mappack")]
-        public ActionResult MapPack(string id)
+        [HttpGet("layers/{id}/mappack", Name = nameof(GetLayerMapPack))]
+        public ActionResult GetLayerMapPack(string id)
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -165,14 +166,17 @@ namespace GruntiMaps.WebAPI.Controllers
                 return new RestError(404, new[] {
                     new RestErrorDetails { field = "id", issue = "Pack does not exist" }
                 }).AsJsonResult();
-            try {
+            try
+            {
                 var result = new FileContentResult(System.IO.File.ReadAllBytes(path), "application/zip")
                 {
                     // assign a file name to the download
                     FileDownloadName = $"{zipFileName}"
                 };
                 return result;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 _logger.LogError($"Failed to read from existing zip file ({path}). {ex}");
                 return new RestError(404, new[] {
                     new RestErrorDetails { field = "id", issue = "Pack does not exist" }
@@ -181,14 +185,15 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Retrieve tile. 
-        [HttpGet("layers/{id}/tiles/{x}/{y}/{z}")]
-        public ActionResult Tile(string id, int x, int y, int z)
+        [HttpGet("layers/{id}/tiles/{x}/{y}/{z}", Name = RouteNames.GetLayerTile)]
+        public ActionResult GetLayerTile(string id, int x, int y, int z)
         {
             y = (1 << z) - y - 1;
             var bytes = GetTile(id, x, y, z);
-            switch (_mapData.LayerDict[id].Source.format) {
-                case "png": return File(bytes, "image/png"); 
-                case "jpg": return File(bytes, "image/jpg"); 
+            switch (_mapData.LayerDict[id].Source.format)
+            {
+                case "png": return File(bytes, "image/png");
+                case "jpg": return File(bytes, "image/jpg");
                 case "pbf": return File(Decompress(bytes), "application/vnd.mapbox-vector-tile");
             }
             return new RestError(400, IdentifyMissingCoordinates(x, y, (byte)z)).AsJsonResult();
@@ -204,8 +209,8 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Get a mapbox grid.
-        [HttpGet("layers/{id}/grid")]
-        public ActionResult Grid(string id, int? x, int? y, byte? z)
+        [HttpGet("layers/{id}/grid", Name = RouteNames.GetLayerGrid)]
+        public ActionResult GetLayerGrid(string id, int? x, int? y, byte? z)
         {
             if (x.HasValue && y.HasValue && z.HasValue) return Content(GetGrid(id, x, y, z), "application/json");
             return new RestError(400, IdentifyMissingCoordinates(x, y, z)).AsJsonResult();
@@ -213,7 +218,7 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Retrieve the style snippet for this map id. 
-        [HttpGet("layers/{id}/style")]
+        [HttpGet("layers/{id}/style", Name = RouteNames.GetLayerStyle)]
         public ActionResult Style(string id)
         {
             if (!_mapData.LayerDict.ContainsKey(id))
@@ -225,8 +230,8 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Retrieve the data json to help with setting up initial styling
-        [HttpGet("layers/{id}/metadata")]
-        public ActionResult DataJson(string id)
+        [HttpGet("layers/{id}/metadata", Name = RouteNames.GetLayerMetaData)]
+        public ActionResult GetLayerMetaData(string id)
         {
             if (!_mapData.LayerDict.ContainsKey(id))
                 return new RestError(404, new[] {
@@ -236,8 +241,8 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Retrieve a json snippet that defines the mapbox 'source' for this layer
-        [HttpGet("layers/{id}/source")]
-        public ActionResult Source(string id)
+        [HttpGet("layersjjj/{id}/source", Name = RouteNames.GetLayerSource)]
+        public ActionResult GetLayerSource(string id)
         {
             if (GetBaseUrl() == null || id == null || !_mapData.LayerDict.ContainsKey(id))
                 return new RestError(404, new[] {
@@ -252,23 +257,13 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Retrieve the GeoJSON associated with this id
-        [HttpGet("layers/geojson/{id}")]
-        public ActionResult GeoJson(string id)
+        [HttpGet("layers/{id}/geojson", Name = RouteNames.GetLayerGeoJson)]
+        public ActionResult GetLayerGeoJson(string id)
         {
             // not yet implemented
             return Json(new { });
         }
 
-        [HttpGet("layers/create/{jobId}")]
-        public async Task<ActionResult> GetCreationJobStatus(string jobId) 
-        {
-            var jobStatus = await _mapData.JobStatusTable.GetStatus(jobId);
-            var status = jobStatus.HasValue ? jobStatus.ToString() : null;
-            return Json(new
-            {
-                status
-            });
-        }
 
         // Retrieve a list of all available fonts.
         [HttpGet("fonts")]
@@ -328,7 +323,7 @@ namespace GruntiMaps.WebAPI.Controllers
                     rel = "item"
                 }
             }).ToList();
-        
+
             return Json(new
             {
                 content = resources,
@@ -369,11 +364,14 @@ namespace GruntiMaps.WebAPI.Controllers
 
                 var path = Path.Combine(_options.FontPath, $@"{fontChoice}", $"{range}.pbf");
                 if (System.IO.File.Exists(path))
-                try {
-                    return new FileContentResult(System.IO.File.ReadAllBytes(path), "application/x-protobuf");
-                } catch (Exception ex) {
-                    _logger.LogError($"Unexpectedly could not read font file at {path}. {ex}");
-                }
+                    try
+                    {
+                        return new FileContentResult(System.IO.File.ReadAllBytes(path), "application/x-protobuf");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Unexpectedly could not read font file at {path}. {ex}");
+                    }
             }
             if (details.Count > 0) return new RestError(400, details.ToArray()).AsJsonResult();
             return new RestError(404, new[]
@@ -531,16 +529,16 @@ namespace GruntiMaps.WebAPI.Controllers
             return resBuffer;
         }
 
-        
+
         private string GetBaseHost()
         {
             // if X-Forwarded-Proto or X-Forwarded-Host headers are set, use them to build the self-referencing URLs
             var proto = string.IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Proto"])
                 ? Request.Scheme
-                :(string) Request.Headers["X-Forwarded-Proto"];
+                : (string)Request.Headers["X-Forwarded-Proto"];
             var host = string.IsNullOrWhiteSpace(Request.Headers["X-Forwarded-Host"])
                 ? Request.Host.ToUriComponent()
-                : (string) Request.Headers["X-Forwarded-Host"];
+                : (string)Request.Headers["X-Forwarded-Host"];
             return $"{proto}://{host}";
         }
 

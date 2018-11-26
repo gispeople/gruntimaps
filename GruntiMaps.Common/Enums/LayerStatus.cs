@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace GruntiMaps.WebAPI.DataContracts
+namespace GruntiMaps.Common.Enums
 {
     [JsonConverter(typeof(StringEnumConverter))]
     public enum LayerStatus

@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
-using GruntiMaps.WebAPI.DataContracts;
+using GruntiMaps.Api.DataContracts.V2.Layers;
+using GruntiMaps.Common.Enums;
 using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
-using GruntiMaps.WebAPI.DataContracts;
 using GruntiMaps.WebAPI.Models;
-using Xunit;
 
 namespace GruntiMaps.Tests
 {

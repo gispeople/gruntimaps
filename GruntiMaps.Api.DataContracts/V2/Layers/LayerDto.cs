@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using GruntiMaps.WebAPI.Models;
-namespace GruntiMaps.WebAPI.DataContracts
+﻿using System.Collections.Generic;
+using GruntiMaps.Common.Enums;
+
+namespace GruntiMaps.Api.DataContracts.V2.Layers
 {
     public class LayerDto
     {

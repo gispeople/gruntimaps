@@ -1,4 +1,4 @@
-﻿namespace GruntiMaps.WebAPI.DataContracts
+﻿namespace GruntiMaps.Api.DataContracts.V2.Layers
 {
     public class LayerCreationDto
     {

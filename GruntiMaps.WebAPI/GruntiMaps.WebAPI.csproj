@@ -14,5 +14,12 @@
 
   <ItemGroup>
     <Compile Remove="Enums\EmptyClass.cs" />
+    <Compile Remove="Controllers\Layers\Get\GetLayerController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gruntify.Api.Common\Gruntify.Api.Common.csproj" />
+    <ProjectReference Include="..\GruntiMaps.Api.DataContracts\GruntiMaps.Api.DataContracts.csproj" />
+    <ProjectReference Include="..\GruntiMaps.Common\GruntiMaps.Common.csproj" />
   </ItemGroup>
 </Project>
