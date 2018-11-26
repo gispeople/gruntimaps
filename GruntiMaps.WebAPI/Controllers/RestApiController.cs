@@ -241,7 +241,7 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         // Retrieve a json snippet that defines the mapbox 'source' for this layer
-        [HttpGet("layersjjj/{id}/source", Name = RouteNames.GetLayerSource)]
+        [HttpGet("layers/{id}/source", Name = RouteNames.GetLayerSource)]
         public ActionResult GetLayerSource(string id)
         {
             if (GetBaseUrl() == null || id == null || !_mapData.LayerDict.ContainsKey(id))
