@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using Gruntify.Api.Common.Resources;
+using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.DataContracts.V2;
 
-namespace Gruntify.Api.Common.Services
+namespace GruntiMaps.Api.Common.Services
 {
     public interface IResourceLinksGenerator
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 
-namespace Gruntify.Api.Common.Services
+namespace GruntiMaps.Api.Common.Services
 {
     public interface IUrlGenerator
     {

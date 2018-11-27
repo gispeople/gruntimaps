@@ -24,7 +24,6 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -39,8 +38,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Gruntify.Api.Common.Services;
-using Gruntify.Api.Common.Resources;
+using GruntiMaps.Api.Common.Resources;
+using GruntiMaps.Api.Common.Services;
 using GruntiMaps.Domain.Common.Exceptions;
 
 namespace GruntiMaps.WebAPI.Controllers
@@ -111,39 +110,6 @@ namespace GruntiMaps.WebAPI.Controllers
                 content = layerResources,
                 links = new { href = $"{baseUrl}", rel = "self" }
             });
-        }
-
-        // RESTful layer information
-        [HttpGet("layers/{id}", Name = RouteNames.GetLayer)]
-        public async Task<LayerDto> GetLayer(string id)
-        {
-            var status = await _mapData.JobStatusTable.GetStatus(id);
-            if (!_mapData.LayerDict.ContainsKey(id))
-            {
-                if (status.HasValue)
-                {
-                    return new LayerDto()
-                    {
-                        Id = id,
-                        Status = status.Value
-                    };
-                }
-                else
-                {
-                    throw new EntityNotFoundException();
-                }
-            }
-
-            var layer = (Layer)_mapData.LayerDict[id];
-
-            return new LayerDto()
-            {
-                Id = layer.Id,
-                Name = layer.Name,
-                Description = layer.Source.description,
-                Status = status ?? LayerStatus.Finished,
-                Links = _resourceLinksGenerator.GenerateResourceLinks(id)
-            };
         }
 
         // RESTful retrieve offline map pack.

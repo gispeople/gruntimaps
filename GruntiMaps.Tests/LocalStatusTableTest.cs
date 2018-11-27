@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using GruntiMaps.ResourceAccess.Local;
 using GruntiMaps.WebAPI.Models;
 
 namespace GruntiMaps.Tests
@@ -16,7 +17,7 @@ namespace GruntiMaps.Tests
                 QueueTimeLimit = 1, // set the time limit to 1 minute so we can check that expiry works
                 QueueEntryTries = 2 // try twice in our tests.
             };
-            _table = new LocalStatusTable(options, "testTable");
+            _table = new LocalStatusTable(options.StoragePath, "testTable");
             _jobId = Guid.NewGuid().ToString();
         }
 

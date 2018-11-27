@@ -1,4 +1,4 @@
-﻿using Gruntify.Api.Common.Services;
+﻿using GruntiMaps.Api.Common.Services;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 

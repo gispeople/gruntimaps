@@ -3,26 +3,24 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.ResourceAccess.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 
-namespace GruntiMaps.WebAPI.Models
+namespace GruntiMaps.ResourceAccess.Azure
 {
-    public class AzureStorage: IStorageContainer
-    {        
+    public class AzureStorage : IStorage
+    {
         public CloudStorageAccount CloudAccount { get; }
         public CloudBlobClient CloudClient { get; }
         private CloudBlobContainer AzureContainer { get; }
         private readonly ILogger _logger;
-        public AzureStorage(Options options, string containerName, ILogger logger)
+        public AzureStorage(string storageAccount, string storageKey, string containerName, ILogger logger)
         {
             _logger = logger;
-            CloudAccount =
-                new CloudStorageAccount(
-                    new StorageCredentials(options.StorageAccount, options.StorageKey), true);
+            CloudAccount = new CloudStorageAccount(new StorageCredentials(storageAccount, storageKey), true);
             CloudClient = CloudAccount.CreateCloudBlobClient();
             AzureContainer = CloudClient.GetContainerReference(containerName);
             AzureContainer.CreateIfNotExistsAsync();
@@ -32,14 +30,17 @@ namespace GruntiMaps.WebAPI.Models
         public async Task<string> Store(string fileName, string inputPath)
         {
             var blob = AzureContainer.GetBlockBlobReference(fileName);
-            try {
+            try
+            {
                 using (var fileStream = File.OpenRead(inputPath))
                 {
                     await blob.UploadFromStreamAsync(fileStream);
                 }
 
                 return blob.Uri.ToString();
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 _logger.LogError($"Could not read input file at {inputPath}. {ex}");
                 return null;
             }
@@ -49,12 +50,15 @@ namespace GruntiMaps.WebAPI.Models
         {
             CloudBlockBlob blob = AzureContainer.GetBlockBlobReference(fileName);
             if (MatchesLength(fileName, blob.Properties.Length)) return false;
-            try {
+            try
+            {
                 using (var fileStream = File.OpenWrite(outputPath))
                 {
                     await blob.DownloadToStreamAsync(fileStream);
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 _logger.LogError($"Could not write to output file at {outputPath}. {ex}");
                 return false;
             }
@@ -81,7 +85,7 @@ namespace GruntiMaps.WebAPI.Models
                 var response = await AzureContainer.ListBlobsSegmentedAsync(continuationToken);
                 continuationToken = response.ContinuationToken;
 
-                result.AddRange(from item in response.Results where item.GetType() == typeof(CloudBlockBlob) select ((CloudBlockBlob) item).Name);
+                result.AddRange(from item in response.Results where item.GetType() == typeof(CloudBlockBlob) select ((CloudBlockBlob)item).Name);
             } while (continuationToken != null);
 
             return result;

@@ -20,6 +20,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 using System.IO;
+using GruntiMaps.Common.Enums;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 

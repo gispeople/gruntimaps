@@ -26,6 +26,9 @@ using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using GruntiMaps.Common.Enums;
+using GruntiMaps.ResourceAccess.Queue;
+using GruntiMaps.ResourceAccess.Storage;
+using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.Logging;
@@ -39,6 +42,12 @@ namespace GruntiMaps.WebAPI.Services
         private readonly IMapData _mapdata;
         private readonly Options _options;
         private readonly List<string> _supportedFileTypes;
+
+        private readonly IGdConversionQueue _gdConversionQueue;
+        private readonly IMbConversionQueue _mbConversionQueue;
+        private readonly IStatusTable _statusTable;
+        private readonly IGeoJsonStorage _geoJsonStorage;
+
 //        private static DocumentClient _client;
 
         /// <summary>
@@ -47,12 +56,27 @@ namespace GruntiMaps.WebAPI.Services
         /// <param name="logger">system logger</param>
         /// <param name="options">global options for the Map Server</param>
         /// <param name="mapdata">Map data layers</param>
-        public GdalConversionService(ILogger<GdalConversionService> logger, Options options, IMapData mapdata)
+        /// <param name="gdConversionQueue"></param>
+        /// <param name="mbConversionQueue"></param>
+        /// <param name="statusTable"></param>
+        /// <param name="geoJsonStorage"></param>
+        public GdalConversionService(ILogger<GdalConversionService> logger, 
+            Options options, 
+            IMapData mapdata,
+            IGdConversionQueue gdConversionQueue,
+            IMbConversionQueue mbConversionQueue,
+            IStatusTable statusTable,
+            IGeoJsonStorage geoJsonStorage)
         {
             _logger = logger;
             _mapdata = mapdata;
             _options = options;
             _supportedFileTypes = new List<string> { ".shp", ".geojson", ".gdb" };
+
+            _gdConversionQueue = gdConversionQueue;
+            _mbConversionQueue = mbConversionQueue;
+            _statusTable = statusTable;
+            _geoJsonStorage = geoJsonStorage;
 //            var EndpointUrl = "https://localhost:8081";
 //            var AuthorisationKey = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
 //            _client = new DocumentClient(new Uri(EndpointUrl), AuthorisationKey);
@@ -67,7 +91,7 @@ namespace GruntiMaps.WebAPI.Services
             // geojson files. Why, you might ask, because tippecanoe can import GeoJSON directly? It's because
             // passing the GeoJSON through ogr2ogr will ensure that the final GeoJSON is in the correct projection
             // and that it should be valid GeoJSON as well.
-            var gdalMsg = await _mapdata.GdConversionQueue.GetMessage();
+            var gdalMsg = await _gdConversionQueue.GetMessage();
             if (gdalMsg != null) // if no message, don't try
             {
                 ConversionMessageData gdalData = null;
@@ -160,7 +184,7 @@ namespace GruntiMaps.WebAPI.Services
 
                         _logger.LogDebug($"geojson file is in {geoJsonFile}");
                         // now we need to put the converted geojson file into storage
-                        var location = await _mapdata.GeojsonContainer.Store($"{gdalData.LayerId}.geojson", geoJsonFile);
+                        var location = await _geoJsonStorage.Store($"{gdalData.LayerId}.geojson", geoJsonFile);
                         _logger.LogDebug("Upload of geojson file to storage complete.");
 
                         var end = DateTime.UtcNow;
@@ -168,23 +192,23 @@ namespace GruntiMaps.WebAPI.Services
                         _logger.LogDebug($"GDALConversion took {duration.TotalMilliseconds} ms.");
 
                         // we created geoJson so we can put a request in for geojson to mvt conversion.
-                        await _mapdata.CreateMbConversionRequest(new ConversionMessageData
+                        await _mbConversionQueue.AddMessage(JsonConvert.SerializeObject(new ConversionMessageData
                         {
                             LayerId = gdalData.LayerId,
                             DataLocation = location,
                             Description = gdalData.Description,
                             LayerName = gdalData.LayerName
-                        });
+                        }));
                     }
                     // we completed GDAL conversion and creation of MVT conversion request, so remove the GDAL request from the queue
                     _logger.LogDebug("deleting gdal message from queue");
-                    await _mapdata.GdConversionQueue.DeleteMessage(gdalMsg);
+                    await _gdConversionQueue.DeleteMessage(gdalMsg);
                 }
                 catch (Exception ex)
                 {
                     if (gdalData != null)
                     {
-                        await _mapdata.JobStatusTable.UpdateStatus(gdalData.LayerId, LayerStatus.Failed);
+                        await _statusTable.UpdateStatus(gdalData.LayerId, LayerStatus.Failed);
                     }
                     throw ex;
                 }

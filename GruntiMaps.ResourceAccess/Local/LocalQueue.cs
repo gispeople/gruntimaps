@@ -1,23 +1,25 @@
 ﻿using System;
 using System.Threading.Tasks;
-using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.ResourceAccess.Queue;
 using Microsoft.Data.Sqlite;
 
-namespace GruntiMaps.WebAPI.Models
+namespace GruntiMaps.ResourceAccess.Local
 {
-    public class LocalQueue: IQueue
+    public class LocalQueue : IQueue
     {
         private readonly SqliteConnection _queueDatabase;
-        private readonly Options _options;
+        private readonly int _queueTimeLimit;
+        private readonly int _queueEntryTries;
 
-        public LocalQueue(Options options, string queueName)
+        public LocalQueue(string storagePath, int queueTimeLimit, int queueEntryTries, string queueName)
         {
-            _options = options;
+            _queueTimeLimit = queueTimeLimit;
+            _queueEntryTries = queueEntryTries;
             var builder = new SqliteConnectionStringBuilder
             {
                 Mode = SqliteOpenMode.ReadWriteCreate,
                 Cache = SqliteCacheMode.Shared,
-                DataSource = System.IO.Path.Combine(_options.StoragePath, $"{queueName}.queue")
+                DataSource = System.IO.Path.Combine(storagePath, $"{queueName}.queue")
             };
             var connStr = builder.ConnectionString;
             _queueDatabase = new SqliteConnection(connStr);
@@ -70,9 +72,12 @@ namespace GruntiMaps.WebAPI.Models
             var popReceipt = Guid.NewGuid().ToString();
             var pop = reader["PopCount"];
             long popCount1;
-            if (DBNull.Value.Equals(pop)) {
+            if (DBNull.Value.Equals(pop))
+            {
                 popCount1 = 0;
-            } else {
+            }
+            else
+            {
                 popCount1 = (long)pop;
             }
             popCount1++;
@@ -103,13 +108,13 @@ namespace GruntiMaps.WebAPI.Models
             const string check =
                 "SELECT ID, PopCount from Queue where PopReceipt IS NOT NULL AND Popped < datetime('now', $timeLimit)";
             var checkCmd = new SqliteCommand(check, _queueDatabase);
-            checkCmd.Parameters.AddWithValue("$timeLimit", $"-{_options.QueueTimeLimit} minutes");
+            checkCmd.Parameters.AddWithValue("$timeLimit", $"-{_queueTimeLimit} minutes");
             var chkReader = checkCmd.ExecuteReader();
             while (chkReader.Read())
             {
                 var id = (long)chkReader["ID"];
                 var popCount = (long)chkReader["PopCount"];
-                if (popCount > _options.QueueEntryTries)
+                if (popCount > _queueEntryTries)
                 {   // we exceeded the retry counter so move the entry into the poison table.
                     const string poison1 = "INSERT INTO Poison(PopReceipt, PopCount, Popped, Content) SELECT PopReceipt, PopCount, Popped, Content FROM Queue WHERE ID=$ID";
                     var poison1Cmd = new SqliteCommand(poison1, _queueDatabase);

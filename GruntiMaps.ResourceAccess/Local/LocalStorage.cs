@@ -2,17 +2,16 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.ResourceAccess.Storage;
 
-namespace GruntiMaps.WebAPI.Models
+namespace GruntiMaps.ResourceAccess.Local
 {
-    public class LocalStorage: IStorageContainer
+    public class LocalStorage : IStorage
     {
         private readonly string _containerPath;
-        public LocalStorage(Options options, string containerName)
+        public LocalStorage(string storagePath, string containerName)
         {
-            var localStoreLocation = options.StoragePath;
-            _containerPath = Path.Combine(localStoreLocation, containerName);
+            _containerPath = Path.Combine(storagePath, containerName);
             Directory.CreateDirectory(_containerPath);
         }
 
@@ -21,7 +20,8 @@ namespace GruntiMaps.WebAPI.Models
         {
 
             var outputPath = Path.Combine(_containerPath, fileName);
-            if (File.Exists(inputPath)) {
+            if (File.Exists(inputPath))
+            {
                 await Task.Run(() =>
                 {
                     File.Copy(inputPath, outputPath);
@@ -36,10 +36,12 @@ namespace GruntiMaps.WebAPI.Models
             // if the source doesn't exist, not much to do
             if (!File.Exists(inputPath)) return false;
             // if the dest doesn't exist, no need to check length
-            if (File.Exists(outputPath)) {
+            if (File.Exists(outputPath))
+            {
                 var inputAttrs = new FileInfo(inputPath);
                 var outputAttrs = new FileInfo(outputPath);
-                if (inputAttrs.Length == outputAttrs.Length) {
+                if (inputAttrs.Length == outputAttrs.Length)
+                {
                     return false;
                 }
             }

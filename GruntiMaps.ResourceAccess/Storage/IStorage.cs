@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace GruntiMaps.WebAPI.Interfaces
+namespace GruntiMaps.ResourceAccess.Storage
 {
-    public interface IStorageContainer
+    public interface IStorage
     {
         // returns the location of the created file (provider-dependent)
         Task<string> Store(string fileName, string inputPath);

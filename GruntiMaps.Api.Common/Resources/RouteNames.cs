@@ -1,4 +1,4 @@
-﻿namespace Gruntify.Api.Common.Resources
+﻿namespace GruntiMaps.Api.Common.Resources
 {
     public class RouteNames
     {
