@@ -41,6 +41,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Gruntify.Api.Common.Services;
 using Gruntify.Api.Common.Resources;
+using GruntiMaps.Domain.Common.Exceptions;
 
 namespace GruntiMaps.WebAPI.Controllers
 {
@@ -116,7 +117,6 @@ namespace GruntiMaps.WebAPI.Controllers
         [HttpGet("layers/{id}", Name = RouteNames.GetLayer)]
         public async Task<LayerDto> GetLayer(string id)
         {
-            var baseUrl = $"{GetBaseHost()}/api/layers";
             var status = await _mapData.JobStatusTable.GetStatus(id);
             if (!_mapData.LayerDict.ContainsKey(id))
             {
@@ -130,13 +130,11 @@ namespace GruntiMaps.WebAPI.Controllers
                 }
                 else
                 {
-                    throw new HttpRequestException("Not found");
+                    throw new EntityNotFoundException();
                 }
             }
 
             var layer = (Layer)_mapData.LayerDict[id];
-
-            var links = _resourceLinksGenerator.GenerateResourceLinks(id);
 
             return new LayerDto()
             {
