@@ -573,6 +573,146 @@
     "x": 0,
     "y": 200
   },
+  "hatch-l-20-black": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 96,
+    "y": 384
+  },
+  "hatch-l-20-blue": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 112,
+    "y": 384
+  },
+  "hatch-l-20-orange": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 128,
+    "y": 384
+  },
+  "hatch-l-20-red": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 144,
+    "y": 384
+  },
+  "hatch-l-20-yellow": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 160,
+    "y": 384
+  },
+  "hatch-l-50-black": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 256,
+    "y": 384
+  },
+  "hatch-l-50-blue": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 264,
+    "y": 384
+  },
+  "hatch-l-50-orange": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 272,
+    "y": 384
+  },
+  "hatch-l-50-red": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 280,
+    "y": 384
+  },
+  "hatch-l-50-yellow": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 288,
+    "y": 384
+  },
+  "hatch-r-20-black": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 176,
+    "y": 384
+  },
+  "hatch-r-20-blue": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 192,
+    "y": 384
+  },
+  "hatch-r-20-orange": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 208,
+    "y": 384
+  },
+  "hatch-r-20-red": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 224,
+    "y": 384
+  },
+  "hatch-r-20-yellow": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 240,
+    "y": 384
+  },
+  "hatch-r-50-black": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 296,
+    "y": 384
+  },
+  "hatch-r-50-blue": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 304,
+    "y": 384
+  },
+  "hatch-r-50-orange": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 312,
+    "y": 384
+  },
+  "hatch-r-50-red": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 320,
+    "y": 384
+  },
+  "hatch-r-50-yellow": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 328,
+    "y": 384
+  },
   "heliport-11": {
     "height": 32,
     "pixelRatio": 2,
