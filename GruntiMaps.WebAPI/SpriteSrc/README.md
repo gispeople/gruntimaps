@@ -55,4 +55,4 @@ spritezero --ratio=2 t\satellite-v9@2x sprites\satellite-v9\_svg\
 spritezero --ratio=4 t\satellite-v9@4x sprites\satellite-v9\_svg\
 ```
 
-- finally, copy the results into the WebAPI `wwwroot/sprites` directory.
+- finally, copy the results from the `t` directory into the WebAPI `wwwroot/sprites` directory.
