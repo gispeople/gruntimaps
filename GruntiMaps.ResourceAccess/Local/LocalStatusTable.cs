@@ -15,7 +15,7 @@ namespace GruntiMaps.ResourceAccess.Local
             var builder = new SqliteConnectionStringBuilder
             {
                 Mode = SqliteOpenMode.ReadWriteCreate,
-                Cache = SqliteCacheMode.Private,
+                Cache = SqliteCacheMode.Shared,
                 DataSource = System.IO.Path.Combine(storagePath, $"{tableName}.table")
             };
             var connStr = builder.ConnectionString;
@@ -23,12 +23,10 @@ namespace GruntiMaps.ResourceAccess.Local
             _queueDatabase.Open();
             const string createStatusesTable = "CREATE TABLE IF NOT EXISTS Statuses(Id NVARCHAR(50) PRIMARY KEY, Status NVARCHAR(50) NOT NULL)";
             new SqliteCommand(createStatusesTable, _queueDatabase).ExecuteNonQuery();
-            _queueDatabase.Close();
         }
 
         public Task<LayerStatus?> GetStatus(string id)
         {
-            _queueDatabase.Open();
             const string getRelatedQueueMsg = "SELECT Status FROM Statuses WHERE Id = $Id";
             var getRelatedQueueCmd = new SqliteCommand(getRelatedQueueMsg, _queueDatabase);
             getRelatedQueueCmd.Parameters.AddWithValue("$Id", id);
@@ -36,11 +34,9 @@ namespace GruntiMaps.ResourceAccess.Local
             if (relatedQueueReader.HasRows)
             {
                 Enum.TryParse(relatedQueueReader["Status"].ToString(), out LayerStatus status);
-                _queueDatabase.Close();
                 return Task.FromResult<LayerStatus?>(status);
             }
 
-            _queueDatabase.Close();
             return Task.FromResult<LayerStatus?>(null);
         }
 
@@ -59,19 +55,15 @@ namespace GruntiMaps.ResourceAccess.Local
                 // update it if it exists
                 msg = "UPDATE Statuses SET Status = $Status WHERE Id = $Id";
             }
-            _queueDatabase.Open();
             var cmd = new SqliteCommand(msg, _queueDatabase);
             cmd.Parameters.AddWithValue("$Status", status.ToString());
             cmd.Parameters.AddWithValue("$Id", id);
             cmd.ExecuteScalar();
-            _queueDatabase.Close();
         }
 
         public void Clear()
         {
-            _queueDatabase.Open();
             new SqliteCommand("DELETE FROM Statuses", _queueDatabase).ExecuteNonQuery();
-            _queueDatabase.Close();
         }
     }
 }
