@@ -570,35 +570,35 @@
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 48,
+    "x": 128,
     "y": 404
   },
   "hatch-l-50-blue": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 56,
+    "x": 136,
     "y": 404
   },
   "hatch-l-50-orange": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 64,
+    "x": 144,
     "y": 404
   },
   "hatch-l-50-red": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 72,
+    "x": 152,
     "y": 404
   },
   "hatch-l-50-yellow": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 80,
+    "x": 160,
     "y": 404
   },
   "hatch-r-20-black": {
@@ -640,35 +640,70 @@
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 88,
+    "x": 168,
     "y": 404
   },
   "hatch-r-50-blue": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 96,
+    "x": 176,
     "y": 404
   },
   "hatch-r-50-orange": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 104,
+    "x": 184,
     "y": 404
   },
   "hatch-r-50-red": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 112,
+    "x": 192,
     "y": 404
   },
   "hatch-r-50-yellow": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 120,
+    "x": 200,
+    "y": 404
+  },
+  "hatch-x-20-black": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 16,
+    "y": 404
+  },
+  "hatch-x-20-blue": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 32,
+    "y": 404
+  },
+  "hatch-x-20-orange": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 48,
+    "y": 404
+  },
+  "hatch-x-20-red": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 64,
+    "y": 404
+  },
+  "hatch-x-20-yellow": {
+    "height": 16,
+    "pixelRatio": 2,
+    "width": 16,
+    "x": 80,
     "y": 404
   },
   "heliport-11": {
@@ -1291,7 +1326,7 @@
     "height": 16,
     "pixelRatio": 2,
     "width": 32,
-    "x": 16,
+    "x": 96,
     "y": 404
   },
   "zoo-11": {

@@ -633,28 +633,28 @@
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 161,
+    "x": 201,
     "y": 154
   },
   "hatch-l-50-orange": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 165,
+    "x": 205,
     "y": 154
   },
   "hatch-l-50-red": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 169,
+    "x": 209,
     "y": 154
   },
   "hatch-l-50-yellow": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 173,
+    "x": 213,
     "y": 154
   },
   "hatch-r-20-black": {
@@ -696,35 +696,70 @@
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 177,
+    "x": 217,
     "y": 154
   },
   "hatch-r-50-blue": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 181,
+    "x": 221,
     "y": 154
   },
   "hatch-r-50-orange": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 185,
+    "x": 225,
     "y": 154
   },
   "hatch-r-50-red": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 189,
+    "x": 229,
     "y": 154
   },
   "hatch-r-50-yellow": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 193,
+    "x": 233,
+    "y": 154
+  },
+  "hatch-x-20-black": {
+    "height": 8,
+    "pixelRatio": 1,
+    "width": 8,
+    "x": 145,
+    "y": 154
+  },
+  "hatch-x-20-blue": {
+    "height": 8,
+    "pixelRatio": 1,
+    "width": 8,
+    "x": 153,
+    "y": 154
+  },
+  "hatch-x-20-orange": {
+    "height": 8,
+    "pixelRatio": 1,
+    "width": 8,
+    "x": 161,
+    "y": 154
+  },
+  "hatch-x-20-red": {
+    "height": 8,
+    "pixelRatio": 1,
+    "width": 8,
+    "x": 169,
+    "y": 154
+  },
+  "hatch-x-20-yellow": {
+    "height": 8,
+    "pixelRatio": 1,
+    "width": 8,
+    "x": 177,
     "y": 154
   },
   "heliport-11": {
@@ -1361,7 +1396,7 @@
     "height": 8,
     "pixelRatio": 1,
     "width": 16,
-    "x": 145,
+    "x": 185,
     "y": 154
   },
   "zoo-11": {

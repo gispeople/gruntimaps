@@ -570,35 +570,35 @@
     "height": 16,
     "pixelRatio": 4,
     "width": 16,
-    "x": 1220,
+    "x": 1380,
     "y": 712
   },
   "hatch-l-50-blue": {
     "height": 16,
     "pixelRatio": 4,
     "width": 16,
-    "x": 1236,
+    "x": 1396,
     "y": 712
   },
   "hatch-l-50-orange": {
     "height": 16,
     "pixelRatio": 4,
     "width": 16,
-    "x": 1252,
+    "x": 1412,
     "y": 712
   },
   "hatch-l-50-red": {
     "height": 16,
     "pixelRatio": 4,
     "width": 16,
-    "x": 1268,
+    "x": 1428,
     "y": 712
   },
   "hatch-l-50-yellow": {
     "height": 16,
     "pixelRatio": 4,
     "width": 16,
-    "x": 1284,
+    "x": 1444,
     "y": 712
   },
   "hatch-r-20-black": {
@@ -640,35 +640,70 @@
     "height": 16,
     "pixelRatio": 4,
     "width": 16,
-    "x": 1300,
-    "y": 712
+    "x": 1444,
+    "y": 636
   },
   "hatch-r-50-blue": {
     "height": 16,
     "pixelRatio": 4,
     "width": 16,
-    "x": 1316,
-    "y": 712
+    "x": 1424,
+    "y": 552
   },
   "hatch-r-50-orange": {
     "height": 16,
     "pixelRatio": 4,
     "width": 16,
-    "x": 1332,
-    "y": 712
+    "x": 1440,
+    "y": 552
   },
   "hatch-r-50-red": {
     "height": 16,
     "pixelRatio": 4,
     "width": 16,
-    "x": 1348,
-    "y": 712
+    "x": 1456,
+    "y": 552
   },
   "hatch-r-50-yellow": {
     "height": 16,
     "pixelRatio": 4,
     "width": 16,
-    "x": 1364,
+    "x": 1420,
+    "y": 0
+  },
+  "hatch-x-20-black": {
+    "height": 32,
+    "pixelRatio": 4,
+    "width": 32,
+    "x": 1220,
+    "y": 712
+  },
+  "hatch-x-20-blue": {
+    "height": 32,
+    "pixelRatio": 4,
+    "width": 32,
+    "x": 1252,
+    "y": 712
+  },
+  "hatch-x-20-orange": {
+    "height": 32,
+    "pixelRatio": 4,
+    "width": 32,
+    "x": 1284,
+    "y": 712
+  },
+  "hatch-x-20-red": {
+    "height": 32,
+    "pixelRatio": 4,
+    "width": 32,
+    "x": 1316,
+    "y": 712
+  },
+  "hatch-x-20-yellow": {
+    "height": 32,
+    "pixelRatio": 4,
+    "width": 32,
+    "x": 1348,
     "y": 712
   },
   "heliport-11": {

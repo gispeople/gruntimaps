@@ -570,35 +570,35 @@
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 24,
+    "x": 64,
     "y": 202
   },
   "hatch-l-50-blue": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 28,
+    "x": 68,
     "y": 202
   },
   "hatch-l-50-orange": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 32,
+    "x": 72,
     "y": 202
   },
   "hatch-l-50-red": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 36,
+    "x": 76,
     "y": 202
   },
   "hatch-l-50-yellow": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 40,
+    "x": 80,
     "y": 202
   },
   "hatch-r-20-black": {
@@ -640,35 +640,70 @@
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 44,
+    "x": 84,
     "y": 202
   },
   "hatch-r-50-blue": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 48,
+    "x": 88,
     "y": 202
   },
   "hatch-r-50-orange": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 52,
+    "x": 92,
     "y": 202
   },
   "hatch-r-50-red": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 56,
+    "x": 96,
     "y": 202
   },
   "hatch-r-50-yellow": {
     "height": 4,
     "pixelRatio": 1,
     "width": 4,
-    "x": 60,
+    "x": 100,
+    "y": 202
+  },
+  "hatch-x-20-black": {
+    "height": 8,
+    "pixelRatio": 1,
+    "width": 8,
+    "x": 8,
+    "y": 202
+  },
+  "hatch-x-20-blue": {
+    "height": 8,
+    "pixelRatio": 1,
+    "width": 8,
+    "x": 16,
+    "y": 202
+  },
+  "hatch-x-20-orange": {
+    "height": 8,
+    "pixelRatio": 1,
+    "width": 8,
+    "x": 24,
+    "y": 202
+  },
+  "hatch-x-20-red": {
+    "height": 8,
+    "pixelRatio": 1,
+    "width": 8,
+    "x": 32,
+    "y": 202
+  },
+  "hatch-x-20-yellow": {
+    "height": 8,
+    "pixelRatio": 1,
+    "width": 8,
+    "x": 40,
     "y": 202
   },
   "heliport-11": {
@@ -1291,7 +1326,7 @@
     "height": 8,
     "pixelRatio": 1,
     "width": 16,
-    "x": 8,
+    "x": 48,
     "y": 202
   },
   "zoo-11": {
