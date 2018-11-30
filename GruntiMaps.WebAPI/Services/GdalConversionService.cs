@@ -189,7 +189,10 @@ namespace GruntiMaps.WebAPI.Services
                     throw ex;
                 }
             }
-            await Task.Delay(_options.CheckConvertTime);
+            else
+            {
+                await Task.Delay(_options.CheckConvertTime);
+            }
         }
         //        }
 
