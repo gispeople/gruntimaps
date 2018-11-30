@@ -58,8 +58,10 @@ namespace GruntiMaps.WebAPI
             services.AddMvc(options => { options.Filters.Add(new DomainExceptionFilter()); })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-            services.AddDomainServices();
+            services.AddOptions(Configuration);
             services.AddSingleton<Options>();
+            services.AddDomainServices();
+            services.AddResourceAccess();
             services.AddSingleton<IMapData, MapData>();
             services.AddSingleton<IHostedService, LayerUpdateService>();
             services.AddSingleton<IHostedService, MapBoxConversionService>();

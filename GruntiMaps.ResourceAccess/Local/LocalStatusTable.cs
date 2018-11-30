@@ -1,22 +1,22 @@
 ﻿using System;
 using System.Threading.Tasks;
 using GruntiMaps.Common.Enums;
-using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.ResourceAccess.Table;
 using Microsoft.Data.Sqlite;
 
-namespace GruntiMaps.WebAPI.Models
+namespace GruntiMaps.ResourceAccess.Local
 {
     public class LocalStatusTable : IStatusTable
     {
         private readonly SqliteConnection _queueDatabase;
 
-        public LocalStatusTable(Options options, string queueName)
+        public LocalStatusTable(string storagePath, string tableName)
         {
             var builder = new SqliteConnectionStringBuilder
             {
                 Mode = SqliteOpenMode.ReadWriteCreate,
                 Cache = SqliteCacheMode.Private,
-                DataSource = System.IO.Path.Combine(options.StoragePath, $"{queueName}.table")
+                DataSource = System.IO.Path.Combine(storagePath, $"{tableName}.table")
             };
             var connStr = builder.ConnectionString;
             _queueDatabase = new SqliteConnection(connStr);

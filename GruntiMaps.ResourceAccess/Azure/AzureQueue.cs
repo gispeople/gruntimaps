@@ -1,22 +1,19 @@
 ﻿using System.Threading.Tasks;
-using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.ResourceAccess.Queue;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Queue;
-using Newtonsoft.Json;
 
-namespace GruntiMaps.WebAPI.Models
+namespace GruntiMaps.ResourceAccess.Azure
 {
-    public class AzureQueue: IQueue
+    public class AzureQueue : IQueue
     {
         public CloudStorageAccount CloudAccount { get; }
         private CloudQueue QueueRef { get; }
 
-        public AzureQueue(Options options, string queueName)
+        public AzureQueue(string key, string account, string queueName)
         {
-            CloudAccount =
-                new CloudStorageAccount(
-                    new StorageCredentials(options.StorageAccount, options.StorageKey), true);
+            CloudAccount = new CloudStorageAccount(new StorageCredentials(account, key), true);
             var queueClient = CloudAccount.CreateCloudQueueClient();
             QueueRef = queueClient.GetQueueReference(queueName);
             QueueRef.CreateIfNotExistsAsync();
@@ -33,19 +30,17 @@ namespace GruntiMaps.WebAPI.Models
         {
             // if there is a job on the queue, process it.
             var msg = await QueueRef.GetMessageAsync();
-            if (msg == null) 
+            if (msg == null)
             {
                 return null;
             }
-            else
+
+            return new Message
             {
-                return new Message
-                {
-                    Id = msg.Id,
-                    Content = msg.AsString,
-                    PopReceipt = msg.PopReceipt,
-                };
-            }
+                Id = msg.Id,
+                Content = msg.AsString,
+                PopReceipt = msg.PopReceipt,
+            };
         }
 
         public async Task DeleteMessage(Message message)

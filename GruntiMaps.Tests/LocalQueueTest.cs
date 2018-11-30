@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using GruntiMaps.ResourceAccess.Local;
 using GruntiMaps.WebAPI.Models;
 using Xunit;
 using Xunit.Abstractions;
@@ -17,7 +18,7 @@ namespace GruntiMaps.Tests
             var options = new Options(Path.GetTempPath()) {QueueTimeLimit = 1, QueueEntryTries = 2};
             // set the time limit to 1 minute so we can check that expiry works
             // try twice in our tests.
-            _queue = new LocalQueue(options, "testQueue");
+            _queue = new LocalQueue(options.StoragePath, options.QueueTimeLimit, options.QueueEntryTries, "testQueue");
         }
         
         [Fact]

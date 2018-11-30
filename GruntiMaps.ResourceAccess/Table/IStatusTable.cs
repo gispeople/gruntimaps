@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using GruntiMaps.Common.Enums;
 
-namespace GruntiMaps.WebAPI.Interfaces
+namespace GruntiMaps.ResourceAccess.Table
 {
     public interface IStatusTable
     {

@@ -1,4 +1,4 @@
-﻿namespace GruntiMaps.WebAPI.Models
+﻿namespace GruntiMaps.ResourceAccess.Queue
 {
     public class Message
     {

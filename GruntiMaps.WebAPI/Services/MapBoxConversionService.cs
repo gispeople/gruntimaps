@@ -25,6 +25,9 @@ using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using GruntiMaps.Common.Enums;
+using GruntiMaps.ResourceAccess.Queue;
+using GruntiMaps.ResourceAccess.Storage;
+using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -39,8 +42,11 @@ namespace GruntiMaps.WebAPI.Services
     public class MapBoxConversionService : BackgroundService
     {
         private readonly ILogger<MapBoxConversionService> _logger;
-        private readonly IMapData _mapdata;
         private readonly Options _options;
+
+        private readonly IMbConversionQueue _mbConversionQueue;
+        private readonly IStatusTable _statusTable;
+        private readonly ITileStorage _tileStorage;
 
         /// <summary>
         ///     Create a new MapBoxConversionService instance.
@@ -48,11 +54,17 @@ namespace GruntiMaps.WebAPI.Services
         /// <param name="logger">system logger</param>
         /// <param name="options">global options for the Map Server</param>
         /// <param name="mapdata">Map data layers</param>
-        public MapBoxConversionService(ILogger<MapBoxConversionService> logger, Options options, IMapData mapdata)
+        public MapBoxConversionService(ILogger<MapBoxConversionService> logger, 
+            Options options,
+            IMbConversionQueue mbConversionQueue,
+            IStatusTable statusTable,
+            ITileStorage tileStorage)
         {
             _logger = logger;
-            _mapdata = mapdata;
             _options = options;
+            _mbConversionQueue = mbConversionQueue;
+            _statusTable = statusTable;
+            _tileStorage = tileStorage;
         }
 
         protected override async Task Process()
@@ -65,7 +77,7 @@ namespace GruntiMaps.WebAPI.Services
             //    convert the geojson to mbtile.
             // 2. the geojson from the previous step (or possibly geojson directly) is in storage, we get
             //    a message and convert to mbtile and place result in storage.
-            var mbMsg = await _mapdata.MbConversionQueue.GetMessage();
+            var mbMsg = await _mbConversionQueue.GetMessage();
             if (mbMsg != null) // if no message, don't try
             {
                 ConversionMessageData mbData = null;
@@ -156,21 +168,21 @@ namespace GruntiMaps.WebAPI.Services
 
                         _logger.LogDebug($"mbtile file is in {mbtileFile}");
                         // now we need to put the converted mbtile file into storage
-                        await _mapdata.TileContainer.Store($"{mbData.LayerId}.mbtiles", mbtileFile);
+                        await _tileStorage.Store($"{mbData.LayerId}.mbtiles", mbtileFile);
                         _logger.LogDebug("Upload of mbtile file to storage complete.");
                         var end = DateTime.UtcNow;
                         var duration = end - start;
                         _logger.LogDebug($"MapBoxConversion took {duration.TotalMilliseconds} ms.");
                     }
-                    await _mapdata.MbConversionQueue.DeleteMessage(mbMsg);
+                    await _mbConversionQueue.DeleteMessage(mbMsg);
                     _logger.LogDebug("Deleted MapBoxConversion message");
-                    await _mapdata.JobStatusTable.UpdateStatus(mbData.LayerId, LayerStatus.Finished);
+                    await _statusTable.UpdateStatus(mbData.LayerId, LayerStatus.Finished);
                 }
                 catch (Exception ex)
                 {
                     if (mbData != null)
                     {
-                        await _mapdata.JobStatusTable.UpdateStatus(mbData.LayerId, LayerStatus.Failed);
+                        await _statusTable.UpdateStatus(mbData.LayerId, LayerStatus.Failed);
                     }
                     throw ex;
                 }

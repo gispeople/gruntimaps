@@ -24,10 +24,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
+using GruntiMaps.ResourceAccess.Storage;
 using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace GruntiMaps.WebAPI.Models
 {
@@ -37,62 +37,34 @@ namespace GruntiMaps.WebAPI.Models
     public class MapData : IMapData
     {
         private readonly ILogger<MapData> _logger;
+
+        private readonly IPackStorage _packStorage;
+        private readonly ITileStorage _tileStorage;
+        private readonly IFontStorage _fontStorage;
+
         // we need to be able to see the watcher so we can disable it while downloading layers
         private readonly FileSystemWatcher _watcher = new FileSystemWatcher();
-        public IStorageContainer PackContainer;
-        public IStorageContainer TileContainer { get; }
-        public IStorageContainer GeojsonContainer { get; }
-        public IStorageContainer FontContainer { get; }
-        public IQueue MbConversionQueue { get; }
-        public IQueue GdConversionQueue { get; }
-        public IStatusTable JobStatusTable { get; }
         public Options CurrentOptions { get; }
 
         public Dictionary<string, ILayer> LayerDict { get; set; } = new Dictionary<string, ILayer>();
 
-        public MapData(Options options, ILogger<MapData> logger)
+        public MapData(Options options, 
+            ILogger<MapData> logger, 
+            IPackStorage packStorage,
+            ITileStorage tileStorage,
+            IFontStorage fontStorage)
         {
             CurrentOptions = options;
             _logger = logger;
             _logger.LogDebug($"Creating MapData root={CurrentOptions.RootDir}");
-            switch (options.StorageProvider)
-            {
-                case StorageProviders.Azure: 
-                    PackContainer = new AzureStorage(CurrentOptions, CurrentOptions.StorageContainer, logger);
-                    TileContainer = new AzureStorage(CurrentOptions, CurrentOptions.MbTilesContainer, logger);
-                    GeojsonContainer = new AzureStorage(CurrentOptions, CurrentOptions.GeoJsonContainer, logger);
-                    FontContainer = new AzureStorage(CurrentOptions, CurrentOptions.FontContainer, logger);
-                    MbConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.MbConvQueue);
-                    GdConversionQueue = new AzureQueue(CurrentOptions, CurrentOptions.GdConvQueue);
-                    JobStatusTable = new AzureStatusTable(CurrentOptions, CurrentOptions.JobStatusTable);
-                    break;
-                case StorageProviders.Local:
-                    PackContainer = new LocalStorage(CurrentOptions, CurrentOptions.StorageContainer);
-                    TileContainer = new LocalStorage(CurrentOptions, CurrentOptions.MbTilesContainer);
-                    GeojsonContainer = new LocalStorage(CurrentOptions, CurrentOptions.GeoJsonContainer);
-                    FontContainer = new LocalStorage(CurrentOptions, CurrentOptions.FontContainer);
-                    MbConversionQueue = new LocalQueue(CurrentOptions, CurrentOptions.MbConvQueue);
-                    GdConversionQueue = new LocalQueue(CurrentOptions, CurrentOptions.GdConvQueue);
-                    JobStatusTable = new LocalStatusTable(CurrentOptions, CurrentOptions.JobStatusTable);
-                    break;
-                default:
-                    _logger.LogCritical("No valid storage provider set.");
-                    break;
-            }
+
+            _packStorage = packStorage;
+            _tileStorage = tileStorage;
+            _fontStorage = fontStorage;
 
             CheckDirectories();
             PopulateFonts();
             OpenTiles();
-        }
-
-        public async Task CreateGdalConversionRequest(ConversionMessageData messageData)
-        {
-            await GdConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
-        }
-
-        public async Task CreateMbConversionRequest(ConversionMessageData messageData)
-        {
-            await MbConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
         }
 
         // retrieve global and per-instance tile packs 
@@ -106,11 +78,11 @@ namespace GruntiMaps.WebAPI.Models
             // check for map packs first.
             _logger.LogDebug("Starting Refreshing layers");
 
-            var packs = await PackContainer.List();
+            var packs = await _packStorage.List();
             foreach (var pack in packs)
             {
                 var thispackfile = Path.Combine(CurrentOptions.PackPath, pack);
-                if (!await PackContainer.GetIfNewer(pack, thispackfile)) continue;
+                if (!await _packStorage.GetIfNewer(pack, thispackfile)) continue;
                 // extract pack to appropriate places
                 using (var zip = ZipFile.OpenRead(thispackfile))
                 {
@@ -141,11 +113,11 @@ namespace GruntiMaps.WebAPI.Models
             // see if there's any new standalone map layers
             _logger.LogDebug("Checking for standalone layers");
 
-            var mbtiles = await TileContainer.List();
+            var mbtiles = await _tileStorage.List();
             foreach (var mbtile in mbtiles)
             {
                 var thismbtile = Path.Combine(CurrentOptions.TilePath, mbtile);
-                if (await TileContainer.GetIfNewer(mbtile, thismbtile))
+                if (await _tileStorage.GetIfNewer(mbtile, thismbtile))
                 {
                     OpenService(thismbtile);
                 }
@@ -204,11 +176,11 @@ namespace GruntiMaps.WebAPI.Models
         // retrieve font set and populate font directory.
         private async void PopulateFonts()
         {
-            var fontPacks = await FontContainer.List();
+            var fontPacks = await _fontStorage.List();
             foreach (var fontPack in fontPacks)
             {
                 var thisFontPack = Path.Combine(CurrentOptions.FontPath, fontPack);
-                if (!await FontContainer.GetIfNewer(fontPack, thisFontPack)) continue;
+                if (!await _fontStorage.GetIfNewer(fontPack, thisFontPack)) continue;
                 using (var zip = ZipFile.OpenRead(thisFontPack))
                 {
                     foreach (var entry in zip.Entries)

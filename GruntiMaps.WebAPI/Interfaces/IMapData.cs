@@ -28,21 +28,10 @@ namespace GruntiMaps.WebAPI.Interfaces
     public interface IMapData
     {
         Dictionary<string, ILayer> LayerDict { get; set; }
-        //CloudStorageAccount CloudAccount { get; }
-        //CloudBlobClient CloudClient { get; }
-        //CloudBlobContainer GeojsonContainer { get; }
-        IStorageContainer TileContainer { get; }
-        IStorageContainer GeojsonContainer { get; }
-        IQueue MbConversionQueue { get; }
-        IQueue GdConversionQueue { get; }
-        IStatusTable JobStatusTable { get; }
         Options CurrentOptions { get; }
 
         void OpenService(string mbtilefile);
         void CloseService(string name);
         Task RefreshLayers();
-        Task CreateGdalConversionRequest(ConversionMessageData messageData);
-        Task CreateMbConversionRequest(ConversionMessageData messageData);
-
     }
 }

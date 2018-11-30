@@ -18,7 +18,7 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-namespace GruntiMaps.WebAPI.Models
+namespace GruntiMaps.Common.Enums
 {
     public enum StorageProviders
     {

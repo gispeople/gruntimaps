@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Threading.Tasks;
+using GruntiMaps.Api.Common.Services;
 using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Common.Enums;
+using GruntiMaps.ResourceAccess.Queue;
+using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.AspNetCore.Mvc;
-using Gruntify.Api.Common.Services;
+using Newtonsoft.Json;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers
 {
@@ -14,12 +17,18 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
     {
         private readonly IMapData _mapData;
         private readonly IResourceLinksGenerator _resourceLinksGenerator;
+        private readonly IGdConversionQueue _gdConversionQueue;
+        private readonly IStatusTable _statusTable;
 
         public CreateLayerController(IMapData mapData,
-            IResourceLinksGenerator resourceLinksGenerator)
+            IResourceLinksGenerator resourceLinksGenerator,
+            IGdConversionQueue gdConversionQueue,
+            IStatusTable statusTable)
         {
             _mapData = mapData;
             _resourceLinksGenerator = resourceLinksGenerator;
+            _gdConversionQueue = gdConversionQueue;
+            _statusTable = statusTable;
         }
 
         [HttpPost(Resources.Layers)]
@@ -33,9 +42,9 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
                 DataLocation = dto.DataLocation,
                 Description = dto.Description
             };
-            await _mapData.CreateGdalConversionRequest(messageData);
-            await _mapData.JobStatusTable.UpdateStatus(id, LayerStatus.Processing);
-            return new LayerDto()
+            await _gdConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
+            await _statusTable.UpdateStatus(id, LayerStatus.Processing);
+            return new LayerDto
             {
                 Id = id,
                 Status = LayerStatus.Processing,

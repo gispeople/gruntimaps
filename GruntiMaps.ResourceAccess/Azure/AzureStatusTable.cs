@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
-using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Common.Enums;
-using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.ResourceAccess.Table;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Table;
 
-namespace GruntiMaps.WebAPI.Models
+namespace GruntiMaps.ResourceAccess.Azure
 {
     public class AzureStatusTable : IStatusTable
     {
@@ -15,12 +14,11 @@ namespace GruntiMaps.WebAPI.Models
 
         private readonly CloudTable _table;
 
-        public AzureStatusTable(Options options, string tableName)
+        public AzureStatusTable(string storageAccount, string storageKey, string tableName)
         {
-            var account = new CloudStorageAccount(
-                new StorageCredentials(options.StorageAccount, options.StorageKey), true);
-
+            var account = new CloudStorageAccount(new StorageCredentials(storageAccount, storageKey), true);
             var client = account.CreateCloudTableClient();
+
             _table = client.GetTableReference(tableName);
             _table.CreateIfNotExistsAsync();
         }
@@ -49,7 +47,7 @@ namespace GruntiMaps.WebAPI.Models
 
             if (retrievedResult.Result != null)
             {
-                var queue = (StatusEntity) retrievedResult.Result;
+                var queue = (StatusEntity)retrievedResult.Result;
                 queue.Status = status.ToString();
                 await _table.ExecuteAsync(TableOperation.Replace(queue));
             }
