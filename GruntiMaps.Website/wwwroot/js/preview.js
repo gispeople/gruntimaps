@@ -57,7 +57,7 @@ $(document).ready(function () {
 
     // create preview map
     mapboxgl.config.REQUIRE_ACCESS_TOKEN = false;
-    var host = "https://localhost:5001";
+    var host = "https://localhost:5001/";
     window.map = new mapboxgl.Map({
         container: "map",
         style: {
@@ -111,14 +111,12 @@ $(document).ready(function () {
         window.map.addLayer({ "type": "symbol", "id": "symbol-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         window.map.addLayer({ "type": "heatmap", "id": "heatmap-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         $.get(`${host}/api/layers`, function (layers) {
-            for (let l of layers.content) {
-                $.get(l.links.href, function (layerProps) {
-                    const source = layerProps.source;
-                    var style = layerProps.style;
-                    $.get(source, function (src) {
-                        src.metadata = { gruntimaps: { styles: style } };
-                        window.map.addSource(src.name, src);
-                    });
+            for (let layer of layers) {
+                const source = layer.links.find(link => link.rel === 'source').href;
+                var style = layer.links.find(link => link.rel === 'style').href;
+                $.get(source, function (src) {
+                    src.metadata = { gruntimaps: { styles: style } };
+                    window.map.addSource(layer.id, src);
                 });
             }
         });

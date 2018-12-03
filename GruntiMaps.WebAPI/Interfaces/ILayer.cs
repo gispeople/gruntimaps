@@ -19,16 +19,20 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
 
-using Microsoft.Data.Sqlite;
+using GruntiMaps.Api.DataContracts.V2.Layers;
 using Newtonsoft.Json.Linq;
 
 namespace GruntiMaps.WebAPI.Interfaces
 {
     public interface ILayer
     {
-        SqliteConnection Conn { get; }
-        IMapBoxSource Source { get; set; }
-        JArray Style { get; set; }
+        string Id { get; }
+        string Name { get; }
+        SourceDto Source { get; }
+        StyleDto[] Styles { get; }
         JObject DataJson { get; }
+        byte[] Tile(int x, int y, int z);
+        string Grid(int x, int y, int z);
+        void Close();
     }
 }

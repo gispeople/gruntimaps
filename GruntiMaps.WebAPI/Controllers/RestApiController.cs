@@ -22,25 +22,18 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Web;
-using GruntiMaps.Api.DataContracts.V2.Layers;
-using GruntiMaps.Common.Enums;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.Common.Services;
-using GruntiMaps.Domain.Common.Exceptions;
 
 namespace GruntiMaps.WebAPI.Controllers
 {
@@ -52,19 +45,16 @@ namespace GruntiMaps.WebAPI.Controllers
         private readonly Options _options;
         private readonly IHostingEnvironment _hostingEnv;
         private readonly ILogger _logger;
-        private readonly IResourceLinksGenerator _resourceLinksGenerator;
 
         public RestApiController(IMapData mapData,
                                  Options options,
                                  IHostingEnvironment hostingEnv,
-                                 ILogger<RestApiController> logger,
-                                 IResourceLinksGenerator resourceLinksGenerator)
+                                 ILogger<RestApiController> logger)
         {
             _options = options;
             _mapData = mapData;
             _hostingEnv = hostingEnv;
             _logger = logger;
-            _resourceLinksGenerator = resourceLinksGenerator;
         }
 
         // RESTful api root
@@ -81,34 +71,6 @@ namespace GruntiMaps.WebAPI.Controllers
                     new {href = $"{baseUrl}/fonts", rel = "collection", title = "fonts"},
                     new {href = $"{baseUrl}/sprites", rel = "collection", title = "sprites"}
                 }
-            });
-        }
-
-        // RESTful layer list
-        [HttpGet("layers")]
-        public ActionResult GetCatalog()
-        {
-            string baseUrl = GetBaseUrl();
-
-            var layerResources = new List<object>();
-
-            foreach (var layer in _mapData.LayerDict)
-            {
-                layerResources.Add(new
-                {
-                    name = layer.Value.Source.name,
-                    links = new
-                    {
-                        href = $"{baseUrl}/{layer.Key}",
-                        rel = "self"
-                    }
-                });
-            }
-
-            return Json(new
-            {
-                content = layerResources,
-                links = new { href = $"{baseUrl}", rel = "self" }
             });
         }
 
@@ -148,51 +110,6 @@ namespace GruntiMaps.WebAPI.Controllers
             }
         }
 
-        // Retrieve tile. 
-        [HttpGet("layers/{id}/tiles/{x}/{y}/{z}", Name = RouteNames.GetLayerTile)]
-        public ActionResult GetLayerTile(string id, int x, int y, int z)
-        {
-            y = (1 << z) - y - 1;
-            var bytes = GetTile(id, x, y, z);
-            switch (_mapData.LayerDict[id].Source.format)
-            {
-                case "png": return File(bytes, "image/png");
-                case "jpg": return File(bytes, "image/jpg");
-                case "pbf": return File(Decompress(bytes), "application/vnd.mapbox-vector-tile");
-            }
-            return new RestError(400, IdentifyMissingCoordinates(x, y, (byte)z)).AsJsonResult();
-        }
-
-        private static RestErrorDetails[] IdentifyMissingCoordinates(int? x, int? y, byte? z)
-        {
-            var details = new List<RestErrorDetails>();
-            if (!x.HasValue) details.Add(new RestErrorDetails { field = "x", issue = "x parameter must be supplied" });
-            if (!y.HasValue) details.Add(new RestErrorDetails { field = "y", issue = "y parameter must be supplied" });
-            if (!z.HasValue) details.Add(new RestErrorDetails { field = "z", issue = "z parameter must be supplied" });
-            return details.ToArray();
-        }
-
-        // Get a mapbox grid.
-        [HttpGet("layers/{id}/grid", Name = RouteNames.GetLayerGrid)]
-        public ActionResult GetLayerGrid(string id, int? x, int? y, byte? z)
-        {
-            if (x.HasValue && y.HasValue && z.HasValue) return Content(GetGrid(id, x, y, z), "application/json");
-            return new RestError(400, IdentifyMissingCoordinates(x, y, z)).AsJsonResult();
-
-        }
-
-        // Retrieve the style snippet for this map id. 
-        [HttpGet("layers/{id}/style", Name = RouteNames.GetLayerStyle)]
-        public ActionResult Style(string id)
-        {
-            if (!_mapData.LayerDict.ContainsKey(id))
-                return new RestError(404, new[] {
-                    new RestErrorDetails{ field = "id", issue = "Layer ID does not exist" }
-                }).AsJsonResult();
-            return Content(JsonPrettify(JsonConvert.SerializeObject(_mapData.LayerDict[id].Style)),
-                "application/json");
-        }
-
         // Retrieve the data json to help with setting up initial styling
         [HttpGet("layers/{id}/metadata", Name = RouteNames.GetLayerMetaData)]
         public ActionResult GetLayerMetaData(string id)
@@ -202,22 +119,6 @@ namespace GruntiMaps.WebAPI.Controllers
                     new RestErrorDetails{ field = "id", issue = "Layer ID does not exist" }
                 }).AsJsonResult();
             return Content(JsonPrettify(_mapData.LayerDict[id].DataJson.ToString()), "application/json");
-        }
-
-        // Retrieve a json snippet that defines the mapbox 'source' for this layer
-        [HttpGet("layers/{id}/source", Name = RouteNames.GetLayerSource)]
-        public ActionResult GetLayerSource(string id)
-        {
-            if (GetBaseUrl() == null || id == null || !_mapData.LayerDict.ContainsKey(id))
-                return new RestError(404, new[] {
-                    new RestErrorDetails{ field = "id", issue = "Layer ID does not exist" }
-                }).AsJsonResult();
-            var src = _mapData.LayerDict[id].Source;
-            src.tiles[0] = src.tiles[0].Replace("#publicHost#", GetBaseHost());
-            return Content(JsonConvert.SerializeObject(
-                src,
-                Formatting.Indented,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }), "application/json");
         }
 
         // Retrieve the GeoJSON associated with this id
@@ -383,73 +284,6 @@ namespace GruntiMaps.WebAPI.Controllers
             }
         }
 
-        // Get a tile from a mapbox tile database.
-        private byte[] GetTile(string id, int x, int y, int z)
-        {
-            using (var cmd = _mapData.LayerDict[id].Conn.CreateCommand())
-            {
-                var command =
-                    $"select tile_data as t from tiles where zoom_level={z} and tile_column={x} and tile_row={y}";
-                cmd.CommandText = command;
-
-                var result = (byte[])cmd.ExecuteScalar();
-
-                return result ?? new byte[] { 0 };
-            }
-        }
-
-        // Get a grid from the database.
-        private string GetGrid(string id, int? x, int? y, byte? z)
-        {
-            //validate input vars
-            if (x == null || y == null || z == null || id == null ||
-                !_mapData.LayerDict.ContainsKey(id)) return "{}";
-
-            y = IntPow(2, (byte)z) - 1 - y;
-
-            var conn = _mapData.LayerDict[id].Conn;
-
-            using (var cmd = conn.CreateCommand())
-            {
-                try
-                {
-                    var command =
-                        $"select grid as g from grids where zoom_level={z} and tile_column={x} and tile_row={y}";
-                    cmd.CommandText = command;
-
-                    var b = (byte[])cmd.ExecuteScalar();
-
-                    if (b.Length == 0) return "{}";
-
-                    var grid = Decompress(b);
-
-                    var g = Encoding.UTF8.GetString(grid);
-
-                    g = g.Substring(0, g.Length - 1);
-                    g += ", \"data\":{";
-
-                    var query =
-                        $"SELECT key_name as key, key_json as json from grid_data where zoom_level={z} and tile_column={x} and tile_row={y}";
-
-                    using (var keyCmd = new SqliteCommand(query, conn))
-                    {
-                        using (var rdr = keyCmd.ExecuteReader())
-                        {
-                            while (rdr.Read()) g += "\"" + rdr.GetString(0) + "\":" + rdr.GetString(1) + ",";
-                        }
-                    }
-
-                    g = g.Trim(',') + "}}";
-                    return g;
-                }
-                catch (SqliteException)
-                {
-                    // most likely there was no grid data for this layer.
-                    return "";
-                }
-            }
-        }
-
         private static int IntPow(int x, byte pow)
         {
             var ret = 1;
@@ -462,35 +296,6 @@ namespace GruntiMaps.WebAPI.Controllers
             }
 
             return ret;
-        }
-
-        private static byte[] Decompress(byte[] zLibCompressedBuffer)
-        {
-            byte[] resBuffer;
-
-            if (zLibCompressedBuffer.Length <= 1)
-                return zLibCompressedBuffer;
-
-            var mInStream = new MemoryStream(zLibCompressedBuffer);
-            var mOutStream = new MemoryStream(zLibCompressedBuffer.Length);
-            var infStream = new GZipStream(mInStream, CompressionMode.Decompress);
-
-            mInStream.Position = 0;
-
-            try
-            {
-                infStream.CopyTo(mOutStream);
-
-                resBuffer = mOutStream.ToArray();
-            }
-            finally
-            {
-                infStream.Flush();
-                mInStream.Flush();
-                mOutStream.Flush();
-            }
-
-            return resBuffer;
         }
 
 

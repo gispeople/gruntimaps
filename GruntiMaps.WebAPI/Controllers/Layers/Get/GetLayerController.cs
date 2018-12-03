@@ -18,7 +18,6 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
         private readonly IStatusTable _statusTable;
         private readonly IResourceLinksGenerator _resourceLinksGenerator;
 
-
         public GetLayerController(IMapData mapData,
             IStatusTable statusTable,
             IResourceLinksGenerator resourceLinksGenerator)
@@ -54,7 +53,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
             {
                 Id = layer.Id,
                 Name = layer.Name,
-                Description = layer.Source.description,
+                Description = layer.Source.Description,
                 Status = status ?? LayerStatus.Finished,
                 Links = _resourceLinksGenerator.GenerateResourceLinks(id)
             };
