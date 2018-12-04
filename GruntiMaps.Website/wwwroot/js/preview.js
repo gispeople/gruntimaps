@@ -28,7 +28,10 @@ $(document).ready(function () {
                     const thisType = style.type;
                     const mapStyle = window.map.getStyle();
                     const existingLayerOfType = mapStyle.layers.find(a=>a.type === thisType);
-                    if (existingLayerOfType !== undefined && existingLayerOfType !== null) window.map.addLayer(style, existingLayerOfType.id); else window.map.addLayer(style);
+                    if (existingLayerOfType !== undefined && existingLayerOfType !== null) 
+                        window.map.addLayer(style, existingLayerOfType.id); 
+                    else 
+                        window.map.addLayer(style);
                     window.map.setLayoutProperty(style.id, "visibility", "visible");
                     const layer = document.createElement("a");
                     layer.href = "#";
@@ -114,7 +117,7 @@ $(document).ready(function () {
             for (let layer of layers) {
                 const source = layer.links.find(link => link.rel === 'source').href;
                 $.get(source, function (src) {
-                    src.metadata = { gruntimaps: { styles: layer.links.find(link => link.rel === 'style').href } };
+                    src.metadata = { gruntimaps: { styles: layer.links.find(link => link.rel === "style").href } };
                     window.map.addSource(layer.id, src);
                 });
             }
