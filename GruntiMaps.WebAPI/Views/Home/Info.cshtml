@@ -61,7 +61,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
     @foreach (var c in Model.LayerDict)
     {
         <div class="row">
-            <div class="col-sm-4">@c.Value.Source.description</div>
+            <div class="col-sm-4">@c.Value.Source.Description</div>
 
             <div class="col-sm-1"><a asp-controller="RestApi" asp-action="GetLayerSource" asp-route-id="@c.Key">Source</a></div>
             <div class="col-sm-1"><a asp-controller="RestApi" asp-action="Style" asp-route-id="@c.Key">Style</a></div>

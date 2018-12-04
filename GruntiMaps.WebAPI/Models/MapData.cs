@@ -117,6 +117,7 @@ namespace GruntiMaps.WebAPI.Models
             foreach (var mbtile in mbtiles)
             {
                 var thismbtile = Path.Combine(CurrentOptions.TilePath, mbtile);
+                CloseService(thismbtile);
                 if (await _tileStorage.GetIfNewer(mbtile, thismbtile))
                 {
                     OpenService(thismbtile);
@@ -136,7 +137,7 @@ namespace GruntiMaps.WebAPI.Models
         {
             // don't try to close a non-existent service
             if (!LayerDict.ContainsKey(name)) return;
-            LayerDict[name].Conn.Close();
+            LayerDict[name].Close();
             LayerDict.Remove(name);
         }
 

@@ -110,15 +110,12 @@ $(document).ready(function () {
         window.map.addLayer({ "type": "circle", "id": "circle-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         window.map.addLayer({ "type": "symbol", "id": "symbol-placeholder", "source": "empty", "layout": { "visibility": "none"} });
         window.map.addLayer({ "type": "heatmap", "id": "heatmap-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        $.get(`${host}/api/layers`, function (layers) {
-            for (let l of layers.content) {
-                $.get(l.links.href, function (layerProps) {
-                    const source = layerProps.links.find(a=>a.rel==="source").href;
-                    var style = layerProps.links.find(a=>a.rel==="style").href;
-                    $.get(source, function (src) {
-                        src.metadata = { gruntimaps: { styles: style } };
-                        window.map.addSource(src.id, src);
-                    });
+        $.get(host + '/api/layers', function (layers) {
+            for (let layer of layers) {
+                const source = layer.links.find(link => link.rel === 'source').href;
+                $.get(source, function (src) {
+                    src.metadata = { gruntimaps: { styles: layer.links.find(link => link.rel === 'style').href } };
+                    window.map.addSource(layer.id, src);
                 });
             }
         });

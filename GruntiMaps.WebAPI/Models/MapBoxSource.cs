@@ -102,7 +102,7 @@ namespace GruntiMaps.WebAPI.Models
             if (scheme == null) scheme = "xyz";
             type = format == "pbf" ? "vector" : "raster";
             tiles = new string[1];
-            tiles[0] = $"#publicHost#/api/layers/{id}/tiles/{{x}}/{{y}}/{{z}}";
+            tiles[0] = $"#publicHost#/api/layers/{id}/tile/{{x}}/{{y}}/{{z}}";
         }
 
 #pragma warning disable IDE1006 // Naming Styles
