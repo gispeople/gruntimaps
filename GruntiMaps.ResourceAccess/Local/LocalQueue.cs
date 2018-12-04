@@ -30,17 +30,14 @@ namespace GruntiMaps.ResourceAccess.Local
             const string createPoisonTable = "CREATE TABLE IF NOT EXISTS Poison(ID INTEGER PRIMARY KEY, PopReceipt NVARCHAR(50) NULL, PopCount INTEGER, Popped NVARCHAR(25) NULL, Content NVARCHAR(2048) NULL)";
             SqliteCommand createPoisonTableCmd = new SqliteCommand(createPoisonTable, _queueDatabase);
             createPoisonTableCmd.ExecuteNonQuery();
-            _queueDatabase.Close();
         }
 
         public void Clear() // clear the queue of entries - not normally desirable but useful for testing
         {
             System.Diagnostics.Debug.WriteLine($"clearing queue for {_queueDatabase.DataSource} (Enter)");
             const string delMsg = "DELETE FROM Queue";
-            _queueDatabase.Open();
             var delMsgCmd = new SqliteCommand(delMsg, _queueDatabase);
             delMsgCmd.ExecuteNonQuery();
-            _queueDatabase.Close();
             System.Diagnostics.Debug.WriteLine($"clearing queue for {_queueDatabase.DataSource} (Exit)");
         }
 
@@ -48,13 +45,11 @@ namespace GruntiMaps.ResourceAccess.Local
         {
             System.Diagnostics.Debug.WriteLine($"adding message to {_queueDatabase.DataSource} (Enter)");
             var id = Guid.NewGuid().ToString();
-            _queueDatabase.Open();
             const string addMsg = "INSERT INTO Queue(ID, PopCount, Content) VALUES($QueueId, 0, $content)";
             var addMsgCmd = new SqliteCommand(addMsg, _queueDatabase);
             addMsgCmd.Parameters.AddWithValue("$content", message);
             addMsgCmd.Parameters.AddWithValue("$QueueId", id);
             addMsgCmd.ExecuteScalar();
-            _queueDatabase.Close();
             System.Diagnostics.Debug.WriteLine($"adding message to {_queueDatabase.DataSource} (Exit)");
             return Task.FromResult(id);
         }
@@ -64,7 +59,6 @@ namespace GruntiMaps.ResourceAccess.Local
             System.Diagnostics.Debug.WriteLine($"get message from {_queueDatabase.DataSource} (Enter)");
 
             CheckExpiredMessages();
-            _queueDatabase.Open();
             // now we can look for an entry to process.
             const string getMsg = "SELECT ID, PopCount, Content from Queue WHERE PopReceipt IS NULL LIMIT 1";
             var getMsgCmd = new SqliteCommand(getMsg, _queueDatabase);
@@ -93,7 +87,6 @@ namespace GruntiMaps.ResourceAccess.Local
             updateMsgCmd.Parameters.AddWithValue("$popReceipt", msg.PopReceipt);
             updateMsgCmd.Parameters.AddWithValue("$popCount", popCount1);
             updateMsgCmd.ExecuteReader();
-            _queueDatabase.Close();
             System.Diagnostics.Debug.WriteLine($"get message from {_queueDatabase.DataSource} (Exit)");
             return string.IsNullOrWhiteSpace(msg.Id) ? Task.FromResult<Message>(null) : Task.FromResult(msg);
         }
@@ -104,7 +97,6 @@ namespace GruntiMaps.ResourceAccess.Local
 
             // make sure there are no stale messages.
             // If there are we will reset their state (but increment a counter)
-            _queueDatabase.Open();
             const string check =
                 "SELECT ID, PopCount from Queue where PopReceipt IS NOT NULL AND Popped < datetime('now', $timeLimit)";
             var checkCmd = new SqliteCommand(check, _queueDatabase);
@@ -133,7 +125,6 @@ namespace GruntiMaps.ResourceAccess.Local
                     resetPopCmd.ExecuteNonQuery();
                 }
             }
-            _queueDatabase.Close();
             System.Diagnostics.Debug.WriteLine($"expiring messages in queue {_queueDatabase.DataSource} (Exit)");
 
         }
@@ -141,13 +132,11 @@ namespace GruntiMaps.ResourceAccess.Local
         public Task DeleteMessage(Message message)
         {
             System.Diagnostics.Debug.WriteLine($"deleting message from queue {_queueDatabase.DataSource} (Enter)");
-            _queueDatabase.Open();
             const string delMsg = "DELETE FROM Queue WHERE ID=$ID AND PopReceipt=$popReceipt";
             var delMsgCmd = new SqliteCommand(delMsg, _queueDatabase);
             delMsgCmd.Parameters.AddWithValue("$ID", message.Id);
             delMsgCmd.Parameters.AddWithValue("$popReceipt", message.PopReceipt);
             delMsgCmd.ExecuteReader();
-            _queueDatabase.Close();
             System.Diagnostics.Debug.WriteLine($"deleting message from queue {_queueDatabase.DataSource} (Exit)");
             return Task.CompletedTask;
         }
