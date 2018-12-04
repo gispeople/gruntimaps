@@ -27,7 +27,7 @@ $(document).ready(function () {
                 if (window.map.getLayer(style.id) === undefined) {
                     const thisType = style.type;
                     const mapStyle = window.map.getStyle();
-                    const existingLayerOfType = mapStyle.layers.find(function(e) { return e.type === thisType; });
+                    const existingLayerOfType = mapStyle.layers.find(a=>a.type === thisType);
                     if (existingLayerOfType !== undefined && existingLayerOfType !== null) window.map.addLayer(style, existingLayerOfType.id); else window.map.addLayer(style);
                     window.map.setLayoutProperty(style.id, "visibility", "visible");
                     const layer = document.createElement("a");
