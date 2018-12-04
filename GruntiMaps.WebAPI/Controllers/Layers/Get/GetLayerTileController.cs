@@ -15,7 +15,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
             _mapData = mapData;
         }
 
-        [HttpGet("layers/{id}/tiles/{x}/{y}/{z}", Name = RouteNames.GetLayerTile)]
+        [HttpGet("layers/{id}/tile/{x}/{y}/{z}", Name = RouteNames.GetLayerTile)]
         public ActionResult Invoke(string id, int x, int y, int z)
         {
             y = (1 << z) - y - 1; // convert xyz to tms

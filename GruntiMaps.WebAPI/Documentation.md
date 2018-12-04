@@ -100,7 +100,7 @@ This call returns the various data elements available for the specified layer.
     "source":"https://demo.gruntimaps.com/api/layers/source/a_layer",
     "style":"https://demo.gruntimaps.com/api/layers/style/a_layer",
     "mappack":"https://demo.gruntimaps.com/api/layers/mappack/a_layer",
-    "tiles":"https://demo.gruntimaps.com/api/layers/tiles/a_layer",
+    "tiles":"https://demo.gruntimaps.com/api/layers/tile/a_layer",
     "grid":"https://demo.gruntimaps.com/api/layers/grid/a_layer",
     "metadata":"https://demo.gruntimaps.com/api/layers/metadata/a_layer",
     "geojson":"https://demo.gruntimaps.com/api/layers/geojson/a_layer",
@@ -151,7 +151,7 @@ This call returns the MapBox source JSON component for the specified layer.
     "version": "2",
     "scheme": "xyz",
     "tiles": [
-        "https://demo.gruntimaps.com/api/layers/tiles/a_layer&x={x}&y={y}&z={z}"
+        "https://demo.gruntimaps.com/api/layers/tile/a_layer&x={x}&y={y}&z={z}"
     ],
     "minzoom": 0.0,
     "maxzoom": 14.0,
@@ -268,7 +268,7 @@ This call returns an offline map pack for the specified layer.
 
 ## Layer Tiles request
 
-**URL** : `/api/layers/tiles/a_layer?x={x}&y={y}&z={z}`
+**URL** : `/api/layers/tile/a_layer?x={x}&y={y}&z={z}`
 
 **Parameters**: The layer identifier is passed in the URL, plus `x`, `y` and `z` coordinates.
 

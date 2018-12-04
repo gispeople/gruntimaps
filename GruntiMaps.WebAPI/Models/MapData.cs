@@ -117,6 +117,7 @@ namespace GruntiMaps.WebAPI.Models
             foreach (var mbtile in mbtiles)
             {
                 var thismbtile = Path.Combine(CurrentOptions.TilePath, mbtile);
+                CloseService(thismbtile);
                 if (await _tileStorage.GetIfNewer(mbtile, thismbtile))
                 {
                     OpenService(thismbtile);
