@@ -42,7 +42,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
         [HttpGet("layers")]
         public LayerDto[] Invoke()
         {
-            return _mapData.LayerDict.Values.Select(layer => new LayerDto()
+            return _mapData.GetAllLayers().Select(layer => new LayerDto()
             {
                 Id = layer.Id,
                 Name = layer.Name,

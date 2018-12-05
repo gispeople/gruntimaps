@@ -76,6 +76,22 @@ namespace GruntiMaps.ResourceAccess.Azure
                 await _table.ExecuteAsync(TableOperation.Insert(new StatusEntity(id)));
             }
         }
+
+        public async Task RemoveStatus(string id)
+        {
+            try
+            {
+                await _table.ExecuteAsync(TableOperation.Delete(new DynamicTableEntity(Workspace, id) {ETag = "*"}));
+            }
+            catch (StorageException e)
+            {
+                if (e.Message != "Not Found")
+                {
+                    throw;
+                }
+            }
+            
+        }
     }
 
     public class StatusEntity : TableEntity

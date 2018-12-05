@@ -81,6 +81,15 @@ namespace GruntiMaps.ResourceAccess.Local
             cmd.ExecuteScalar();
         }
 
+        public Task RemoveStatus(string id)
+        {
+            var msg = "DELETE FROM Statuses WHERE Id = $Id";
+            var cmd = new SqliteCommand(msg, _queueDatabase);
+            cmd.Parameters.AddWithValue("$Id", id);
+            cmd.ExecuteScalar();
+            return Task.CompletedTask;
+        }
+
         public void Clear()
         {
             new SqliteCommand("DELETE FROM Statuses", _queueDatabase).ExecuteNonQuery();
