@@ -40,11 +40,11 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
         }
 
         [HttpGet("layers/{id}/source", Name = RouteNames.GetLayerSource)]
-        public SourceDto GetLayerSource(string id)
+        public SourceDto Invoke(string id)
         {
-            if (!_mapData.LayerDict.ContainsKey(id))
+            if (!_mapData.HasLayer(id))
                 throw new EntityNotFoundException();
-            var src = _mapData.LayerDict[id].Source;
+            var src = _mapData.GetLayer(id).Source;
             src.Tiles = new[] { $"{_urlGenerator.BuildUrl(RouteNames.GetLayer, new { id })}/tile/" + "{x}/{y}/{z}" };
             return src;
         }

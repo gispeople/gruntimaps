@@ -21,6 +21,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using System;
 using System.Threading.Tasks;
 using GruntiMaps.Api.DataContracts.V2;
+using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,17 +30,21 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
     public class DeleteLayerController : ApiControllerBase
     {
         private readonly IMapData _mapData;
+        private readonly IStatusTable _statusTable;
 
-        public DeleteLayerController(IMapData mapData)
+        public DeleteLayerController(IMapData mapData,
+            IStatusTable statusTable)
         {
             _mapData = mapData;
+            _statusTable = statusTable;
         }
 
-        [HttpPost(Resources.Layers + "/{id}")]
+        [HttpDelete(Resources.Layers + "/{id}")]
         public async Task<IActionResult> Invoke(string id)
         {
-            // todo
-            throw new NotImplementedException();
+            await _statusTable.RemoveStatus(id);
+            await _mapData.DeleteLayer(id);
+            return NoContent();
         }
     }
 }

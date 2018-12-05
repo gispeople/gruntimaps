@@ -114,11 +114,11 @@ namespace GruntiMaps.WebAPI.Controllers
         [HttpGet("layers/{id}/metadata", Name = RouteNames.GetLayerMetaData)]
         public ActionResult GetLayerMetaData(string id)
         {
-            if (!_mapData.LayerDict.ContainsKey(id))
+            if (!_mapData.HasLayer(id))
                 return new RestError(404, new[] {
                     new RestErrorDetails{ field = "id", issue = "Layer ID does not exist" }
                 }).AsJsonResult();
-            return Content(JsonPrettify(_mapData.LayerDict[id].DataJson.ToString()), "application/json");
+            return Content(JsonPrettify(_mapData.GetLayer(id).DataJson.ToString()), "application/json");
         }
 
         // Retrieve the GeoJSON associated with this id

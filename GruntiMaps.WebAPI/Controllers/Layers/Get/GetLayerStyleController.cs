@@ -38,8 +38,8 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
         [HttpGet("layers/{id}/style", Name = RouteNames.GetLayerStyle)]
         public StyleDto[] Invoke(string id)
         {
-            return _mapData.LayerDict.ContainsKey(id)
-                ? _mapData.LayerDict[id].Styles
+            return _mapData.HasLayer(id)
+                ? _mapData.GetLayer(id).Styles
                 : throw new EntityNotFoundException();
         }
     }

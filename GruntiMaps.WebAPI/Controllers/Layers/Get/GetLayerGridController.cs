@@ -40,11 +40,11 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
         {
             y = (1 << z) - y - 1; // convert xyz to tms
 
-            return _mapData.LayerDict.ContainsKey(id)
+            return _mapData.HasLayer(id)
                 ? new ContentResult
                 {
                     StatusCode = (int) HttpStatusCode.OK,
-                    Content = _mapData.LayerDict[id].Grid(x, y, z),
+                    Content = _mapData.GetLayer(id).Grid(x, y, z),
                     ContentType = "application/json"
                 }
                 : throw new EntityNotFoundException();

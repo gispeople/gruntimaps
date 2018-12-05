@@ -49,24 +49,24 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 <p>Font List: <a asp-controller="RestApi" asp-action="GetFonts">Retrieve Font List JSON</a></p>
 
 <p>There 
-    @if (Model.LayerDict.Count == 1) {
+    @if (Model.GetAllLayers().Length == 1) {
          @("is")
     }
     else
     {
         @("are")
     }
-    @Model.LayerDict.Count open vector tile layers:</p>
+    @Model.GetAllLayers().Length open vector tile layers:</p>
 <div class="container">
-    @foreach (var c in Model.LayerDict)
+    @foreach (var c in Model.GetAllLayers())
     {
         <div class="row">
-            <div class="col-sm-4">@c.Value.Source.Description</div>
+            <div class="col-sm-4">@c.Source.Description</div>
 
-            <div class="col-sm-1"><a asp-controller="RestApi" asp-action="GetLayerSource" asp-route-id="@c.Key">Source</a></div>
-            <div class="col-sm-1"><a asp-controller="RestApi" asp-action="Style" asp-route-id="@c.Key">Style</a></div>
-            <div class="col-sm-1"><a asp-controller="RestApi" asp-action="GetLayerMetaData" asp-route-id="@c.Key">Data</a></div>
-            <div class="col-sm-5"><a class="validate" id="@c.Key">Validate</a></div>
+            <div class="col-sm-1"><a asp-route-name="GetLayerSource"  asp-route-id="@c.Id">Source</a></div>
+            <div class="col-sm-1"><a asp-route-name="GetLayerStyle" asp-route-id="@c.Id">Style</a></div>
+            <div class="col-sm-1"><a asp-route-name="GetLayerMetaData" asp-route-id="@c.Id">Data</a></div>
+            <div class="col-sm-5"><a class="validate" id="@c.Id">Validate</a></div>
         </div>
     }
 </div>

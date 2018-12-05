@@ -51,7 +51,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
         public async Task<LayerDto> Invoke(string id)
         {
             var status = await _statusTable.GetStatus(id);
-            if (!_mapData.LayerDict.ContainsKey(id))
+            if (!_mapData.HasLayer(id))
             {
                 if (status.HasValue)
                 {
@@ -67,7 +67,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
                 }
             }
 
-            var layer = (Layer)_mapData.LayerDict[id];
+            var layer = (Layer)_mapData.GetLayer(id);
 
             return new LayerDto()
             {

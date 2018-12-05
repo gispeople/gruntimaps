@@ -27,8 +27,10 @@ namespace GruntiMaps.ResourceAccess.Storage
     {
         // returns the location of the created file (provider-dependent)
         Task<string> Store(string fileName, string inputPath);
-        // returns true if it retrieved a newer version of the file, false if no newer version existed (or an error occurred during the check)
-        Task<bool> GetIfNewer(string fileName, string outputPath);
+
+        Task<string> GetMd5(string fileName);
+        Task UpdateLocalFile(string fileName, string localPath);
         Task<List<string>> List();
+        Task<bool> DeleteIfExist(string fileName);
     }
 }

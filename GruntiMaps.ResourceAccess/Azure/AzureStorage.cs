@@ -33,23 +33,21 @@ namespace GruntiMaps.ResourceAccess.Azure
 {
     public class AzureStorage : IStorage
     {
-        public CloudStorageAccount CloudAccount { get; }
-        public CloudBlobClient CloudClient { get; }
-        private CloudBlobContainer AzureContainer { get; }
+        private readonly CloudBlobContainer _azureContainer;
         private readonly ILogger _logger;
         public AzureStorage(string storageAccount, string storageKey, string containerName, ILogger logger)
         {
             _logger = logger;
-            CloudAccount = new CloudStorageAccount(new StorageCredentials(storageAccount, storageKey), true);
-            CloudClient = CloudAccount.CreateCloudBlobClient();
-            AzureContainer = CloudClient.GetContainerReference(containerName);
-            AzureContainer.CreateIfNotExistsAsync();
-            AzureContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
+            var cloudAccount = new CloudStorageAccount(new StorageCredentials(storageAccount, storageKey), true);
+            var cloudClient = cloudAccount.CreateCloudBlobClient();
+            _azureContainer = cloudClient.GetContainerReference(containerName);
+            _azureContainer.CreateIfNotExistsAsync();
+            _azureContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
         }
         // returns the location of the created file 
         public async Task<string> Store(string fileName, string inputPath)
         {
-            var blob = AzureContainer.GetBlockBlobReference(fileName);
+            var blob = _azureContainer.GetBlockBlobReference(fileName);
             try
             {
                 using (var fileStream = File.OpenRead(inputPath))
@@ -66,34 +64,33 @@ namespace GruntiMaps.ResourceAccess.Azure
             }
         }
 
-        public async Task<bool> GetIfNewer(string fileName, string outputPath)
+        public async Task<string> GetMd5(string fileName)
         {
-            CloudBlockBlob blob = AzureContainer.GetBlockBlobReference(fileName);
-            if (MatchesLength(fileName, blob.Properties.Length)) return false;
+            var blob = _azureContainer.GetBlockBlobReference(fileName);
+            await blob.FetchAttributesAsync();
+            return blob.Properties.ContentMD5;
+        }
+
+        public async Task UpdateLocalFile(string fileName, string localPath)
+        {
+            CloudBlockBlob blob = _azureContainer.GetBlockBlobReference(fileName);
             try
             {
-                using (var fileStream = File.OpenWrite(outputPath))
+                using (var fileStream = File.OpenWrite(localPath))
                 {
                     await blob.DownloadToStreamAsync(fileStream);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Could not write to output file at {outputPath}. {ex}");
-                return false;
+                _logger.LogError($"Could not write to output file at {localPath}. {ex}");
             }
-            return true;
         }
 
-        private static bool MatchesLength(string filepath, long expectedLength)
+        public Task<bool> DeleteIfExist(string fileName)
         {
-            var result = false;
-            // don't retrieve pack if we already have it (TODO: check should probably be more than just size)
-            if (!File.Exists(filepath)) return false;
-            var fi = new FileInfo(filepath);
-            if (fi.Length == expectedLength) result = true;
-
-            return result;
+            CloudBlockBlob blob = _azureContainer.GetBlockBlobReference(fileName);
+            return blob.DeleteIfExistsAsync();
         }
 
         public async Task<List<string>> List()
@@ -102,7 +99,7 @@ namespace GruntiMaps.ResourceAccess.Azure
             var result = new List<string>();
             do
             {
-                var response = await AzureContainer.ListBlobsSegmentedAsync(continuationToken);
+                var response = await _azureContainer.ListBlobsSegmentedAsync(continuationToken);
                 continuationToken = response.ContinuationToken;
 
                 result.AddRange(from item in response.Results where item.GetType() == typeof(CloudBlockBlob) select ((CloudBlockBlob)item).Name);
