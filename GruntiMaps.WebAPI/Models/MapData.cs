@@ -160,11 +160,10 @@ namespace GruntiMaps.WebAPI.Models
 
         public async Task DeleteLayer(string id)
         {
-            if (await _packStorage.DeleteIfExist($"{id}.mbtiles"))
-            {
-                CloseService(id);
-                File.Delete(Path.Combine(CurrentOptions.TilePath, $"{id}.mbtiles"));
-            }
+            Task task = _packStorage.DeleteIfExist($"{id}.mbtiles");
+            CloseService(id);
+            File.Delete(Path.Combine(CurrentOptions.TilePath, $"{id}.mbtiles"));
+            await task;
         }
 
         /// Close a MapBox tile service so that it can be changed.
@@ -175,6 +174,8 @@ namespace GruntiMaps.WebAPI.Models
             if (!_layerDict.ContainsKey(name)) return;
             _layerDict[name].Close();
             _layerDict.Remove(name);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         /// Open a MapBox tile service.
@@ -291,6 +292,7 @@ namespace GruntiMaps.WebAPI.Models
             finally
             {
                 stream?.Close();
+                stream?.Dispose();
             }
             return false;
         }
