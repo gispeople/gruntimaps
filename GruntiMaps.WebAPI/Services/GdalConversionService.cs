@@ -204,13 +204,13 @@ namespace GruntiMaps.WebAPI.Services
                     _logger.LogDebug("deleting gdal message from queue");
                     await _gdConversionQueue.DeleteMessage(gdalMsg);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     if (gdalData != null)
                     {
                         await _statusTable.UpdateStatus(gdalData.LayerId, LayerStatus.Failed);
                     }
-                    throw ex;
+                    throw;
                 }
             }
             else
