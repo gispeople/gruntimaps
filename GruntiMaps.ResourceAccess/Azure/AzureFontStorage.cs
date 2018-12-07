@@ -25,8 +25,8 @@ namespace GruntiMaps.ResourceAccess.Azure
 {
     public class AzureFontStorage : AzureStorage, IFontStorage
     {
-        public AzureFontStorage(string storageAccount, string storageKey, string containerName, ILogger logger) 
-            : base(storageAccount, storageKey, containerName, logger)
+        public AzureFontStorage(string connectionString, string containerName, ILogger logger) 
+            : base(connectionString, containerName, logger)
         {
         }
     }

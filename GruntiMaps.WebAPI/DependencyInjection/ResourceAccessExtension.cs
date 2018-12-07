@@ -19,15 +19,16 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 using System;
-using GruntiMaps.Common.Enums;
+using GruntiMaps.Api.Common.Configuration;
+using GruntiMaps.Api.Common.Enums;
 using GruntiMaps.ResourceAccess.Azure;
 using GruntiMaps.ResourceAccess.Local;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Storage;
 using GruntiMaps.ResourceAccess.Table;
-using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace GruntiMaps.WebAPI.DependencyInjection
 {
@@ -37,100 +38,106 @@ namespace GruntiMaps.WebAPI.DependencyInjection
         {
             services.AddSingleton<IMbConversionQueue>(provider =>
             {
-                var options = provider.GetService<Options>();
-                switch (options.StorageProvider)
+                var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
+                var queue = provider.GetService<IOptions<QueueOptions>>().Value.MvtConversion;
+                switch (providerOptions.Type)
                 {
-                    case StorageProviders.Azure:
-                        return new AzureMbConversionQueue(options.StorageKey, options.StorageAccount,
-                            options.MbConvQueue);
-                    case StorageProviders.Local:
-                        return new LocalMbConversionQueue(options.StoragePath, options.QueueTimeLimit,
-                            options.QueueEntryTries, options.MbConvQueue);
+                    case ProviderType.Azure:
+                        return new AzureMbConversionQueue(providerOptions.Azure.ConnectionString, queue);
+                    case ProviderType.Local:
+                        var local = providerOptions.Local;
+                        return new LocalMbConversionQueue(local.Path, local.QueueTimeLimit,
+                            local.QueueEntryLife, queue);
                     default:
                         throw new NotImplementedException();
                 }
             });
             services.AddSingleton<IGdConversionQueue>(provider =>
             {
-                var options = provider.GetService<Options>();
-                switch (options.StorageProvider)
+                var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
+                var queue = provider.GetService<IOptions<QueueOptions>>().Value.GdalConversion;
+                switch (providerOptions.Type)
                 {
-                    case StorageProviders.Azure:
-                        return new AzureGdConversionQueue(options.StorageKey, options.StorageAccount,
-                            options.GdConvQueue);
-                    case StorageProviders.Local:
-                        return new LocalGdConversionQueue(options.StoragePath, options.QueueTimeLimit,
-                            options.QueueEntryTries, options.GdConvQueue);
+                    case ProviderType.Azure:
+                        return new AzureGdConversionQueue(providerOptions.Azure.ConnectionString, queue);
+                    case ProviderType.Local:
+                        var local = providerOptions.Local;
+                        return new LocalGdConversionQueue(local.Path, local.QueueTimeLimit,
+                            local.QueueEntryLife, queue);
                     default:
                         throw new NotImplementedException();
                 }
             });
             services.AddSingleton<IPackStorage>(provider =>
             {
-                var options = provider.GetService<Options>();
-                switch (options.StorageProvider)
+                var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
+                var container = provider.GetService<IOptions<ContainerOptions>>().Value.Packs;
+                switch (providerOptions.Type)
                 {
-                    case StorageProviders.Azure:
-                        return new AzurePackStorage(options.StorageAccount, options.StorageKey,
-                            options.StorageContainer, provider.GetService<ILogger>());
-                    case StorageProviders.Local:
-                        return new LocalPackStorage(options.StoragePath, options.StorageContainer);
+                    case ProviderType.Azure:
+                        return new AzurePackStorage(providerOptions.Azure.ConnectionString,
+                            container, provider.GetService<ILogger>());
+                    case ProviderType.Local:
+                        return new LocalPackStorage(providerOptions.Local.Path, container);
                     default:
                         throw new NotImplementedException();
                 }
             });
             services.AddSingleton<ITileStorage>(provider =>
             {
-                var options = provider.GetService<Options>();
-                switch (options.StorageProvider)
+                var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
+                var container = provider.GetService<IOptions<ContainerOptions>>().Value.MbTiles;
+                switch (providerOptions.Type)
                 {
-                    case StorageProviders.Azure:
-                        return new AzureTileStorage(options.StorageAccount, options.StorageKey,
-                            options.MbTilesContainer, provider.GetService<ILogger>());
-                    case StorageProviders.Local:
-                        return new LocalTileStorage(options.StoragePath, options.MbTilesContainer);
+                    case ProviderType.Azure:
+                        return new AzureTileStorage(providerOptions.Azure.ConnectionString,
+                            container, provider.GetService<ILogger>());
+                    case ProviderType.Local:
+                        return new LocalTileStorage(providerOptions.Local.Path, container);
                     default:
                         throw new NotImplementedException();
                 }
             });
             services.AddSingleton<IGeoJsonStorage>(provider =>
             {
-                var options = provider.GetService<Options>();
-                switch (options.StorageProvider)
+                var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
+                var container = provider.GetService<IOptions<ContainerOptions>>().Value.Geojsons;
+                switch (providerOptions.Type)
                 {
-                    case StorageProviders.Azure:
-                        return new AzureGeoJsonStorage(options.StorageAccount, options.StorageKey,
-                            options.GeoJsonContainer, provider.GetService<ILogger>());
-                    case StorageProviders.Local:
-                        return new LocalGeoJsonStorage(options.StoragePath, options.GeoJsonContainer);
+                    case ProviderType.Azure:
+                        return new AzureGeoJsonStorage(providerOptions.Azure.ConnectionString,
+                            container, provider.GetService<ILogger>());
+                    case ProviderType.Local:
+                        return new LocalGeoJsonStorage(providerOptions.Local.Path, container);
                     default:
                         throw new NotImplementedException();
                 }
             });
             services.AddSingleton<IFontStorage>(provider =>
             {
-                var options = provider.GetService<Options>();
-                switch (options.StorageProvider)
+                var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
+                var container = provider.GetService<IOptions<ContainerOptions>>().Value.Fonts;
+                switch (providerOptions.Type)
                 {
-                    case StorageProviders.Azure:
-                        return new AzureFontStorage(options.StorageAccount, options.StorageKey,
-                            options.FontContainer, provider.GetService<ILogger>());
-                    case StorageProviders.Local:
-                        return new LocalFontStorage(options.StoragePath, options.FontContainer);
+                    case ProviderType.Azure:
+                        return new AzureFontStorage(providerOptions.Azure.ConnectionString,
+                            container, provider.GetService<ILogger>());
+                    case ProviderType.Local:
+                        return new LocalFontStorage(providerOptions.Local.Path, container);
                     default:
                         throw new NotImplementedException();
                 }
             });
             services.AddSingleton<IStatusTable>(provider =>
             {
-                var options = provider.GetService<Options>();
-                switch (options.StorageProvider)
+                var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
+                var table = provider.GetService<IOptions<TableOptions>>().Value.JobStatuses;
+                switch (providerOptions.Type)
                 {
-                    case StorageProviders.Azure:
-                        return new AzureStatusTable(options.StorageAccount, options.StorageKey,
-                            options.JobStatusTable);
-                    case StorageProviders.Local:
-                        return new LocalStatusTable(options.StoragePath, options.JobStatusTable);
+                    case ProviderType.Azure:
+                        return new AzureStatusTable(providerOptions.Azure.ConnectionString, table);
+                    case ProviderType.Local:
+                        return new LocalStatusTable(providerOptions.Local.Path, table);
                     default:
                         throw new NotImplementedException();
                 }

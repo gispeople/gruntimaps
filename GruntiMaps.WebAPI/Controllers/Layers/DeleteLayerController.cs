@@ -18,15 +18,16 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using System;
 using System.Threading.Tasks;
 using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers
 {
+    [Authorize]
     public class DeleteLayerController : ApiControllerBase
     {
         private readonly IMapData _mapData;

@@ -24,13 +24,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
+using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.ResourceAccess.Storage;
 using GruntiMaps.WebAPI.Interfaces;
-using GruntiMaps.WebAPI.Util;
+using GruntiMaps.WebAPI.Utils;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace GruntiMaps.WebAPI.Models
 {
@@ -47,19 +48,19 @@ namespace GruntiMaps.WebAPI.Models
 
         // we need to be able to see the watcher so we can disable it while downloading layers
         private readonly FileSystemWatcher _watcher = new FileSystemWatcher();
-        public Options CurrentOptions { get; }
+        public readonly PathOptions _pathOptions;
 
         private Dictionary<string, ILayer> _layerDict = new Dictionary<string, ILayer>();
 
-        public MapData(Options options, 
+        public MapData(IOptions<PathOptions> pathOptions, 
             ILogger<MapData> logger, 
             IPackStorage packStorage,
             ITileStorage tileStorage,
             IFontStorage fontStorage)
         {
-            CurrentOptions = options;
+            _pathOptions = pathOptions.Value;
             _logger = logger;
-            _logger.LogDebug($"Creating MapData root={CurrentOptions.RootDir}");
+            _logger.LogDebug($"Creating MapData root={_pathOptions.Root}");
 
             _packStorage = packStorage;
             _tileStorage = tileStorage;
@@ -71,7 +72,7 @@ namespace GruntiMaps.WebAPI.Models
         }
 
         public ILayer GetLayer(string id) => _layerDict[id];
-        public ILayer[] GetAllLayers() => _layerDict.Values.ToArray();
+        public ILayer[] AllActiveLayers => _layerDict.Values.ToArray();
         public bool HasLayer(string id) => _layerDict.ContainsKey(id);
 
         // retrieve global and per-instance tile packs 
@@ -88,7 +89,7 @@ namespace GruntiMaps.WebAPI.Models
             var packs = await _packStorage.List();
             foreach (var pack in packs)
             {
-                var localFile = Path.Combine(CurrentOptions.PackPath, pack);
+                var localFile = Path.Combine(_pathOptions.Packs, pack);
                 var localHash = HashCalculator.GetLocalFileMd5(localFile);
                 var remoteHash = await _packStorage.GetMd5(pack);
                 if (localHash == remoteHash)
@@ -105,7 +106,7 @@ namespace GruntiMaps.WebAPI.Models
                         var ext = Path.GetExtension(fn);
                         if (ext.Equals(".json"))
                         {
-                            var style = Path.Combine(CurrentOptions.StylePath, fn);
+                            var style = Path.Combine(_pathOptions.Styles, fn);
                             if (NeedToExtract(style, entry.Length))
                             {
                                 _logger.LogDebug($"Extracting {style}.");
@@ -114,7 +115,7 @@ namespace GruntiMaps.WebAPI.Models
                         }
 
                         if (!ext.Equals(".mbtiles")) continue;
-                        var tile = Path.Combine(CurrentOptions.TilePath, fn);
+                        var tile = Path.Combine(_pathOptions.Tiles, fn);
                         if (!NeedToExtract(tile, entry.Length)) continue;
                         _logger.LogDebug($"Extracting {tile}.");
                         entry.ExtractToFile(tile, true);
@@ -129,7 +130,7 @@ namespace GruntiMaps.WebAPI.Models
             var mbtiles = await _tileStorage.List();
             foreach (var mbtile in mbtiles)
             {
-                var localFile = Path.Combine(CurrentOptions.TilePath, mbtile);
+                var localFile = Path.Combine(_pathOptions.Tiles, mbtile);
                 var localHash = HashCalculator.GetLocalFileMd5(localFile);
                 var remoteHash = await _tileStorage.GetMd5(mbtile);
                 if (localHash == remoteHash)
@@ -141,7 +142,7 @@ namespace GruntiMaps.WebAPI.Models
                 OpenService(localFile);
             }
 
-            var localFilesToDelete = Directory.GetFiles(CurrentOptions.TilePath)
+            var localFilesToDelete = Directory.GetFiles(_pathOptions.Tiles)
                 .Where(file => !mbtiles.Any(file.Contains));
 
             foreach (var localFileToDelete in localFilesToDelete)
@@ -162,7 +163,7 @@ namespace GruntiMaps.WebAPI.Models
         {
             Task task = _tileStorage.DeleteIfExist($"{id}.mbtiles");
             CloseService(id);
-            File.Delete(Path.Combine(CurrentOptions.TilePath, $"{id}.mbtiles"));
+            File.Delete(Path.Combine(_pathOptions.Tiles, $"{id}.mbtiles"));
             await task;
         }
 
@@ -189,7 +190,7 @@ namespace GruntiMaps.WebAPI.Models
 
             try
             {
-                var layer = new Layer(CurrentOptions, id);
+                var layer = new Layer(_pathOptions, id);
                 _layerDict.Add(id, layer);
 
             }
@@ -217,7 +218,7 @@ namespace GruntiMaps.WebAPI.Models
             var fontPacks = await _fontStorage.List();
             foreach (var fontPack in fontPacks)
             {
-                var localFile = Path.Combine(CurrentOptions.FontPath, fontPack);
+                var localFile = Path.Combine(_pathOptions.Fonts, fontPack);
                 var localHash = HashCalculator.GetLocalFileMd5(localFile);
                 var remoteHash = await _tileStorage.GetMd5(fontPack);
                 if (localHash == remoteHash)
@@ -231,12 +232,12 @@ namespace GruntiMaps.WebAPI.Models
                     foreach (var entry in zip.Entries)
                         if (entry.Length != 0)
                         {
-                            var fontFile = Path.Combine(CurrentOptions.FontPath, entry.FullName);
+                            var fontFile = Path.Combine(_pathOptions.Fonts, entry.FullName);
                             if (NeedToExtract(fontFile, entry.Length)) entry.ExtractToFile(fontFile, true);
                         }
                         else
                         {
-                            var dir = Path.Combine(CurrentOptions.FontPath, entry.FullName);
+                            var dir = Path.Combine(_pathOptions.Fonts, entry.FullName);
                             Directory.CreateDirectory(dir);
                         }
                 }
@@ -246,11 +247,11 @@ namespace GruntiMaps.WebAPI.Models
 
         private void CheckDirectories()
         {
-            if (!Directory.Exists(CurrentOptions.RootDir)) Directory.CreateDirectory(CurrentOptions.RootDir);
-            if (!Directory.Exists(CurrentOptions.TilePath)) Directory.CreateDirectory(CurrentOptions.TilePath);
-            if (!Directory.Exists(CurrentOptions.PackPath)) Directory.CreateDirectory(CurrentOptions.PackPath);
-            if (!Directory.Exists(CurrentOptions.StylePath)) Directory.CreateDirectory(CurrentOptions.StylePath);
-            if (!Directory.Exists(CurrentOptions.FontPath)) Directory.CreateDirectory(CurrentOptions.FontPath);
+            if (!Directory.Exists(_pathOptions.Root)) Directory.CreateDirectory(_pathOptions.Root);
+            if (!Directory.Exists(_pathOptions.Tiles)) Directory.CreateDirectory(_pathOptions.Tiles);
+            if (!Directory.Exists(_pathOptions.Packs)) Directory.CreateDirectory(_pathOptions.Packs);
+            if (!Directory.Exists(_pathOptions.Styles)) Directory.CreateDirectory(_pathOptions.Styles);
+            if (!Directory.Exists(_pathOptions.Fonts)) Directory.CreateDirectory(_pathOptions.Fonts);
         }
 
         /// <summary>
@@ -260,7 +261,7 @@ namespace GruntiMaps.WebAPI.Models
         private void OpenTiles()
         {
             _layerDict = new Dictionary<string, ILayer>();
-            var mbtiles = Directory.GetFiles(CurrentOptions.TilePath, "*.mbtiles");
+            var mbtiles = Directory.GetFiles(_pathOptions.Tiles, "*.mbtiles");
 
             foreach (var file in mbtiles)
             {
@@ -268,7 +269,7 @@ namespace GruntiMaps.WebAPI.Models
             }
 
             //var watcher = new FileSystemWatcher();
-            _watcher.Path = CurrentOptions.TilePath;
+            _watcher.Path = _pathOptions.Tiles;
             _watcher.Filter = "*.mbtiles";
             _watcher.NotifyFilter = NotifyFilters.Size | NotifyFilters.FileName | NotifyFilters.CreationTime |
                                NotifyFilters.DirectoryName | NotifyFilters.LastWrite;

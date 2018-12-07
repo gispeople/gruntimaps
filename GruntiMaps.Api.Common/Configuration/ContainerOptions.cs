@@ -18,16 +18,15 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using GruntiMaps.ResourceAccess.Storage;
-using Microsoft.Extensions.Logging;
-
-namespace GruntiMaps.ResourceAccess.Azure
+namespace GruntiMaps.Api.Common.Configuration
 {
-    public class AzureTileStorage : AzureStorage, ITileStorage
+    public class ContainerOptions
     {
-        public AzureTileStorage(string connectionString, string containerName, ILogger logger)
-            : base(connectionString, containerName, logger)
-        {
-        }
+        public string Fonts { get; set; }
+        public string Geojsons { get; set; }
+        public string MbTiles { get; set; }
+        public string Packs { get; set; }
+        public string Overlays { get; set; }
+        public string Styles { get; set; }
     }
 }

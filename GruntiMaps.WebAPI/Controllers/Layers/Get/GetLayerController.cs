@@ -28,6 +28,7 @@ using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
@@ -47,6 +48,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
             _resourceLinksGenerator = resourceLinksGenerator;
         }
 
+        [AllowAnonymous]
         [HttpGet(Resources.Layers + "/{id}", Name = RouteNames.GetLayer)]
         public async Task<LayerDto> Invoke(string id)
         {

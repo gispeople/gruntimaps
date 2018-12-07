@@ -31,6 +31,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using GruntiMaps.WebAPI.DependencyInjection;
+using GruntiMaps.WebAPI.Helper;
+using Microsoft.AspNetCore.Authentication;
 
 namespace GruntiMaps.WebAPI
 {
@@ -54,12 +56,13 @@ namespace GruntiMaps.WebAPI
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+            services.AddAuthentication("BasicAuthentication")
+                .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
             services.AddMvc(options => { options.Filters.Add(new DomainExceptionFilter()); })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddOptions(Configuration);
-            services.AddSingleton<Options>();
             services.AddDomainServices();
             services.AddResourceAccess();
             services.AddSingleton<IMapData, MapData>();
@@ -84,6 +87,8 @@ namespace GruntiMaps.WebAPI
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+
+            app.UseAuthentication();
 
             app.UseMvc(routes =>
             {
