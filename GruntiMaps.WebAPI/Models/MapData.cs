@@ -160,7 +160,7 @@ namespace GruntiMaps.WebAPI.Models
 
         public async Task DeleteLayer(string id)
         {
-            Task task = _packStorage.DeleteIfExist($"{id}.mbtiles");
+            Task task = _tileStorage.DeleteIfExist($"{id}.mbtiles");
             CloseService(id);
             File.Delete(Path.Combine(CurrentOptions.TilePath, $"{id}.mbtiles"));
             await task;
