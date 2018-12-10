@@ -21,7 +21,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.WebAPI.Interfaces;
-using GruntiMaps.WebAPI.Util;
+using GruntiMaps.WebAPI.Utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get

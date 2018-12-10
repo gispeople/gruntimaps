@@ -23,10 +23,12 @@ using GruntiMaps.Api.Common.Services;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Common.Enums;
 using GruntiMaps.WebAPI.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers
 {
+    [Authorize]
     public class ListLayersController : ApiControllerBase
     {
         private readonly IMapData _mapData;
@@ -42,7 +44,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
         [HttpGet("layers")]
         public LayerDto[] Invoke()
         {
-            return _mapData.GetAllLayers().Select(layer => new LayerDto()
+            return _mapData.AllActiveLayers.Select(layer => new LayerDto()
             {
                 Id = layer.Id,
                 Name = layer.Name,

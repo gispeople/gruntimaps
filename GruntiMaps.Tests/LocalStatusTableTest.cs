@@ -32,12 +32,7 @@ namespace GruntiMaps.Tests
 
         public LocalStatusTableTest()
         {
-            var options = new Options(Path.GetTempPath())
-            {
-                QueueTimeLimit = 1, // set the time limit to 1 minute so we can check that expiry works
-                QueueEntryTries = 2 // try twice in our tests.
-            };
-            _table = new LocalStatusTable(options.StoragePath, "testTable");
+            _table = new LocalStatusTable(Path.GetTempPath(), "testTable");
             _jobId = Guid.NewGuid().ToString();
         }
 

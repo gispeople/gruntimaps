@@ -2,7 +2,7 @@
 using System.IO;
 using System.Security.Cryptography;
 
-namespace GruntiMaps.WebAPI.Util
+namespace GruntiMaps.WebAPI.Utils
 {
     public static class HashCalculator
     {

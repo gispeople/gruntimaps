@@ -28,10 +28,12 @@ using Microsoft.AspNetCore.Mvc;
 using GruntiMaps.Api.Common.Services;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Table;
+using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers
 {
+    [Authorize]
     public class UpdateLayerController : ApiControllerBase
     {
         private readonly IMapData _mapData;

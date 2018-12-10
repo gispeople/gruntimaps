@@ -20,20 +20,17 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
  */
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
-using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using GruntiMaps.Api.Common.Resources;
-using GruntiMaps.Api.Common.Services;
+using Microsoft.Extensions.Options;
 
 namespace GruntiMaps.WebAPI.Controllers
 {
@@ -41,20 +38,17 @@ namespace GruntiMaps.WebAPI.Controllers
     [Route("api")]
     public class RestApiController : Controller
     {
-        private readonly IMapData _mapData;
-        private readonly Options _options;
         private readonly IHostingEnvironment _hostingEnv;
+        private readonly PathOptions _pathOptions;
         private readonly ILogger _logger;
 
-        public RestApiController(IMapData mapData,
-                                 Options options,
-                                 IHostingEnvironment hostingEnv,
+        public RestApiController(IHostingEnvironment hostingEnv,
+                                 IOptions<PathOptions> options,
                                  ILogger<RestApiController> logger)
         {
-            _options = options;
-            _mapData = mapData;
             _hostingEnv = hostingEnv;
             _logger = logger;
+            _pathOptions = options.Value;
         }
 
         // RESTful api root
@@ -74,67 +68,12 @@ namespace GruntiMaps.WebAPI.Controllers
             });
         }
 
-        // RESTful retrieve offline map pack.
-        [HttpGet("layers/{id}/mappack", Name = nameof(GetLayerMapPack))]
-        public ActionResult GetLayerMapPack(string id)
-        {
-            if (string.IsNullOrEmpty(id))
-            {
-                return new RestError(400, new[] {
-                    new RestErrorDetails { field = "id", issue = "Pack ID must be supplied" }
-                }).AsJsonResult();
-            }
-
-            var zipFileName = id;
-            if (!zipFileName.EndsWith(".zip", true, CultureInfo.CurrentCulture)) zipFileName += ".zip";
-            var path = Path.Combine(_options.PackPath, $@"{zipFileName}");
-            if (!System.IO.File.Exists(path))
-                return new RestError(404, new[] {
-                    new RestErrorDetails { field = "id", issue = "Pack does not exist" }
-                }).AsJsonResult();
-            try
-            {
-                var result = new FileContentResult(System.IO.File.ReadAllBytes(path), "application/zip")
-                {
-                    // assign a file name to the download
-                    FileDownloadName = $"{zipFileName}"
-                };
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Failed to read from existing zip file ({path}). {ex}");
-                return new RestError(404, new[] {
-                    new RestErrorDetails { field = "id", issue = "Pack does not exist" }
-                }).AsJsonResult();
-            }
-        }
-
-        // Retrieve the data json to help with setting up initial styling
-        [HttpGet("layers/{id}/metadata", Name = RouteNames.GetLayerMetaData)]
-        public ActionResult GetLayerMetaData(string id)
-        {
-            if (!_mapData.HasLayer(id))
-                return new RestError(404, new[] {
-                    new RestErrorDetails{ field = "id", issue = "Layer ID does not exist" }
-                }).AsJsonResult();
-            return Content(JsonPrettify(_mapData.GetLayer(id).DataJson.ToString()), "application/json");
-        }
-
-        // Retrieve the GeoJSON associated with this id
-        [HttpGet("layers/{id}/geojson", Name = RouteNames.GetLayerGeoJson)]
-        public ActionResult GetLayerGeoJson(string id)
-        {
-            // not yet implemented
-            return Json(new { });
-        }
-
 
         // Retrieve a list of all available fonts.
         [HttpGet("fonts")]
         public ActionResult GetFonts()
         {
-            var fontDir = new DirectoryInfo(_options.FontPath);
+            var fontDir = new DirectoryInfo(_pathOptions.Fonts);
             var dirInfo = fontDir.GetDirectories();
             var resources = dirInfo.Select(di => new
             {
@@ -177,7 +116,7 @@ namespace GruntiMaps.WebAPI.Controllers
                 }).AsJsonResult();
             }
 
-            var rangeDir = new DirectoryInfo(Path.Combine(_options.FontPath, faceFile));
+            var rangeDir = new DirectoryInfo(Path.Combine(_pathOptions.Fonts, faceFile));
             var ranges = rangeDir.GetFiles("*.pbf", SearchOption.TopDirectoryOnly);
             var resources = ranges.Select(fr => new
             {
@@ -227,7 +166,7 @@ namespace GruntiMaps.WebAPI.Controllers
                 // if there were errors for this font, skip to the next one (if it exists)
                 if (details.Count > 0) continue;
 
-                var path = Path.Combine(_options.FontPath, $@"{fontChoice}", $"{range}.pbf");
+                var path = Path.Combine(_pathOptions.Fonts, $@"{fontChoice}", $"{range}.pbf");
                 if (System.IO.File.Exists(path))
                     try
                     {
@@ -266,38 +205,6 @@ namespace GruntiMaps.WebAPI.Controllers
         }
 
         #region Internals
-
-        public static string JsonPrettify(string json)
-        {
-            if (json == null)
-            {
-                return "{}";
-            }
-
-            using (var stringReader = new StringReader(json))
-            using (var stringWriter = new StringWriter())
-            {
-                var jsonReader = new JsonTextReader(stringReader);
-                var jsonWriter = new JsonTextWriter(stringWriter) { Formatting = Formatting.Indented };
-                jsonWriter.WriteToken(jsonReader);
-                return stringWriter.ToString();
-            }
-        }
-
-        private static int IntPow(int x, byte pow)
-        {
-            var ret = 1;
-            while (pow != 0)
-            {
-                if ((pow & 1) == 1)
-                    ret *= x;
-                x *= x;
-                pow >>= 1;
-            }
-
-            return ret;
-        }
-
 
         private string GetBaseHost()
         {

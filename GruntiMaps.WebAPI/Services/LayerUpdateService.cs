@@ -20,8 +20,10 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 using System.Threading.Tasks;
+using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Models;
+using Microsoft.Extensions.Options;
 
 namespace GruntiMaps.WebAPI.Services
 {
@@ -32,12 +34,12 @@ namespace GruntiMaps.WebAPI.Services
     public class LayerUpdateService : BackgroundService
     {
         private readonly IMapData _mapdata;
-        private readonly Options _options;
+        private readonly ServiceOptions _serviceOptions;
 
-        public LayerUpdateService(Options options, IMapData mapdata)
+        public LayerUpdateService(IOptions<ServiceOptions> serviceOptions, IMapData mapdata)
         {
             _mapdata = mapdata;
-            _options = options;
+            _serviceOptions = serviceOptions.Value;
         }
 
         protected override async Task Process()
@@ -50,7 +52,7 @@ namespace GruntiMaps.WebAPI.Services
             //var duration = end - start;
             //                _logger.LogDebug($"Layer refresh took {duration.TotalMilliseconds} ms.");
 
-            await Task.Delay(_options.CheckUpdateTime);
+            await Task.Delay(_serviceOptions.LayerRefresh);
         }
     }
 }

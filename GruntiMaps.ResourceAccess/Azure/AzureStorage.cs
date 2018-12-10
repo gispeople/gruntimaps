@@ -26,7 +26,6 @@ using System.Threading.Tasks;
 using GruntiMaps.ResourceAccess.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace GruntiMaps.ResourceAccess.Azure
@@ -35,14 +34,18 @@ namespace GruntiMaps.ResourceAccess.Azure
     {
         private readonly CloudBlobContainer _azureContainer;
         private readonly ILogger _logger;
-        public AzureStorage(string storageAccount, string storageKey, string containerName, ILogger logger)
+        public AzureStorage(string connectionString, string containerName, ILogger logger)
         {
             _logger = logger;
-            var cloudAccount = new CloudStorageAccount(new StorageCredentials(storageAccount, storageKey), true);
-            var cloudClient = cloudAccount.CreateCloudBlobClient();
-            _azureContainer = cloudClient.GetContainerReference(containerName);
+            _azureContainer = CloudStorageAccount
+                .Parse(connectionString)
+                .CreateCloudBlobClient()
+                .GetContainerReference(containerName);
             _azureContainer.CreateIfNotExistsAsync();
-            _azureContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
+            _azureContainer.SetPermissionsAsync(new BlobContainerPermissions
+            {
+                PublicAccess = BlobContainerPublicAccessType.Blob
+            });
         }
         // returns the location of the created file 
         public async Task<string> Store(string fileName, string inputPath)

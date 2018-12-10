@@ -26,8 +26,6 @@ namespace GruntiMaps.WebAPI.Interfaces
 {
     public interface IMapData
     {
-        Options CurrentOptions { get; }
-
         /// <summary>
         /// Get the ILayer object
         /// </summary>
@@ -39,7 +37,7 @@ namespace GruntiMaps.WebAPI.Interfaces
         /// Get all active layers
         /// </summary>
         /// <returns>all active layers as array</returns>
-        ILayer[] GetAllLayers();
+        ILayer[] AllActiveLayers { get; }
 
         /// <summary>
         /// Check existance of a layer
