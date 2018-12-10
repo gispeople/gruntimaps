@@ -171,8 +171,6 @@ namespace GruntiMaps.WebAPI.Models
         private StyleDto[] TryFetchLocalStyleInfo()
         {
             var styleFile = Path.Combine(_pathOptions.Styles, $"{Id}.json");
-            var sampleFile = Path.Combine(_pathOptions.Styles, "0016eab7-9cfe-4b65-815d-f84aab092c00.json");
-            var abc = Directory.GetFiles(_pathOptions.Styles);
             
             try
             {
