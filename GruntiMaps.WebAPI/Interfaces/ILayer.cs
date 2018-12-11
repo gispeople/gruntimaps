@@ -27,6 +27,7 @@ namespace GruntiMaps.WebAPI.Interfaces
     public interface ILayer
     {
         string Id { get; }
+        string WorkspaceId { get; }
         string Name { get; }
         SourceDto Source { get; }
         StyleDto[] Styles { get; }

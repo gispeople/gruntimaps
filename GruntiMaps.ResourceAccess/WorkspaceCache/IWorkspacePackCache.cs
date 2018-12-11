@@ -18,14 +18,9 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using System.Threading.Tasks;
-
-namespace GruntiMaps.ResourceAccess.Queue
+namespace GruntiMaps.ResourceAccess.WorkspaceCache
 {
-    public interface IQueue
+    public interface IWorkspacePackCache : IWorkspaceCache
     {
-        Task<string> AddMessage(string message);
-        Task<Message> GetMessage();
-        Task DeleteMessage(Message message);
     }
 }

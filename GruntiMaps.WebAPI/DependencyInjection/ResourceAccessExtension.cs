@@ -26,6 +26,7 @@ using GruntiMaps.ResourceAccess.Local;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Storage;
 using GruntiMaps.ResourceAccess.Table;
+using GruntiMaps.ResourceAccess.WorkspaceCache;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -36,6 +37,7 @@ namespace GruntiMaps.WebAPI.DependencyInjection
     {
         public static void AddResourceAccess(this IServiceCollection services)
         {
+            // Hosted Resources
             services.AddSingleton<IMbConversionQueue>(provider =>
             {
                 var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
@@ -143,6 +145,10 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                 }
             });
 
+            // Local Cache
+            services.AddSingleton<IWorkspaceTileCache, WorkspaceTileCache>();
+            services.AddSingleton<IWorkspaceStyleCache, WorkspaceStyleCache>();
+            services.AddSingleton<IWorkspacePackCache, WorkspacePackCache>();
         }
     }
 }

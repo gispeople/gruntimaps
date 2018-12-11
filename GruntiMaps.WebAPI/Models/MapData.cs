@@ -27,9 +27,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.ResourceAccess.Storage;
+using GruntiMaps.ResourceAccess.WorkspaceCache;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Utils;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -42,87 +42,90 @@ namespace GruntiMaps.WebAPI.Models
     {
         private readonly ILogger<MapData> _logger;
 
-        private readonly IPackStorage _packStorage;
         private readonly ITileStorage _tileStorage;
         private readonly IFontStorage _fontStorage;
+        private readonly IWorkspaceTileCache _tileCache;
+        private readonly IWorkspaceStyleCache _styleCache;
+        private readonly Dictionary<string, ILayer> _layerDict;
 
-        // we need to be able to see the watcher so we can disable it while downloading layers
-        private readonly FileSystemWatcher _watcher = new FileSystemWatcher();
-        public readonly PathOptions _pathOptions;
-
-        private Dictionary<string, ILayer> _layerDict = new Dictionary<string, ILayer>();
+        private readonly PathOptions _pathOptions;
 
         public MapData(IOptions<PathOptions> pathOptions, 
-            ILogger<MapData> logger, 
-            IPackStorage packStorage,
+            ILogger<MapData> logger,
             ITileStorage tileStorage,
-            IFontStorage fontStorage)
+            IFontStorage fontStorage,
+            IWorkspaceTileCache tileCache,
+            IWorkspaceStyleCache styleCache)
         {
+            _layerDict = new Dictionary<string, ILayer>();
             _pathOptions = pathOptions.Value;
             _logger = logger;
             _logger.LogDebug($"Creating MapData root={_pathOptions.Root}");
 
-            _packStorage = packStorage;
             _tileStorage = tileStorage;
             _fontStorage = fontStorage;
+
+            _tileCache = tileCache;
+            _styleCache = styleCache;
 
             CheckDirectories();
             PopulateFonts();
             OpenTiles();
         }
 
-        public ILayer GetLayer(string id) => _layerDict[id];
-        public ILayer[] AllActiveLayers => _layerDict.Values.ToArray();
-        public bool HasLayer(string id) => _layerDict.ContainsKey(id);
+        public ILayer GetLayer(string workspaceId, string id)
+            => _layerDict[id].WorkspaceId == workspaceId ? _layerDict[id] : null;
+
+        public ILayer[] GetAllActiveLayers(string workspaceId) =>
+            _layerDict.Values.Where(layer => layer.WorkspaceId == workspaceId).ToArray();
+
+        public bool HasLayer(string workspaceId, string id)
+            => _layerDict.ContainsKey(id) && _layerDict[id].WorkspaceId == workspaceId;
 
         // retrieve global and per-instance tile packs 
         public async Task RefreshLayers()
         {
-            // we don't want to do this more than once at the same time so we will need to track that.
-
-            // stop watching for filesystem changes while we download 
-            _watcher.EnableRaisingEvents = false;
-
             // check for map packs first.
             _logger.LogDebug("Starting Refreshing layers");
 
-            var packs = await _packStorage.List();
-            foreach (var pack in packs)
-            {
-                var localFile = Path.Combine(_pathOptions.Packs, pack);
-                var localHash = HashCalculator.GetLocalFileMd5(localFile);
-                var remoteHash = await _packStorage.GetMd5(pack);
-                if (localHash == remoteHash)
-                {
-                    continue;
-                }
-                await _packStorage.UpdateLocalFile(pack, localFile);
-                // extract pack to appropriate places
-                using (var zip = ZipFile.OpenRead(localFile))
-                {
-                    foreach (var entry in zip.Entries)
-                    {
-                        var fn = Path.GetFileName(entry.FullName);
-                        var ext = Path.GetExtension(fn);
-                        if (ext.Equals(".json"))
-                        {
-                            var style = Path.Combine(_pathOptions.Styles, fn);
-                            if (NeedToExtract(style, entry.Length))
-                            {
-                                _logger.LogDebug($"Extracting {style}.");
-                                entry.ExtractToFile(style, true);
-                            }
-                        }
-
-                        if (!ext.Equals(".mbtiles")) continue;
-                        var tile = Path.Combine(_pathOptions.Tiles, fn);
-                        if (!NeedToExtract(tile, entry.Length)) continue;
-                        _logger.LogDebug($"Extracting {tile}.");
-                        entry.ExtractToFile(tile, true);
-                        OpenService(tile);
-                    }
-                }
-            }
+//            var packs = await _packStorage.List();
+//            foreach (var pack in packs)
+//            {
+//                var localFile = Path.Combine(_pathOptions.Packs, pack);
+//                var localHash = HashCalculator.GetLocalFileMd5(localFile);
+//                if (GetWorkspaceAndLayerId(pack, out string workspaceId, out string layerId))
+//
+//                if (localHash == await _packStorage.GetMd5(pack))
+//                {
+//                    continue;
+//                }
+//                await _packStorage.UpdateLocalFile(pack, localFile);
+//                // extract pack to appropriate places
+//                using (var zip = ZipFile.OpenRead(localFile))
+//                {
+//                    foreach (var entry in zip.Entries)
+//                    {
+//                        var fn = Path.GetFileName(entry.FullName);
+//                        var ext = Path.GetExtension(fn);
+//                        if (ext.Equals(".json"))
+//                        {
+//                            var style = Path.Combine(_pathOptions.Styles, fn);
+//                            if (NeedToExtract(style, entry.Length))
+//                            {
+//                                _logger.LogDebug($"Extracting {style}.");
+//                                entry.ExtractToFile(style, true);
+//                            }
+//                        }
+//
+//                        if (!ext.Equals(".mbtiles")) continue;
+//                        var tile = Path.Combine(_pathOptions.Tiles, fn);
+//                        if (!NeedToExtract(tile, entry.Length)) continue;
+//                        _logger.LogDebug($"Extracting {tile}.");
+//                        entry.ExtractToFile(tile, true);
+//                        OpenService(tile);
+//                    }
+//                }
+//            }
 
             // see if there's any new standalone map layers
             _logger.LogDebug("Checking for standalone layers");
@@ -130,74 +133,120 @@ namespace GruntiMaps.WebAPI.Models
             var mbtiles = await _tileStorage.List();
             foreach (var mbtile in mbtiles)
             {
-                var localFile = Path.Combine(_pathOptions.Tiles, mbtile);
-                var localHash = HashCalculator.GetLocalFileMd5(localFile);
-                var remoteHash = await _tileStorage.GetMd5(mbtile);
-                if (localHash == remoteHash)
+                if (!GetWorkspaceAndLayerId(mbtile, out string workspaceId, out string layerId))
                 {
+                    _logger.LogDebug($"Failed to retrieve correct ids for mbtile {mbtile}");
                     continue;
                 }
-                CloseService(Path.GetFileNameWithoutExtension(localFile));
-                await _tileStorage.UpdateLocalFile(mbtile, localFile);
-                OpenService(localFile);
+                if (_tileCache.GetFileMd5(workspaceId, layerId) != await _tileStorage.GetMd5(mbtile))
+                {
+                    _logger.LogDebug($"Syncing layer {layerId} for workspace {workspaceId}");
+                    CloseService(layerId);
+                    await _tileStorage.UpdateLocalFile(mbtile, _tileCache.GetFilePath(workspaceId, layerId));
+                    OpenService(workspaceId, layerId);
+                }
             }
 
-            var localFilesToDelete = Directory.GetFiles(_pathOptions.Tiles)
-                .Where(file => !mbtiles.Any(file.Contains));
-
-            foreach (var localFileToDelete in localFilesToDelete)
+            // remove deleted layer from local cache
+            foreach (var workspace in _tileCache.ListWorkspaces())
             {
-                var id = Path.GetFileNameWithoutExtension(localFileToDelete);
-                CloseService(id);
-                File.Delete(localFileToDelete);
+                foreach (var id in _tileCache.ListFileIds(workspace))
+                {
+                    if (!mbtiles.Any(mbtile => mbtile.Contains($"{workspace}/{id}")))
+                    {
+                        CloseService(id);
+                        _tileCache.DeleteIfExist(workspace, id);
+                    }
+                }
             }
-
-            // reenable watching for filesystem changes 
-            _watcher.EnableRaisingEvents = true;
 
             _logger.LogDebug("Ending Refreshing layers");
 
         }
 
-        public async Task DeleteLayer(string id)
+        /// <summary>
+        /// Completely delete layer from local cache and hosted storage
+        /// </summary>
+        /// <param name="workspaceId"></param>
+        /// <param name="layerId"></param>
+        /// <returns></returns>
+        public async Task DeleteLayer(string workspaceId, string layerId)
         {
-            Task task = _tileStorage.DeleteIfExist($"{id}.mbtiles");
-            CloseService(id);
-            File.Delete(Path.Combine(_pathOptions.Tiles, $"{id}.mbtiles"));
+            Task task = _tileStorage.DeleteIfExist($"{workspaceId}/{layerId}.mbtiles");
+            CloseService(layerId);
+            _tileCache.DeleteIfExist(workspaceId, layerId);
             await task;
         }
 
         /// Close a MapBox tile service so that it can be changed.
-        /// <param name="name">The name of the service to close</param>
-        public void CloseService(string name)
+        /// <param name="layerId">The name of the service to close</param>
+        public void CloseService(string layerId)
         {
             // don't try to close a non-existent service
-            if (!_layerDict.ContainsKey(name)) return;
-            _layerDict[name].Close();
-            _layerDict.Remove(name);
+            if (!_layerDict.ContainsKey(layerId)) return;
+            _layerDict[layerId].Close();
+            _layerDict.Remove(layerId);
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }
 
-        /// Open a MapBox tile service.
-        /// <param name="mbtilefile">The file containing the service to open</param>
-        public void OpenService(string mbtilefile)
+        /// <summary>
+        /// Open a mabox service
+        /// </summary>
+        /// <param name="workspaceId">workspace id</param>
+        /// <param name="layerId">layer id</param>
+        public void OpenService(string workspaceId, string layerId)
         {
-            // don't try to open the file if it's locked, or if it doesn't pass basic mbtile file requirements
-            if (IsFileLocked(mbtilefile) || !IsValidMbTile(mbtilefile)) return;
-            var id = Path.GetFileNameWithoutExtension(mbtilefile);
-            if (id == null || _layerDict.ContainsKey(id)) return;
-
-            try
+            // only try if all of the following: 
+            if (layerId != null && workspaceId != null &&           // layer/workspace id not null
+                !_layerDict.ContainsKey(layerId) &&                 // layer is inactive
+                _tileCache.FileExists(workspaceId, layerId) &&      // layer file exists
+                _tileCache.FileIsValidMbTile(workspaceId, layerId)) // layer file is valid
             {
-                var layer = new Layer(_pathOptions, id);
-                _layerDict.Add(id, layer);
+                try
+                {
+                    _layerDict.Add(layerId, new Layer(workspaceId, layerId, _tileCache, _styleCache));
 
+                }
+                catch (Exception e)
+                {
+                    _logger.LogDebug($"Layer creation failed for workspace {workspaceId} and layer {layerId}", e);
+                    throw new Exception("Could not create layer", e);
+                }
             }
-            catch (Exception e)
+        }
+
+        private void CheckDirectories()
+        {
+            Directory.CreateDirectory(_pathOptions.Fonts);
+        }
+
+        /// <summary>
+        /// Open all MapBox tile databases found in the Tile directory
+        /// </summary>
+        private void OpenTiles()
+        {
+            foreach (var workspace in _tileCache.ListWorkspaces())
             {
-                throw new Exception("Could not create layer", e);
+                foreach (var id in _tileCache.ListFileIds(workspace))
+                {
+                    OpenService(workspace, id);
+                }
             }
+        }
+
+        private bool GetWorkspaceAndLayerId(string file, out string workspaceId, out string layerId)
+        {
+            var ids = file.Split('/');
+            if (ids.Length != 2)
+            {
+                workspaceId = null;
+                layerId = null;
+                return false;
+            }
+            workspaceId = ids[0];
+            layerId = Path.GetFileNameWithoutExtension(ids[1]);
+            return true;
         }
 
         // returns true if the file doesn't exist, or if it does exist 
@@ -242,102 +291,6 @@ namespace GruntiMaps.WebAPI.Models
                         }
                 }
             }
-
-        }
-
-        private void CheckDirectories()
-        {
-            if (!Directory.Exists(_pathOptions.Root)) Directory.CreateDirectory(_pathOptions.Root);
-            if (!Directory.Exists(_pathOptions.Tiles)) Directory.CreateDirectory(_pathOptions.Tiles);
-            if (!Directory.Exists(_pathOptions.Packs)) Directory.CreateDirectory(_pathOptions.Packs);
-            if (!Directory.Exists(_pathOptions.Styles)) Directory.CreateDirectory(_pathOptions.Styles);
-            if (!Directory.Exists(_pathOptions.Fonts)) Directory.CreateDirectory(_pathOptions.Fonts);
-        }
-
-        /// <summary>
-        ///     Open all MapBox tile databases found in the Tile directory and store the open connections in the
-        ///     SqLiteConnections dictionary. Also create a watcher to monitor for additions to that directory.
-        /// </summary>
-        private void OpenTiles()
-        {
-            _layerDict = new Dictionary<string, ILayer>();
-            var mbtiles = Directory.GetFiles(_pathOptions.Tiles, "*.mbtiles");
-
-            foreach (var file in mbtiles)
-            {
-                OpenService(file);
-            }
-
-            //var watcher = new FileSystemWatcher();
-            _watcher.Path = _pathOptions.Tiles;
-            _watcher.Filter = "*.mbtiles";
-            _watcher.NotifyFilter = NotifyFilters.Size | NotifyFilters.FileName | NotifyFilters.CreationTime |
-                               NotifyFilters.DirectoryName | NotifyFilters.LastWrite;
-            _watcher.Created += Watcher_Created;
-            _watcher.EnableRaisingEvents = true;
-
-        }
-
-        // function to check if a file is openable. We use this below.
-        private static bool IsFileLocked(string filepath)
-        {
-            FileStream stream = null;
-            try
-            {
-                stream = File.Open(filepath, FileMode.Open, FileAccess.Read, FileShare.None);
-            }
-            catch (IOException)
-            {
-                return true;
-            }
-            finally
-            {
-                stream?.Close();
-                stream?.Dispose();
-            }
-            return false;
-        }
-
-        // For the moment we validate a MBTile file by the presence of the metadata and tiles tables.
-        // We could possibly check for the presence of entries in both but it is probably valid to have (at least) an empty tiles table?
-        private bool IsValidMbTile(string filepath)
-        {
-            try
-            {
-                var builder = new SqliteConnectionStringBuilder
-                {
-                    Mode = SqliteOpenMode.ReadOnly,
-                    Cache = SqliteCacheMode.Shared,
-                    DataSource = filepath
-                };
-                var connStr = builder.ConnectionString;
-                var count = 0;
-                using (var dbConnection = new SqliteConnection(connStr))
-                {
-                    dbConnection.Open();
-                    using (var cmd = dbConnection.CreateCommand())
-                    {
-                        cmd.CommandText = "select count(*) from sqlite_master where type='table' and name in ('metadata','tiles')";
-                        var result = cmd.ExecuteScalar();
-                        if (result != null)
-                        {
-                            count = Convert.ToInt32(result);
-                        }
-                    }
-                    dbConnection.Close();
-                    if (count == 2) return true;
-                }
-            }
-            catch
-            {
-                _logger.LogWarning($"{filepath} failed mbtile sanity check.");
-            }
-            return false;
-        }
-        private void Watcher_Created(object sender, FileSystemEventArgs e)
-        {
-            _logger.LogDebug($"found file at {e.FullPath}");
-            OpenService(e.FullPath);
         }
     }
 }

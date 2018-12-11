@@ -22,7 +22,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using System.Threading.Tasks;
 using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.WebAPI.Interfaces;
-using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.Options;
 
 namespace GruntiMaps.WebAPI.Services

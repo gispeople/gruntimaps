@@ -22,7 +22,7 @@ using GruntiMaps.ResourceAccess.Queue;
 
 namespace GruntiMaps.ResourceAccess.Azure
 {
-    public class AzureMbConversionQueue : AzureQueue, IMbConversionQueue
+    public class AzureMbConversionQueue : AzureConversionQueue, IMbConversionQueue
     {
         public AzureMbConversionQueue(string connectionString, string queueName) 
             : base(connectionString, queueName)

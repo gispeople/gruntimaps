@@ -53,31 +53,31 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 <h3>Data Available:</h3>
 <p>Font List: <a asp-controller="RestApi" asp-action="GetFonts">Retrieve Font List JSON</a></p>
 
-<p>
-    There
-    @if (Model.AllActiveLayers.Length == 1)
-    {
-        @("is")
-    }
-    else
-    {
-        @("are")
-    }
-    @Model.AllActiveLayers.Length open vector tile layers:
-</p>
-<div class="container">
-    @foreach (var c in Model.AllActiveLayers)
-    {
-        <div class="row">
-            <div class="col-sm-4">@c.Source.Description</div>
-
-            <div class="col-sm-1"><a asp-route-name="GetLayerSource" asp-route-id="@c.Id">Source</a></div>
-            <div class="col-sm-1"><a asp-route-name="GetLayerStyle" asp-route-id="@c.Id">Style</a></div>
-            <div class="col-sm-1"><a asp-route-name="GetLayerMetaData" asp-route-id="@c.Id">Data</a></div>
-            <div class="col-sm-5"><a class="validate" id="@c.Id">Validate</a></div>
-        </div>
-    }
-</div>
+@* <p> *@
+@*     There *@
+@*     @if (Model.AllActiveLayers.Length == 1) *@
+@*     { *@
+@*         @("is") *@
+@*     } *@
+@*     else *@
+@*     { *@
+@*         @("are") *@
+@*     } *@
+@*     @Model.AllActiveLayers.Length open vector tile layers: *@
+@* </p> *@
+@* <div class="container"> *@
+@*     @foreach (var c in Model.AllActiveLayers) *@
+@*     { *@
+@*         <div class="row"> *@
+@*             <div class="col-sm-4">@c.Source.Description</div> *@
+@* *@
+@*             <div class="col-sm-1"><a asp-route-name="GetLayerSource" asp-route-id="@c.Id">Source</a></div> *@
+@*             <div class="col-sm-1"><a asp-route-name="GetLayerStyle" asp-route-id="@c.Id">Style</a></div> *@
+@*             <div class="col-sm-1"><a asp-route-name="GetLayerMetaData" asp-route-id="@c.Id">Data</a></div> *@
+@*             <div class="col-sm-5"><a class="validate" id="@c.Id">Validate</a></div> *@
+@*         </div> *@
+@*     } *@
+@* </div> *@
 <h3>Configuration:</h3>
 <p>Layers are checked every @ServiceOptions.Value.LayerRefresh ms.</p>
 <p>The conversion queue is checked every @ServiceOptions.Value.ConvertPolling ms.</p>

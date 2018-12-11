@@ -18,12 +18,15 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-namespace GruntiMaps.ResourceAccess.Queue
+using GruntiMaps.Api.Common.Extensions;
+using GruntiMaps.Api.DataContracts.V2;
+using Microsoft.AspNetCore.Mvc;
+
+namespace GruntiMaps.WebAPI.Controllers
 {
-    public class Message
+    [Route(Resources.Workspaces + "/{workspaceId}")]
+    public abstract class WorkspaceControllerBase : ControllerBase
     {
-        public string Id;
-        public string PopReceipt;
-        public string Content;
+        protected string WorkspaceId => ControllerContext.RouteData.GetWorkspaceId();
     }
 }

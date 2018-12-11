@@ -18,15 +18,9 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using GruntiMaps.ResourceAccess.Queue;
-
-namespace GruntiMaps.ResourceAccess.Azure
+namespace GruntiMaps.ResourceAccess.WorkspaceCache
 {
-    public class AzureGdConversionQueue : AzureConversionQueue, IGdConversionQueue
+    public interface IWorkspaceStyleCache : IWorkspaceCache
     {
-        public AzureGdConversionQueue(string connectionString, string queueName) 
-            : base(connectionString, queueName)
-        {
-        }
     }
 }

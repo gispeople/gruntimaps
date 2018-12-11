@@ -19,56 +19,57 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 using System.Threading.Tasks;
-using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Common.Enums;
-using GruntiMaps.WebAPI.Interfaces;
-using GruntiMaps.WebAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using GruntiMaps.Api.Common.Services;
+using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Table;
 using Microsoft.AspNetCore.Authorization;
-using Newtonsoft.Json;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers
 {
     [Authorize]
-    public class UpdateLayerController : ApiControllerBase
+    public class UpdateLayerController : WorkspaceLayerControllerBase
     {
-        private readonly IMapData _mapData;
         private readonly IResourceLinksGenerator _resourceLinksGenerator;
         private readonly IGdConversionQueue _gdConversionQueue;
         private readonly IStatusTable _statusTable;
 
-        public UpdateLayerController(IMapData mapData,
+        public UpdateLayerController(
             IResourceLinksGenerator resourceLinksGenerator,
             IGdConversionQueue gdConversionQueue,
             IStatusTable statusTable)
         {
-            _mapData = mapData;
             _resourceLinksGenerator = resourceLinksGenerator;
             _gdConversionQueue = gdConversionQueue;
             _statusTable = statusTable;
         }
 
-        [HttpPatch(Resources.Layers + "/{id}")]
-        public async Task<LayerDto> Invoke(string id, [FromBody] UpdateLayerDto dto)
+        [HttpPatch]
+        public async Task<LayerDto> Invoke([FromBody] UpdateLayerDto dto)
         {
-            ConversionMessageData messageData = new ConversionMessageData
+            if (!(await _statusTable.GetStatus(WorkspaceId, LayerId)).HasValue)
             {
-                LayerId = id,
+                throw new EntityNotFoundException();
+            }
+            var job = new ConversionJobData
+            {
+                LayerId = LayerId,
+                WorkspaceId = WorkspaceId,
                 LayerName = dto.Name,
                 DataLocation = dto.DataLocation,
                 Description = dto.Description
             };
-            await _gdConversionQueue.AddMessage(JsonConvert.SerializeObject(messageData));
-            await _statusTable.UpdateStatus(messageData.LayerId, LayerStatus.Processing);
+            await _gdConversionQueue.Queue(job);
+            await _statusTable.UpdateStatus(WorkspaceId, LayerId, LayerStatus.Processing);
             return new LayerDto
             {
-                Id = id,
-                Status = LayerStatus.Processing,
-                Links = _resourceLinksGenerator.GenerateResourceLinks(id),
+                Id = LayerId,
+                Name = dto.Name,
+                Description = dto.Description,
+                Links = _resourceLinksGenerator.GenerateResourceLinks(WorkspaceId, LayerId),
             };
         }
     }

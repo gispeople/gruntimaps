@@ -25,8 +25,8 @@ namespace GruntiMaps.ResourceAccess.Table
 {
     public interface IStatusTable
     {
-        Task<LayerStatus?> GetStatus(string id);
-        Task UpdateStatus(string id, LayerStatus status);
-        Task RemoveStatus(string id);
+        Task<LayerStatus?> GetStatus(string workspaceId, string layerId);
+        Task UpdateStatus(string workspaceId, string layerId, LayerStatus status);
+        Task RemoveStatus(string workspaceId, string layerId);
     }
 }
