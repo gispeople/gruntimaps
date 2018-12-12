@@ -535,175 +535,245 @@
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 646,
-    "y": 336
+    "x": 128,
+    "y": 404
   },
   "hatch-l-20-blue": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 646,
-    "y": 370
+    "x": 144,
+    "y": 404
   },
   "hatch-l-20-orange": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 654,
-    "y": 84
+    "x": 160,
+    "y": 404
   },
   "hatch-l-20-red": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 640,
-    "y": 126
+    "x": 176,
+    "y": 404
   },
   "hatch-l-20-yellow": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 656,
-    "y": 126
+    "x": 192,
+    "y": 404
   },
   "hatch-l-50-black": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 128,
+    "x": 400,
     "y": 404
   },
   "hatch-l-50-blue": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 136,
+    "x": 408,
     "y": 404
   },
   "hatch-l-50-orange": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 144,
+    "x": 416,
     "y": 404
   },
   "hatch-l-50-red": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 152,
+    "x": 424,
     "y": 404
   },
   "hatch-l-50-yellow": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 160,
+    "x": 432,
     "y": 404
   },
   "hatch-r-20-black": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 642,
-    "y": 168
+    "x": 208,
+    "y": 404
   },
   "hatch-r-20-blue": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 642,
-    "y": 210
+    "x": 224,
+    "y": 404
   },
   "hatch-r-20-orange": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 642,
-    "y": 252
+    "x": 240,
+    "y": 404
   },
   "hatch-r-20-red": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 642,
-    "y": 294
+    "x": 256,
+    "y": 404
   },
   "hatch-r-20-yellow": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 0,
+    "x": 272,
     "y": 404
   },
   "hatch-r-50-black": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 168,
+    "x": 440,
     "y": 404
   },
   "hatch-r-50-blue": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 176,
+    "x": 448,
     "y": 404
   },
   "hatch-r-50-orange": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 184,
+    "x": 456,
     "y": 404
   },
   "hatch-r-50-red": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 192,
+    "x": 464,
     "y": 404
   },
   "hatch-r-50-yellow": {
     "height": 8,
     "pixelRatio": 2,
     "width": 8,
-    "x": 200,
+    "x": 472,
+    "y": 404
+  },
+  "hatch-x-10-black": {
+    "height": 32,
+    "pixelRatio": 2,
+    "width": 32,
+    "x": 640,
+    "y": 126
+  },
+  "hatch-x-10-blue": {
+    "height": 32,
+    "pixelRatio": 2,
+    "width": 32,
+    "x": 0,
+    "y": 404
+  },
+  "hatch-x-10-orange": {
+    "height": 32,
+    "pixelRatio": 2,
+    "width": 32,
+    "x": 32,
+    "y": 404
+  },
+  "hatch-x-10-red": {
+    "height": 32,
+    "pixelRatio": 2,
+    "width": 32,
+    "x": 64,
+    "y": 404
+  },
+  "hatch-x-10-yellow": {
+    "height": 32,
+    "pixelRatio": 2,
+    "width": 32,
+    "x": 96,
     "y": 404
   },
   "hatch-x-20-black": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 16,
+    "x": 288,
     "y": 404
   },
   "hatch-x-20-blue": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 32,
+    "x": 304,
     "y": 404
   },
   "hatch-x-20-orange": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 48,
+    "x": 320,
     "y": 404
   },
   "hatch-x-20-red": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 64,
+    "x": 336,
     "y": 404
   },
   "hatch-x-20-yellow": {
     "height": 16,
     "pixelRatio": 2,
     "width": 16,
-    "x": 80,
+    "x": 352,
+    "y": 404
+  },
+  "hatch-x-50-black": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 480,
+    "y": 404
+  },
+  "hatch-x-50-blue": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 488,
+    "y": 404
+  },
+  "hatch-x-50-orange": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 496,
+    "y": 404
+  },
+  "hatch-x-50-red": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 504,
+    "y": 404
+  },
+  "hatch-x-50-yellow": {
+    "height": 8,
+    "pixelRatio": 2,
+    "width": 8,
+    "x": 512,
     "y": 404
   },
   "heliport-11": {
@@ -1326,7 +1396,7 @@
     "height": 16,
     "pixelRatio": 2,
     "width": 32,
-    "x": 96,
+    "x": 368,
     "y": 404
   },
   "zoo-11": {
