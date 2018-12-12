@@ -27,5 +27,6 @@ namespace GruntiMaps.ResourceAccess.Table
     {
         Task<LayerStatus?> GetStatus(string id);
         Task UpdateStatus(string id, LayerStatus status);
+        Task RemoveStatus(string id);
     }
 }

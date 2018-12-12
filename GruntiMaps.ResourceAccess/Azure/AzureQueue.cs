@@ -21,35 +21,34 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using System.Threading.Tasks;
 using GruntiMaps.ResourceAccess.Queue;
 using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Queue;
 
 namespace GruntiMaps.ResourceAccess.Azure
 {
     public class AzureQueue : IQueue
     {
-        public CloudStorageAccount CloudAccount { get; }
-        private CloudQueue QueueRef { get; }
+        private readonly CloudQueue _queue;
 
-        public AzureQueue(string key, string account, string queueName)
+        public AzureQueue(string connectionString, string queueName)
         {
-            CloudAccount = new CloudStorageAccount(new StorageCredentials(account, key), true);
-            var queueClient = CloudAccount.CreateCloudQueueClient();
-            QueueRef = queueClient.GetQueueReference(queueName);
-            QueueRef.CreateIfNotExistsAsync();
+            _queue = CloudStorageAccount
+                .Parse(connectionString)
+                .CreateCloudQueueClient()
+                .GetQueueReference(queueName);
+            _queue.CreateIfNotExistsAsync();
         }
 
         public async Task<string> AddMessage(string messageData)
         {
             CloudQueueMessage message = new CloudQueueMessage(messageData);
-            await QueueRef.AddMessageAsync(message);
+            await _queue.AddMessageAsync(message);
             return message.Id;
         }
 
         public async Task<Message> GetMessage()
         {
             // if there is a job on the queue, process it.
-            var msg = await QueueRef.GetMessageAsync();
+            var msg = await _queue.GetMessageAsync();
             if (msg == null)
             {
                 return null;
@@ -65,7 +64,7 @@ namespace GruntiMaps.ResourceAccess.Azure
 
         public async Task DeleteMessage(Message message)
         {
-            await QueueRef.DeleteMessageAsync(message.Id, message.PopReceipt);
+            await _queue.DeleteMessageAsync(message.Id, message.PopReceipt);
         }
     }
 }

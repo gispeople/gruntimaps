@@ -19,7 +19,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
 
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using GruntiMaps.WebAPI.Models;
 
@@ -27,11 +26,37 @@ namespace GruntiMaps.WebAPI.Interfaces
 {
     public interface IMapData
     {
-        Dictionary<string, ILayer> LayerDict { get; set; }
-        Options CurrentOptions { get; }
+        /// <summary>
+        /// Get the ILayer object
+        /// </summary>
+        /// <param name="id">layer id</param>
+        /// <returns>layer</returns>
+        ILayer GetLayer(string id);
 
-        void OpenService(string mbtilefile);
-        void CloseService(string name);
+        /// <summary>
+        /// Get all active layers
+        /// </summary>
+        /// <returns>all active layers as array</returns>
+        ILayer[] AllActiveLayers { get; }
+
+        /// <summary>
+        /// Check existance of a layer
+        /// </summary>
+        /// <param name="id">layer id</param>
+        /// <returns>the existance of the layer</returns>
+        bool HasLayer(string id);
+
+        /// <summary>
+        /// Refresh active layer to sync with remote storage
+        /// </summary>
+        /// <returns></returns>
         Task RefreshLayers();
+
+        /// <summary>
+        /// Delete an active layer
+        /// </summary>
+        /// <param name="id">layer id</param>
+        /// <returns></returns>
+        Task DeleteLayer(string id);
     }
 }

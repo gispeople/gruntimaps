@@ -29,7 +29,13 @@ namespace GruntiMaps.WebAPI.DependencyInjection
         public static void AddOptions(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddOptions();
-            services.Configure<QueuesOptions>(configuration.GetSection("Queues"));
+            services.Configure<ContainerOptions>(configuration.GetSection("Container"));
+            services.Configure<QueueOptions>(configuration.GetSection("Queue"));
+            services.Configure<TableOptions>(configuration.GetSection("Table"));
+            services.Configure<ProviderOptions>(configuration.GetSection("Provider"));
+            services.Configure<PathOptions>(configuration.GetSection("Path"));
+            services.Configure<ServiceOptions>(configuration.GetSection("Service"));
+            services.Configure<AuthOptions>(configuration.GetSection("Authentication"));
         }
     }
 }

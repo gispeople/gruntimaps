@@ -1,19 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using GruntiMaps.Api.Common.Services;
-using GruntiMaps.Api.DataContracts.V2;
-using GruntiMaps.Api.DataContracts.V2.Layers;
-using GruntiMaps.Common.Enums;
-using GruntiMaps.ResourceAccess.Queue;
-using GruntiMaps.ResourceAccess.Table;
-using GruntiMaps.WebAPI.Interfaces;
-using GruntiMaps.WebAPI.Models;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-
-namespace GruntiMaps.WebAPI.Controllers.Layers
-{
-    public class /*
+﻿/*
 
 Copyright 2016, 2017, 2018 GIS People Pty Ltd
 
@@ -33,7 +18,25 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-        CreateLayerController : ApiControllerBase
+
+using System;
+using System.Threading.Tasks;
+using GruntiMaps.Api.Common.Services;
+using GruntiMaps.Api.DataContracts.V2;
+using GruntiMaps.Api.DataContracts.V2.Layers;
+using GruntiMaps.Common.Enums;
+using GruntiMaps.ResourceAccess.Queue;
+using GruntiMaps.ResourceAccess.Table;
+using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.WebAPI.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+
+namespace GruntiMaps.WebAPI.Controllers.Layers
+{
+    [Authorize]
+    public class CreateLayerController : ApiControllerBase
     {
         private readonly IMapData _mapData;
         private readonly IResourceLinksGenerator _resourceLinksGenerator;

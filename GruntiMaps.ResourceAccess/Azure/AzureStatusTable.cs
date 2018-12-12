@@ -23,7 +23,6 @@ using System.Threading.Tasks;
 using GruntiMaps.Common.Enums;
 using GruntiMaps.ResourceAccess.Table;
 using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace GruntiMaps.ResourceAccess.Azure
@@ -34,12 +33,12 @@ namespace GruntiMaps.ResourceAccess.Azure
 
         private readonly CloudTable _table;
 
-        public AzureStatusTable(string storageAccount, string storageKey, string tableName)
+        public AzureStatusTable(string connectionString, string tableName)
         {
-            var account = new CloudStorageAccount(new StorageCredentials(storageAccount, storageKey), true);
-            var client = account.CreateCloudTableClient();
-
-            _table = client.GetTableReference(tableName);
+            _table = CloudStorageAccount
+                .Parse(connectionString)
+                .CreateCloudTableClient()
+                .GetTableReference(tableName);
             _table.CreateIfNotExistsAsync();
         }
 
@@ -75,6 +74,22 @@ namespace GruntiMaps.ResourceAccess.Azure
             {
                 await _table.ExecuteAsync(TableOperation.Insert(new StatusEntity(id)));
             }
+        }
+
+        public async Task RemoveStatus(string id)
+        {
+            try
+            {
+                await _table.ExecuteAsync(TableOperation.Delete(new DynamicTableEntity(Workspace, id) {ETag = "*"}));
+            }
+            catch (StorageException e)
+            {
+                if (e.Message != "Not Found")
+                {
+                    throw;
+                }
+            }
+            
         }
     }
 

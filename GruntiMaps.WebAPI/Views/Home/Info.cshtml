@@ -23,9 +23,14 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 }
 
 @using System.IO
-@using GruntiMaps.Common.Enums
-@using GruntiMaps.WebAPI.Models
+@using GruntiMaps.Api.Common.Configuration
+@using GruntiMaps.Api.Common.Enums
+@using Microsoft.Extensions.Options
 @model GruntiMaps.WebAPI.Interfaces.IMapData
+@inject IOptions<PathOptions> PathOptions
+@inject IOptions<ServiceOptions> ServiceOptions
+@inject IOptions<ProviderOptions> ProviderOptions
+@inject IOptions<ContainerOptions> ContainerOptions
 
 @section scripts {
     <script src="/js/info.js"></script>
@@ -39,40 +44,43 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 <h2>@ViewData["Title"].</h2>
 <environment names="Development">
     <h3>Directories:</h3>
-    <p>Root directory = @Model.CurrentOptions.RootDir, containing @Directory.GetDirectories(Model.CurrentOptions.RootDir).Length directories</p>
-    <p>Pack directory = @Model.CurrentOptions.PackPath, containing @Directory.GetFiles(Model.CurrentOptions.PackPath).Length files</p>
-    <p>Style directory = @Model.CurrentOptions.StylePath, containing @Directory.GetFiles(Model.CurrentOptions.StylePath).Length files</p>
-    <p>Tile directory = @Model.CurrentOptions.TilePath, containing @Directory.GetFiles(Model.CurrentOptions.TilePath).Length files</p>
-    <p>Font directory = @Model.CurrentOptions.FontPath, containing @Directory.GetDirectories(Model.CurrentOptions.FontPath).Length fonts</p>
+    <p>Root directory = @PathOptions.Value.Root, containing @Directory.GetDirectories(PathOptions.Value.Root).Length directories</p>
+    <p>Pack directory = @PathOptions.Value.Packs, containing @Directory.GetFiles(PathOptions.Value.Packs).Length files</p>
+    <p>Style directory = @PathOptions.Value.Styles, containing @Directory.GetFiles(PathOptions.Value.Styles).Length files</p>
+    <p>Tile directory = @PathOptions.Value.Tiles, containing @Directory.GetFiles(PathOptions.Value.Tiles).Length files</p>
+    <p>Font directory = @PathOptions.Value.Fonts, containing @Directory.GetDirectories(PathOptions.Value.Fonts).Length fonts</p>
 </environment>
 <h3>Data Available:</h3>
 <p>Font List: <a asp-controller="RestApi" asp-action="GetFonts">Retrieve Font List JSON</a></p>
 
-<p>There 
-    @if (Model.LayerDict.Count == 1) {
-         @("is")
+<p>
+    There
+    @if (Model.AllActiveLayers.Length == 1)
+    {
+        @("is")
     }
     else
     {
         @("are")
     }
-    @Model.LayerDict.Count open vector tile layers:</p>
+    @Model.AllActiveLayers.Length open vector tile layers:
+</p>
 <div class="container">
-    @foreach (var c in Model.LayerDict)
+    @foreach (var c in Model.AllActiveLayers)
     {
         <div class="row">
-            <div class="col-sm-4">@c.Value.Source.Description</div>
+            <div class="col-sm-4">@c.Source.Description</div>
 
-            <div class="col-sm-1"><a asp-controller="RestApi" asp-action="GetLayerSource" asp-route-id="@c.Key">Source</a></div>
-            <div class="col-sm-1"><a asp-controller="RestApi" asp-action="Style" asp-route-id="@c.Key">Style</a></div>
-            <div class="col-sm-1"><a asp-controller="RestApi" asp-action="GetLayerMetaData" asp-route-id="@c.Key">Data</a></div>
-            <div class="col-sm-5"><a class="validate" id="@c.Key">Validate</a></div>
+            <div class="col-sm-1"><a asp-route-name="GetLayerSource" asp-route-id="@c.Id">Source</a></div>
+            <div class="col-sm-1"><a asp-route-name="GetLayerStyle" asp-route-id="@c.Id">Style</a></div>
+            <div class="col-sm-1"><a asp-route-name="GetLayerMetaData" asp-route-id="@c.Id">Data</a></div>
+            <div class="col-sm-5"><a class="validate" id="@c.Id">Validate</a></div>
         </div>
     }
 </div>
 <h3>Configuration:</h3>
-<p>Layers are checked every @Model.CurrentOptions.CheckUpdateTime ms.</p>
-<p>The conversion queue is checked every @Model.CurrentOptions.CheckConvertTime ms.</p>
+<p>Layers are checked every @ServiceOptions.Value.LayerRefresh ms.</p>
+<p>The conversion queue is checked every @ServiceOptions.Value.ConvertPolling ms.</p>
 <p>The external host is @ViewContext.HttpContext.Request.Host</p>
 <p>This is a @Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") environment.</p>
 @if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("host")))
@@ -81,22 +89,22 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 }
 
 <environment names="Development">
-@switch (Model.CurrentOptions.StorageProvider)
+    @switch (ProviderOptions.Value.Type)
     {
-         case StorageProviders.Local:
-             <p>Local storage provider, path = @Model.CurrentOptions.StoragePath</p>
+        case ProviderType.Local:
+            <p>Local storage provider, path = @ProviderOptions.Value.Local.Path</p>
             break;
-        case StorageProviders.Azure:
-            <p>Azure storage provider, map data is being obtained from the <b>@Environment.GetEnvironmentVariable("globalStorageAccount")</b> storage account.</p>
+        case ProviderType.Azure:
+            <p>Azure storage provider, map data is being obtained from connection string: <b>@ProviderOptions.Value.Azure.ConnectionString</b></p>
             break;
     }
     <h3>Storage Containers</h3>
-    <p>fonts: @Model.CurrentOptions.FontContainer</p>
-    <p>geojson: @Model.CurrentOptions.GeoJsonContainer</p>
-    <p>mbtiles: @Model.CurrentOptions.MbTilesContainer</p>
-    <p>packs: @Model.CurrentOptions.PacksContainer</p>
-    <p>storage: @Model.CurrentOptions.StorageContainer</p>
-    <p>styles: @Model.CurrentOptions.StyleContainer</p>
+    <p>fonts: @ContainerOptions.Value.Fonts</p>
+    <p>geojson: @ContainerOptions.Value.Geojsons</p>
+    <p>mbtiles: @ContainerOptions.Value.MbTiles</p>
+    <p>packs: @ContainerOptions.Value.Packs</p>
+    <p>overlay: @ContainerOptions.Value.Overlays</p>
+    <p>styles: @ContainerOptions.Value.Styles</p>
     <h3>Environment:</h3>
     <ul>
         @foreach (System.Collections.DictionaryEntry e in Environment.GetEnvironmentVariables())
@@ -106,7 +114,8 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
     </ul>
     <h3>Headers:</h3>
     <ul>
-        @foreach(var h in ViewContext.HttpContext.Request.Headers) {
+        @foreach (var h in ViewContext.HttpContext.Request.Headers)
+        {
             <li>@h.Key = @h.Value</li>
         }
     </ul>

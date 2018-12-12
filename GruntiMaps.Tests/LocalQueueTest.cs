@@ -35,10 +35,9 @@ namespace GruntiMaps.Tests
         public LocalQueueTest(ITestOutputHelper output)
         {
             _output = output;
-            var options = new Options(Path.GetTempPath()) {QueueTimeLimit = 1, QueueEntryTries = 2};
             // set the time limit to 1 minute so we can check that expiry works
             // try twice in our tests.
-            _queue = new LocalQueue(options.StoragePath, options.QueueTimeLimit, options.QueueEntryTries, "testQueue");
+            _queue = new LocalQueue(Path.GetTempPath(), 1, 2, "testQueue");
         }
         
         [Fact]

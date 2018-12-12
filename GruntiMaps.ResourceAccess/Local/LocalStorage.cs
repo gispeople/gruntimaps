@@ -18,9 +18,12 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using GruntiMaps.ResourceAccess.Storage;
 
@@ -50,26 +53,33 @@ namespace GruntiMaps.ResourceAccess.Local
             return outputPath;
         }
 
-        public async Task<bool> GetIfNewer(string fileName, string outputPath)
+        public Task<string> GetMd5(string fileName)
         {
-            var inputPath = Path.Combine(_containerPath, fileName);
-            // if the source doesn't exist, not much to do
-            if (!File.Exists(inputPath)) return false;
-            // if the dest doesn't exist, no need to check length
-            if (File.Exists(outputPath))
+            var filePath = Path.Combine(_containerPath, fileName);
+            string hash = null;
+            if (File.Exists(filePath))
             {
-                var inputAttrs = new FileInfo(inputPath);
-                var outputAttrs = new FileInfo(outputPath);
-                if (inputAttrs.Length == outputAttrs.Length)
+                using (var md5 = MD5.Create())
                 {
-                    return false;
+                    using (var stream = File.OpenRead(filePath))
+                    {
+                        hash = Convert.ToBase64String(md5.ComputeHash(stream));
+                    }
                 }
             }
-            await Task.Run(() =>
+            return Task.FromResult(hash);
+        }
+
+        public async Task UpdateLocalFile(string fileName, string localPath)
+        {
+            var inputPath = Path.Combine(_containerPath, fileName);
+            if (File.Exists(inputPath))
             {
-                File.Copy(inputPath, outputPath);
-            });
-            return true;
+                await Task.Run(() =>
+                {
+                    File.Copy(inputPath, localPath);
+                });
+            }
         }
 
         public async Task<List<string>> List()
@@ -82,6 +92,20 @@ namespace GruntiMaps.ResourceAccess.Local
                 result.AddRange(di.GetFiles().Select(file => file.Name));
             });
             return result;
+        }
+
+        public async Task<bool> DeleteIfExist(string fileName)
+        {
+            var filePath = Path.Combine(_containerPath, fileName);
+            if (File.Exists(filePath))
+            {
+                await Task.Run(() =>
+                {
+                    File.Delete(filePath);
+                });
+                return true;
+            }
+            return false;
         }
     }
 }

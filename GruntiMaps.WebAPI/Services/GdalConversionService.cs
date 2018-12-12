@@ -25,6 +25,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.Common.Enums;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Storage;
@@ -32,6 +33,7 @@ using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace GruntiMaps.WebAPI.Services
@@ -40,7 +42,7 @@ namespace GruntiMaps.WebAPI.Services
     {
         private readonly ILogger<GdalConversionService> _logger;
         private readonly IMapData _mapdata;
-        private readonly Options _options;
+        private readonly ServiceOptions _serviceOptions;
         private readonly List<string> _supportedFileTypes;
 
         private readonly IGdConversionQueue _gdConversionQueue;
@@ -54,14 +56,14 @@ namespace GruntiMaps.WebAPI.Services
         ///     Create a new GdalConversionService instance.
         /// </summary>
         /// <param name="logger">system logger</param>
-        /// <param name="options">global options for the Map Server</param>
+        /// <param name="serviceOptions"></param>
         /// <param name="mapdata">Map data layers</param>
         /// <param name="gdConversionQueue"></param>
         /// <param name="mbConversionQueue"></param>
         /// <param name="statusTable"></param>
         /// <param name="geoJsonStorage"></param>
-        public GdalConversionService(ILogger<GdalConversionService> logger, 
-            Options options, 
+        public GdalConversionService(ILogger<GdalConversionService> logger,
+            IOptions<ServiceOptions> serviceOptions, 
             IMapData mapdata,
             IGdConversionQueue gdConversionQueue,
             IMbConversionQueue mbConversionQueue,
@@ -70,7 +72,7 @@ namespace GruntiMaps.WebAPI.Services
         {
             _logger = logger;
             _mapdata = mapdata;
-            _options = options;
+            _serviceOptions = serviceOptions.Value;
             _supportedFileTypes = new List<string> { ".shp", ".geojson", ".gdb" };
 
             _gdConversionQueue = gdConversionQueue;
@@ -204,18 +206,18 @@ namespace GruntiMaps.WebAPI.Services
                     _logger.LogDebug("deleting gdal message from queue");
                     await _gdConversionQueue.DeleteMessage(gdalMsg);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     if (gdalData != null)
                     {
                         await _statusTable.UpdateStatus(gdalData.LayerId, LayerStatus.Failed);
                     }
-                    throw ex;
+                    throw;
                 }
             }
             else
             {
-                await Task.Delay(_options.CheckConvertTime);
+                await Task.Delay(_serviceOptions.ConvertPolling);
             }
         }
         //        }

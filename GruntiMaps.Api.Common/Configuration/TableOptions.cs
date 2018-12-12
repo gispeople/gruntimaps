@@ -20,9 +20,8 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 */
 namespace GruntiMaps.Api.Common.Configuration
 {
-    public class QueuesOptions
+    public class TableOptions
     {
-        public string mvtConversion { get; set; }
-        public string gdalConversion { get; set; }
+        public string JobStatuses { get; set; }
     }
 }

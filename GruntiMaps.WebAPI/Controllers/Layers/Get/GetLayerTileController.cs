@@ -21,7 +21,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.WebAPI.Interfaces;
-using GruntiMaps.WebAPI.Util;
+using GruntiMaps.WebAPI.Utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
@@ -39,8 +39,8 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
         public ActionResult Invoke(string id, int x, int y, int z)
         {
             y = (1 << z) - y - 1; // convert xyz to tms
-            var bytes = _mapData.LayerDict[id].Tile(x, y, z);
-            switch (_mapData.LayerDict[id].Source.Format)
+            var bytes = _mapData.GetLayer(id).Tile(x, y, z);
+            switch (_mapData.GetLayer(id).Source.Format)
             {
                 case "png": return File(bytes, "image/png");
                 case "jpg": return File(bytes, "image/jpg");

@@ -24,14 +24,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.Common.Enums;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Storage;
 using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using IMapData = GruntiMaps.WebAPI.Interfaces.IMapData;
 
 namespace GruntiMaps.WebAPI.Services
 {
@@ -42,7 +43,7 @@ namespace GruntiMaps.WebAPI.Services
     public class MapBoxConversionService : BackgroundService
     {
         private readonly ILogger<MapBoxConversionService> _logger;
-        private readonly Options _options;
+        private readonly ServiceOptions _serviceOptions;
 
         private readonly IMbConversionQueue _mbConversionQueue;
         private readonly IStatusTable _statusTable;
@@ -52,16 +53,17 @@ namespace GruntiMaps.WebAPI.Services
         ///     Create a new MapBoxConversionService instance.
         /// </summary>
         /// <param name="logger">system logger</param>
-        /// <param name="options">global options for the Map Server</param>
-        /// <param name="mapdata">Map data layers</param>
+        /// <param name="mbConversionQueue"></param>
+        /// <param name="statusTable"></param>
+        /// <param name="tileStorage"></param>
         public MapBoxConversionService(ILogger<MapBoxConversionService> logger, 
-            Options options,
+            IOptions<ServiceOptions> serviceOptions,
             IMbConversionQueue mbConversionQueue,
             IStatusTable statusTable,
             ITileStorage tileStorage)
         {
             _logger = logger;
-            _options = options;
+            _serviceOptions = serviceOptions.Value;
             _mbConversionQueue = mbConversionQueue;
             _statusTable = statusTable;
             _tileStorage = tileStorage;
@@ -178,18 +180,18 @@ namespace GruntiMaps.WebAPI.Services
                     _logger.LogDebug("Deleted MapBoxConversion message");
                     await _statusTable.UpdateStatus(mbData.LayerId, LayerStatus.Finished);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     if (mbData != null)
                     {
                         await _statusTable.UpdateStatus(mbData.LayerId, LayerStatus.Failed);
                     }
-                    throw ex;
+                    throw;
                 }
             }
             else
             {
-                await Task.Delay(_options.CheckConvertTime);
+                await Task.Delay(_serviceOptions.ConvertPolling);
             }
 
             // _logger.LogDebug("MapBoxConversion process complete.");

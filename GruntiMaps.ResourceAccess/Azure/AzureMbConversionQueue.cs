@@ -24,8 +24,8 @@ namespace GruntiMaps.ResourceAccess.Azure
 {
     public class AzureMbConversionQueue : AzureQueue, IMbConversionQueue
     {
-        public AzureMbConversionQueue(string key, string account, string queueName) 
-            : base(key, account, queueName)
+        public AzureMbConversionQueue(string connectionString, string queueName) 
+            : base(connectionString, queueName)
         {
         }
     }
