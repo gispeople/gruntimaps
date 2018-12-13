@@ -12,7 +12,7 @@ namespace GruntiMaps.WebAPI.Helper
     public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
         private readonly string _adminToken;
-        private const string AccessTokenHeader = "access-token";
+        private const string AccessTokenHeader = "Authorization";
 
         public BasicAuthenticationHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
@@ -35,22 +35,21 @@ namespace GruntiMaps.WebAPI.Helper
             }
 
             if (!Request.Headers.ContainsKey(AccessTokenHeader))
+            {
                 return Task.FromResult(AuthenticateResult.Fail($"Missing {AccessTokenHeader} Header"));
+            }
 
-            string credential;
             try
             {
-                var authHeader = AuthenticationHeaderValue.Parse(Request.Headers[AccessTokenHeader]);
-                credential = authHeader.ToString();
+                var credential = AuthenticationHeaderValue.Parse(Request.Headers[AccessTokenHeader]).Parameter;
+                return Task.FromResult(credential == _adminToken
+                    ? AuthenticateResult.Success(ticket)
+                    : AuthenticateResult.Fail($"Invalid {AccessTokenHeader}"));
             }
             catch
             {
                 return Task.FromResult(AuthenticateResult.Fail($"Invalid {AccessTokenHeader} Header"));
             }
-
-            return Task.FromResult(credential == _adminToken
-                ? AuthenticateResult.Success(ticket)
-                : AuthenticateResult.Fail($"Invalid {AccessTokenHeader}"));
         }
     }
 }
