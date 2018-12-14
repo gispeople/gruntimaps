@@ -18,7 +18,9 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+using System;
 using GruntiMaps.Api.Common.Resources;
+using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Utils;
@@ -26,7 +28,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 {
-    public class GetLayerTileController : ApiControllerBase
+    public class GetLayerTileController : WorkspaceLayerControllerBase
     {
         private readonly IMapData _mapData;
 
@@ -35,18 +37,23 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
             _mapData = mapData;
         }
 
-        [HttpGet("layers/{id}/tile/{x}/{y}/{z}", Name = RouteNames.GetLayerTile)]
-        public ActionResult Invoke(string id, int x, int y, int z)
+        [HttpGet(Resources.TileSubResource + "/{x}/{y}/{z}", Name = RouteNames.GetLayerTile)]
+        public ActionResult Invoke(int x, int y, int z)
         {
+            var layer = _mapData.HasLayer(WorkspaceId, LayerId)
+                ? _mapData.GetLayer(WorkspaceId, LayerId)
+                : throw new EntityNotFoundException();
+
             y = (1 << z) - y - 1; // convert xyz to tms
-            var bytes = _mapData.GetLayer(id).Tile(x, y, z);
-            switch (_mapData.GetLayer(id).Source.Format)
+            var bytes = layer.Tile(x, y, z);
+            switch (layer.Source.Format)
             {
                 case "png": return File(bytes, "image/png");
                 case "jpg": return File(bytes, "image/jpg");
                 case "pbf": return File(Decompressor.Decompress(bytes), "application/vnd.mapbox-vector-tile");
+                default:
+                    throw new Exception("unsupported layer source format");
             }
-            throw new EntityNotFoundException();
         }
     }
 }

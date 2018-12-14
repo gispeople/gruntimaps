@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GruntiMaps.Api.Common\GruntiMaps.Api.Common.csproj" />
     <ProjectReference Include="..\GruntiMaps.Common\GruntiMaps.Common.csproj" />
   </ItemGroup>
 

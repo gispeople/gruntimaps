@@ -25,8 +25,8 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
-using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.Api.DataContracts.V2.Layers;
+using GruntiMaps.ResourceAccess.WorkspaceCache;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Utils;
 using Microsoft.Data.Sqlite;
@@ -37,23 +37,30 @@ namespace GruntiMaps.WebAPI.Models
 {
     public class Layer : ILayer
     {
-        private readonly string _id;
-        private readonly StyleDto[] _styles;
-        private readonly SourceDto _source;
         private readonly SqliteConnection _connection;
-        private readonly PathOptions _pathOptions;
+        private readonly IWorkspaceTileCache _tileCache;
+        private readonly IWorkspaceStyleCache _styleCache;
+
 
         private JObject _dataJson;
 
-        public Layer(PathOptions pathOptions, string id)
+        public string Id { get; }
+        public string WorkspaceId { get; }
+        public string Name => Source.Name;
+        public SourceDto Source { get; }
+        public StyleDto[] Styles { get; }
+
+        public Layer(string workspaceId, string layerId, IWorkspaceTileCache tileCache, IWorkspaceStyleCache styleCache)
         {
-            _pathOptions = pathOptions;
+            Id = layerId;
+            WorkspaceId = workspaceId;
+            _tileCache = tileCache;
+            _styleCache = styleCache;
             try
             {
-                _id = id;
                 _connection = GetConnection();
-                _source = PopulateSourceInfo();
-                _styles = TryFetchLocalStyleInfo() ?? PopulateStyleInfo();
+                Source = PopulateSourceInfo();
+                Styles = TryFetchLocalStyleInfo() ?? PopulateStyleInfo();
             }
             catch (Exception e)
             {
@@ -61,27 +68,15 @@ namespace GruntiMaps.WebAPI.Models
             }
         }
 
-        public string Id => _id;
-        public string Name => _source.Name;
-        public SourceDto Source => _source;
-        public StyleDto[] Styles => _styles;
-
-        public void Close()
-        {
-            _connection.Close();
-            _connection.Dispose();
-        }
-
         private SqliteConnection GetConnection(bool writeable = false)
         {
-            if (_id == null) return null;
+            if (Id == null) return null;
             var builder = new SqliteConnectionStringBuilder
             {
                 Mode = writeable ? SqliteOpenMode.ReadWrite : SqliteOpenMode.ReadOnly,
                 Cache = SqliteCacheMode.Private,
-                DataSource = System.IO.Path.Combine(_pathOptions.Tiles, $"{Id}.mbtiles")
+                DataSource = _tileCache.GetFilePath(WorkspaceId, Id)
             };
-//            Path = builder.DataSource;
             var connStr = builder.ConnectionString;
             try
             {
@@ -91,14 +86,14 @@ namespace GruntiMaps.WebAPI.Models
             }
             catch (Exception e)
             {
-                throw new Exception($"Failed to open database for service {_id} (connection string={connStr}) exception={e}", e);
+                throw new Exception($"Failed to open database for service {Id} (connection string={connStr}) exception={e}", e);
             }
         }
 
         private SourceDto PopulateSourceInfo()
         {
             if (_connection == null)
-                throw new Exception($"Failed to popluate source info for {_id} as no connection exist");
+                throw new Exception($"Failed to popluate source info for {Id} as no connection exist");
             try
             {
                 var source = new SourceDto();
@@ -164,19 +159,17 @@ namespace GruntiMaps.WebAPI.Models
             }
             catch (Exception e)
             {
-                throw new Exception($"Failed to popluate source info for {_id}", e);
+                throw new Exception($"Failed to popluate source info for {Id}", e);
             }
         }
 
         private StyleDto[] TryFetchLocalStyleInfo()
         {
-            var styleFile = Path.Combine(_pathOptions.Styles, $"{Id}.json");
-            
             try
             {
-                if (File.Exists(styleFile))
+                if (_styleCache.FileExists(WorkspaceId, Id))
                 {
-                    using (var f = new StreamReader(styleFile))
+                    using (var f = new StreamReader(_styleCache.GetFilePath(WorkspaceId, Id)))
                     {
                         var styleStr = f.ReadToEnd();
                         var styles = JsonConvert.DeserializeObject<StyleDto[]>(styleStr);
@@ -312,7 +305,29 @@ namespace GruntiMaps.WebAPI.Models
             }
         }
 
+        public void UpdateNameDescription(string name, string description)
+        {
+            using (var cmd = _connection.CreateCommand())
+            {
+                cmd.CommandText = "UPDATE metadata SET value = $DescriptionValue WHERE name = $DescriptionName; " +
+                                  "UPDATE metadata SET value = $NameValue WHERE name = $NameName;";
+
+                cmd.Parameters.AddWithValue("$DescriptionValue", description ?? Source.Description);
+                cmd.Parameters.AddWithValue("$DescriptionName", nameof(description));
+                cmd.Parameters.AddWithValue("$NameValue", name ?? Source.Name);
+                cmd.Parameters.AddWithValue("$NameName", nameof(name));
+
+                cmd.ExecuteScalar();
+            }
+        }
+
         ~Layer()
+        {
+            if (_connection.State != ConnectionState.Closed) _connection.Close();
+            _connection.Dispose();
+        }
+
+        public void Close()
         {
             if (_connection.State != ConnectionState.Closed) _connection.Close();
             _connection.Dispose();

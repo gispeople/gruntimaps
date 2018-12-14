@@ -20,6 +20,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System.Linq;
 using GruntiMaps.Api.Common.Services;
+using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Common.Enums;
 using GruntiMaps.WebAPI.Interfaces;
@@ -29,7 +30,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GruntiMaps.WebAPI.Controllers.Layers
 {
     [Authorize]
-    public class ListLayersController : ApiControllerBase
+    public class ListLayersController : WorkspaceControllerBase
     {
         private readonly IMapData _mapData;
         private readonly IResourceLinksGenerator _resourceLinksGenerator;
@@ -41,16 +42,15 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
             _resourceLinksGenerator = resourceLinksGenerator;
         }
 
-        [HttpGet("layers")]
+        [HttpGet(Resources.Layers)]
         public LayerDto[] Invoke()
         {
-            return _mapData.AllActiveLayers.Select(layer => new LayerDto()
+            return _mapData.GetAllActiveLayers(WorkspaceId).Select(layer => new LayerDto()
             {
                 Id = layer.Id,
                 Name = layer.Name,
                 Description = layer.Source.Description,
-                Status = LayerStatus.Finished,
-                Links = _resourceLinksGenerator.GenerateResourceLinks(layer.Id)
+                Links = _resourceLinksGenerator.GenerateResourceLinks(WorkspaceId, layer.Id)
             }).ToArray();
         }
     }

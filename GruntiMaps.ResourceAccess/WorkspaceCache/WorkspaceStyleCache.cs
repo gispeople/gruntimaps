@@ -18,14 +18,16 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using GruntiMaps.ResourceAccess.Queue;
+using GruntiMaps.Api.Common.Configuration;
+using Microsoft.Extensions.Options;
 
-namespace GruntiMaps.ResourceAccess.Azure
+namespace GruntiMaps.ResourceAccess.WorkspaceCache
 {
-    public class AzureGdConversionQueue : AzureConversionQueue, IGdConversionQueue
+    public class WorkspaceStyleCache : WorkspaceCache, IWorkspaceStyleCache
     {
-        public AzureGdConversionQueue(string connectionString, string queueName) 
-            : base(connectionString, queueName)
+        private const string DefaultExtension = "json";
+        public WorkspaceStyleCache(IOptions<PathOptions> pathOptions)
+            : base(pathOptions.Value.Styles, DefaultExtension)
         {
         }
     }

@@ -22,7 +22,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using System.Threading.Tasks;
 using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.WebAPI.Interfaces;
-using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.Options;
 
 namespace GruntiMaps.WebAPI.Services
@@ -31,12 +30,12 @@ namespace GruntiMaps.WebAPI.Services
     /// <summary>
     ///     Service to poll for changes to available map layers and update the available list.
     /// </summary>
-    public class LayerUpdateService : BackgroundService
+    public class LayerCacheRefreshService : BackgroundService
     {
         private readonly IMapData _mapdata;
         private readonly ServiceOptions _serviceOptions;
 
-        public LayerUpdateService(IOptions<ServiceOptions> serviceOptions, IMapData mapdata)
+        public LayerCacheRefreshService(IOptions<ServiceOptions> serviceOptions, IMapData mapdata)
         {
             _mapdata = mapdata;
             _serviceOptions = serviceOptions.Value;

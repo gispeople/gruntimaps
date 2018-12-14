@@ -20,7 +20,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 */
 namespace GruntiMaps.ResourceAccess.Queue
 {
-    public interface IGdConversionQueue : IQueue
+    public interface IGdConversionQueue : IConversionQueue
     {
     }
 }

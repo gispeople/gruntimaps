@@ -27,12 +27,14 @@ namespace GruntiMaps.WebAPI.Interfaces
     public interface ILayer
     {
         string Id { get; }
+        string WorkspaceId { get; }
         string Name { get; }
         SourceDto Source { get; }
         StyleDto[] Styles { get; }
         JObject DataJson { get; }
         byte[] Tile(int x, int y, int z);
         string Grid(int x, int y, int z);
+        void UpdateNameDescription(string name, string description);
         void Close();
     }
 }

@@ -19,6 +19,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 using GruntiMaps.Api.Common.Resources;
+using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.WebAPI.Interfaces;
@@ -26,7 +27,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 {
-    public class GetLayerStyleController : ApiControllerBase
+    public class GetLayerStyleController : WorkspaceLayerControllerBase
     {
         private readonly IMapData _mapData;
 
@@ -35,11 +36,12 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
             _mapData = mapData;
         }
 
-        [HttpGet("layers/{id}/style", Name = RouteNames.GetLayerStyle)]
-        public StyleDto[] Invoke(string id)
+        [HttpGet(Resources.StyleSubResource, Name = RouteNames.GetLayerStyle)]
+        public StyleDto[] Invoke()
         {
-            return _mapData.HasLayer(id)
-                ? _mapData.GetLayer(id).Styles
+            var abc = WorkspaceId;
+            return _mapData.HasLayer(WorkspaceId, LayerId)
+                ? _mapData.GetLayer(WorkspaceId, LayerId).Styles
                 : throw new EntityNotFoundException();
         }
     }

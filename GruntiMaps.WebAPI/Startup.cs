@@ -33,16 +33,19 @@ using Microsoft.Extensions.Hosting;
 using GruntiMaps.WebAPI.DependencyInjection;
 using GruntiMaps.WebAPI.Helper;
 using Microsoft.AspNetCore.Authentication;
+using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace GruntiMaps.WebAPI
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
             Configuration = configuration;
+            Environment = env;
         }
 
+        public IHostingEnvironment Environment { get; }
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -59,20 +62,24 @@ namespace GruntiMaps.WebAPI
             services.AddAuthentication("BasicAuthentication")
                 .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
-            services.AddMvc(options => { options.Filters.Add(new DomainExceptionFilter()); })
+            services.AddMvc(options =>
+                {
+                    options.Filters.Add(new UnhandledExceptionFilter(!Environment.IsProduction()));
+                    options.Filters.Add(new DomainExceptionFilter());
+                })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddOptions(Configuration);
             services.AddDomainServices();
             services.AddResourceAccess();
             services.AddSingleton<IMapData, MapData>();
-            services.AddSingleton<IHostedService, LayerUpdateService>();
+            services.AddSingleton<IHostedService, LayerCacheRefreshService>();
             services.AddSingleton<IHostedService, MapBoxConversionService>();
             services.AddSingleton<IHostedService, GdalConversionService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, Microsoft.AspNetCore.Hosting.IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {

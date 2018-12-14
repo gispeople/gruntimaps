@@ -29,8 +29,6 @@ namespace GruntiMaps.ResourceAccess.Azure
 {
     public class AzureStatusTable : IStatusTable
     {
-        public const string Workspace = "Workspace"; // this is to be replaced when adding workspace function
-
         private readonly CloudTable _table;
 
         public AzureStatusTable(string connectionString, string tableName)
@@ -42,12 +40,10 @@ namespace GruntiMaps.ResourceAccess.Azure
             _table.CreateIfNotExistsAsync();
         }
 
-        public async Task<LayerStatus?> GetStatus(string id)
+        public async Task<LayerStatus?> GetStatus(string workspaceId, string layerId)
         {
-            TableOperation retrieveOperation = TableOperation.Retrieve<StatusEntity>(Workspace, id);
-
+            TableOperation retrieveOperation = TableOperation.Retrieve<StatusEntity>(workspaceId, layerId);
             TableResult retrievedResult = await _table.ExecuteAsync(retrieveOperation);
-
             if (retrievedResult.Result == null)
             {
                 return null;
@@ -57,10 +53,10 @@ namespace GruntiMaps.ResourceAccess.Azure
             return status;
         }
 
-        public async Task UpdateStatus(string id, LayerStatus status)
+        public async Task UpdateStatus(string workspaceId, string layerId, LayerStatus status)
         {
 
-            TableOperation retrieveOperation = TableOperation.Retrieve<StatusEntity>(Workspace, id);
+            TableOperation retrieveOperation = TableOperation.Retrieve<StatusEntity>(workspaceId, layerId);
 
             TableResult retrievedResult = await _table.ExecuteAsync(retrieveOperation);
 
@@ -72,15 +68,15 @@ namespace GruntiMaps.ResourceAccess.Azure
             }
             else
             {
-                await _table.ExecuteAsync(TableOperation.Insert(new StatusEntity(id)));
+                await _table.ExecuteAsync(TableOperation.Insert(new StatusEntity(workspaceId, layerId)));
             }
         }
 
-        public async Task RemoveStatus(string id)
+        public async Task RemoveStatus(string workspaceId, string layerId)
         {
             try
             {
-                await _table.ExecuteAsync(TableOperation.Delete(new DynamicTableEntity(Workspace, id) {ETag = "*"}));
+                await _table.ExecuteAsync(TableOperation.Delete(new DynamicTableEntity(workspaceId, layerId) {ETag = "*"}));
             }
             catch (StorageException e)
             {
@@ -95,17 +91,14 @@ namespace GruntiMaps.ResourceAccess.Azure
 
     public class StatusEntity : TableEntity
     {
-        public StatusEntity(string id)
+        public StatusEntity(string workspaceId, string id)
         {
-            PartitionKey = AzureStatusTable.Workspace;
+            PartitionKey = workspaceId;
             RowKey = id;
-            Id = id;
             Status = LayerStatus.Processing.ToString();
         }
 
         public StatusEntity() { }
-
-        public string Id { get; set; }
 
         public string Status { get; set; }
     }
