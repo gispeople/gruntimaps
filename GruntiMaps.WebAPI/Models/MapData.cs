@@ -82,6 +82,14 @@ namespace GruntiMaps.WebAPI.Models
         public bool HasLayer(string workspaceId, string id)
             => _layerDict.ContainsKey(id) && _layerDict[id].WorkspaceId == workspaceId;
 
+        public void UploadLocalLayer(string workspaceId, string id)
+        {
+            if (HasLayer(workspaceId, id))
+            {
+                _tileStorage.Store($"{workspaceId}/{id}.mbtiles", _tileCache.GetFilePath(workspaceId, id));
+            }
+        }
+
         // retrieve global and per-instance tile packs 
         public async Task RefreshLayers()
         {

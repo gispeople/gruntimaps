@@ -18,11 +18,9 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using System.Threading.Tasks;
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.Common.Services;
 using GruntiMaps.Api.DataContracts.V2.Layers;
-using GruntiMaps.Common.Enums;
 using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;

@@ -21,7 +21,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using System.Threading.Tasks;
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.DataContracts.V2;
-using GruntiMaps.Common.Enums;
+using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.ResourceAccess.Table;
 using Microsoft.AspNetCore.Mvc;
@@ -38,9 +38,14 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
         }
 
         [HttpGet(Resources.StatusSubResource, Name = RouteNames.GetLayerStatus)]
-        public async Task<LayerStatus> Invoke()
+        public async Task<LayerStatusDto> Invoke()
         {
-            return await _statusTable.GetStatus(WorkspaceId, LayerId) ?? throw new EntityNotFoundException();
+            var status = await _statusTable.GetStatus(WorkspaceId, LayerId);
+            return new LayerStatusDto
+            {
+                Id = LayerId,
+                Status = status ?? throw new EntityNotFoundException()
+            };
         }
     }
 }

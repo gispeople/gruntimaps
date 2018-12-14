@@ -43,10 +43,17 @@ namespace GruntiMaps.WebAPI.Interfaces
         /// <summary>
         /// Check existance of a layer
         /// </summary>
-        /// <param name="workspaceId"></param>
+        /// <param name="workspaceId">workspace id</param>
         /// <param name="id">layer id</param>
         /// <returns>the existance of the layer</returns>
         bool HasLayer(string workspaceId, string id);
+
+        /// <summary>
+        /// Upload local layer to hosted storage to publish changes
+        /// </summary>
+        /// <param name="workspaceId"></param>
+        /// <param name="id">layer id</param>
+        void UploadLocalLayer(string workspaceId, string id);
 
         /// <summary>
         /// Refresh active layer to sync with remote storage

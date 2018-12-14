@@ -305,6 +305,22 @@ namespace GruntiMaps.WebAPI.Models
             }
         }
 
+        public void UpdateNameDescription(string name, string description)
+        {
+            using (var cmd = _connection.CreateCommand())
+            {
+                cmd.CommandText = "UPDATE metadata SET value = $DescriptionValue WHERE name = $DescriptionName; " +
+                                  "UPDATE metadata SET value = $NameValue WHERE name = $NameName;";
+
+                cmd.Parameters.AddWithValue("$DescriptionValue", description ?? Source.Description);
+                cmd.Parameters.AddWithValue("$DescriptionName", nameof(description));
+                cmd.Parameters.AddWithValue("$NameValue", name ?? Source.Name);
+                cmd.Parameters.AddWithValue("$NameName", nameof(name));
+
+                cmd.ExecuteScalar();
+            }
+        }
+
         ~Layer()
         {
             if (_connection.State != ConnectionState.Closed) _connection.Close();

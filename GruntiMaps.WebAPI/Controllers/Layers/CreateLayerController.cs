@@ -50,7 +50,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
         }
 
         [HttpPost(Resources.Layers)]
-        public async Task<LayerDto> Invoke([FromBody] CreateLayerDto dto)
+        public async Task<ActionResult> Invoke([FromBody] CreateLayerDto dto)
         {
             var id = Guid.NewGuid().ToString();
             ConversionJobData job = new ConversionJobData
@@ -63,13 +63,11 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
             };
             await _gdConversionQueue.Queue(job);
             await _statusTable.UpdateStatus(WorkspaceId, id, LayerStatus.Processing);
-            return new LayerDto
+            return Accepted(new LayerStatusDto
             {
                 Id = id,
-                Name = dto.Name,
-                Description = dto.Description,
-                Links = _resourceLinksGenerator.GenerateResourceLinks(WorkspaceId, id),
-            };
+                Status = LayerStatus.Processing
+            });
         }
     }
 }
