@@ -32,7 +32,6 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
     public class GetLayerController : WorkspaceLayerControllerBase
     {
         private readonly IMapData _mapData;
-        private readonly IStatusTable _statusTable;
         private readonly IResourceLinksGenerator _resourceLinksGenerator;
 
         public GetLayerController(IMapData mapData,
@@ -40,7 +39,6 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
             IResourceLinksGenerator resourceLinksGenerator)
         {
             _mapData = mapData;
-            _statusTable = statusTable;
             _resourceLinksGenerator = resourceLinksGenerator;
         }
 

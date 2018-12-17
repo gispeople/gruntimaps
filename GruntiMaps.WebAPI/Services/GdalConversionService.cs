@@ -179,16 +179,17 @@ namespace GruntiMaps.WebAPI.Services
                         }
                     }
                     // we completed GDAL conversion and creation of MVT conversion request, so remove the GDAL request from the queue
-                    _logger.LogDebug("deleting gdal message from queue");
                     await _gdConversionQueue.DeleteJob(queued);
+                    _logger.LogDebug("Deleted GdalConversion message");
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     if (queued?.Content?.LayerId != null)
                     {
                         await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
                     }
-                    throw;
+                    await _gdConversionQueue.DeleteJob(queued);
+                    _logger.LogDebug($"Deleted GdalConversion message due to unsuccessful job for layer {queued?.Content?.LayerId}", ex);
                 }
             }
             else
