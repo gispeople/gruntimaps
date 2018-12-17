@@ -1,7 +1,8 @@
 # About these fill-patterns
+
 These SVG icons can be processed using `spritezero` to create fill-patterns for use in maps.
 
-It's remarkable that there doesn't appear to be a lot of them around because without them you can't really do pattern fills. 
+It's remarkable that there doesn't appear to be a lot of them around because without them you can't really do pattern fills.
 
 Hopefully this will be the start of a useful collection of fill patterns. At this stage, it's just some left and right 45 degree hatches and crosshatches in a variety of colours and densities.
 
@@ -13,7 +14,9 @@ While the process is documented, here and there, for the sake of convenience we'
 
 You'll need the [`mapbox-gl-styles`](https://github.com/mapbox/mapbox-gl-styles) repository and [`spritezero-cli`](https://github.com/mapbox/spritezero-cli) installed (so you will also need `node` and `npm`).
 
-_hint_: you're probably better off installing `spritezero` explicitly first rather than letting `spritezero-cli` install it as a dependency. It seems to try to install an outdated version. So do the following:
+_hint 1_: node v10 does not play nicely with mapnik, which is used by `spritezero`. Use v8 or earlier to avoid a lot of pain and suffering.
+
+_hint 2_: you're probably better off installing `spritezero` explicitly first rather than letting `spritezero-cli` install it as a dependency. It seems to try to install an outdated version. So do the following:
 
 ```
 npm install -g @mapbox/spritezero
@@ -23,7 +26,8 @@ npm install -g @mapbox/spritezero-cli
 - Copy the `.svg` files into the various `sprites\*\_svg` directories (eg. `sprites\satellite-v9\_svg`)
 - create a directory to hold the sprite sets: `mkdir t`
 - create the various sprite sets at the appropriate sizes:
-```
+
+```batch
 rem create basic v8 in normal, retina and super-retina
 spritezero t\basic-v8 sprites\basic-v8\_svg\
 spritezero --ratio=2 t\basic-v8@2x sprites\basic-v8\_svg\
