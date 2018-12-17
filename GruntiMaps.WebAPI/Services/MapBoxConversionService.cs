@@ -163,18 +163,19 @@ namespace GruntiMaps.WebAPI.Services
                     }
                     await _mbConversionQueue.DeleteJob(queued);
                     _logger.LogDebug("Deleted MapBoxConversion message");
-                    if (job?.LayerId != null)
+                    if (job?.LayerId != null && job?.WorkspaceId != null)
                     {
                         await _statusTable.UpdateStatus(job.WorkspaceId, job.LayerId, LayerStatus.Finished);
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     if (queued?.Content?.LayerId != null)
                     {
                         await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
                     }
-                    throw;
+                    await _mbConversionQueue.DeleteJob(queued);
+                    _logger.LogDebug("Deleted MapBoxConversion message due to unsuccessfull job", ex);
                 }
             }
             else
