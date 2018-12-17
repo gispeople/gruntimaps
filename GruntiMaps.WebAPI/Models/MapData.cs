@@ -291,7 +291,7 @@ namespace GruntiMaps.WebAPI.Models
             {
                 var localFile = Path.Combine(_pathOptions.Fonts, fontPack);
                 var localHash = HashCalculator.GetLocalFileMd5(localFile);
-                var remoteHash = await _tileStorage.GetMd5(fontPack);
+                var remoteHash = await _fontStorage.GetMd5(fontPack);
                 if (localHash == remoteHash)
                 {
                     continue;

@@ -40,6 +40,8 @@ namespace GruntiMaps.WebAPI.Services
     /// </summary>
     public class MapBoxConversionService : BackgroundService
     {
+        private const int RetryLimit = 3;
+
         private readonly ILogger<MapBoxConversionService> _logger;
         private readonly ServiceOptions _serviceOptions;
 
@@ -81,7 +83,7 @@ namespace GruntiMaps.WebAPI.Services
                         // convert the geoJSON to a mapbox dataset
                         var timer = new Stopwatch();
                         timer.Start();
-                        _logger.LogDebug($"Processing MapBox Conversion for Layer {queued.Content.LayerId} within Queue Message {queued.Id}");
+                        _logger.LogDebug($"Processing MbConversion for Layer {queued.Content.LayerId} within Queue Message {queued.Id}");
 
                         // it will be in the system's temporary directory
                         var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
@@ -170,12 +172,19 @@ namespace GruntiMaps.WebAPI.Services
                 }
                 catch (Exception ex)
                 {
-                    if (queued?.Content?.LayerId != null)
+                    if (queued.DequeueCount >= RetryLimit)
                     {
-                        await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
+                        await _mbConversionQueue.DeleteJob(queued);
+                        if (queued.Content?.LayerId != null && queued.Content?.WorkspaceId != null)
+                        {
+                            await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
+                        }
+                        _logger.LogError($"MbConversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
                     }
-                    await _mbConversionQueue.DeleteJob(queued);
-                    _logger.LogDebug("Deleted MapBoxConversion message due to unsuccessfull job", ex);
+                    else
+                    {
+                        _logger.LogWarning($"MbConversion failed for layer {queued.Content?.LayerId} and will retry later", ex);
+                    }
                 }
             }
             else

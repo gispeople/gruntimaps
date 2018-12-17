@@ -37,6 +37,8 @@ namespace GruntiMaps.WebAPI.Services
 {
     public class GdalConversionService : BackgroundService
     {
+        private const int RetryLimit = 3;
+
         private readonly ILogger<GdalConversionService> _logger;
         private readonly ServiceOptions _serviceOptions;
         private readonly List<string> _supportedFileTypes;
@@ -61,9 +63,6 @@ namespace GruntiMaps.WebAPI.Services
             _mbConversionQueue = mbConversionQueue;
             _statusTable = statusTable;
             _geoJsonStorage = geoJsonStorage;
-            //            var EndpointUrl = "https://localhost:8081";
-            //            var AuthorisationKey = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
-            //            _client = new DocumentClient(new Uri(EndpointUrl), AuthorisationKey);
         }
 
         protected override async Task Process()
@@ -184,12 +183,19 @@ namespace GruntiMaps.WebAPI.Services
                 }
                 catch (Exception ex)
                 {
-                    if (queued?.Content?.LayerId != null)
+                    if (queued.DequeueCount >= RetryLimit)
                     {
-                        await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
+                        await _gdConversionQueue.DeleteJob(queued);
+                        if (queued.Content?.LayerId != null && queued.Content?.WorkspaceId != null)
+                        {
+                            await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
+                        }
+                        _logger.LogError($"GdalConversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
                     }
-                    await _gdConversionQueue.DeleteJob(queued);
-                    _logger.LogDebug($"Deleted GdalConversion message due to unsuccessful job for layer {queued?.Content?.LayerId}", ex);
+                    else
+                    {
+                        _logger.LogWarning($"GdalConversion failed for layer {queued.Content?.LayerId} will retry later", ex);
+                    }
                 }
             }
             else

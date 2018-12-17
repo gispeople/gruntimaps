@@ -24,6 +24,7 @@ namespace GruntiMaps.ResourceAccess.Queue
     {
         public string Id;
         public string PopReceipt;
+        public int DequeueCount;
         public ConversionJobData Content;
     }
 }
