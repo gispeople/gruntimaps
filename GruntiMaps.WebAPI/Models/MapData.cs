@@ -205,22 +205,36 @@ namespace GruntiMaps.WebAPI.Models
         /// <param name="layerId">layer id</param>
         public void OpenService(string workspaceId, string layerId)
         {
-            // only try if all of the following: 
-            if (layerId != null && workspaceId != null &&           // layer/workspace id not null
-                !_layerDict.ContainsKey(layerId) &&                 // layer is inactive
-                _tileCache.FileExists(workspaceId, layerId) &&      // layer file exists
-                _tileCache.FileIsValidMbTile(workspaceId, layerId)) // layer file is valid
+            if (layerId == null || workspaceId == null)
             {
-                try
-                {
-                    _layerDict.Add(layerId, new Layer(workspaceId, layerId, _tileCache, _styleCache));
+                return;
+            }
 
-                }
-                catch (Exception e)
-                {
-                    _logger.LogDebug($"Layer creation failed for workspace {workspaceId} and layer {layerId}", e);
-                    throw new Exception("Could not create layer", e);
-                }
+            if (_layerDict.ContainsKey(layerId))
+            {
+                _logger.LogDebug($"Layer creation canceled for workspace {workspaceId} and layer {layerId} since same layer already activated");
+                return;
+            }
+
+            if (!_tileCache.FileExists(workspaceId, layerId))
+            {
+                _logger.LogDebug($"Layer creation canceled for workspace {workspaceId} and layer {layerId} since file not exist");
+                return;
+            }
+
+            if (!_tileCache.FileIsValidMbTile(workspaceId, layerId))
+            {
+                _logger.LogDebug($"Layer creation canceled for workspace {workspaceId} and layer {layerId} since file is not valid mbtile");
+                return;
+            }
+
+            try
+            {
+                _layerDict.Add(layerId, new Layer(workspaceId, layerId, _tileCache, _styleCache));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"Layer creation failed for workspace {workspaceId} and layer {layerId}", e);
             }
         }
 
