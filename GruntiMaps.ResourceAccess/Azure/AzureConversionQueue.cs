@@ -62,6 +62,7 @@ namespace GruntiMaps.ResourceAccess.Azure
                     Id = queued.Id,
                     Content = JsonConvert.DeserializeObject<ConversionJobData>(queued.AsString),
                     PopReceipt = queued.PopReceipt,
+                    DequeueCount = queued.DequeueCount
                 }
                 : null;
         }
