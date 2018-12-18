@@ -20,6 +20,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 */
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.Common.Services;
+using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.WebAPI.Interfaces;
@@ -27,7 +28,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 {
-    public class GetLayerSourceController : ApiControllerBase
+    public class GetLayerSourceController : WorkspaceLayerControllerBase
     {
         private readonly IMapData _mapData;
         private readonly IUrlGenerator _urlGenerator;
@@ -39,13 +40,14 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
             _urlGenerator = urlGenerator;
         }
 
-        [HttpGet("layers/{id}/source", Name = RouteNames.GetLayerSource)]
-        public SourceDto Invoke(string id)
+        [HttpGet(Resources.SourceSubResource, Name = RouteNames.GetLayerSource)]
+        public SourceDto Invoke()
         {
-            if (!_mapData.HasLayer(id))
+            if (!_mapData.HasLayer(WorkspaceId, LayerId))
                 throw new EntityNotFoundException();
-            var src = _mapData.GetLayer(id).Source;
-            src.Tiles = new[] { $"{_urlGenerator.BuildUrl(RouteNames.GetLayer, new { id })}/tile/" + "{x}/{y}/{z}" };
+            var src = _mapData.GetLayer(WorkspaceId, LayerId).Source;
+            src.Tiles = new[]
+                {$"{_urlGenerator.BuildUrl(RouteNames.GetLayer, new {WorkspaceId, LayerId})}/tile" + "/{x}/{y}/{z}"};
             return src;
         }
     }

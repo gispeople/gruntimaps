@@ -29,10 +29,8 @@ using GruntiMaps.Common.Enums;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Storage;
 using GruntiMaps.ResourceAccess.Table;
-using GruntiMaps.WebAPI.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 
 namespace GruntiMaps.WebAPI.Services
 {
@@ -42,6 +40,8 @@ namespace GruntiMaps.WebAPI.Services
     /// </summary>
     public class MapBoxConversionService : BackgroundService
     {
+        private const int RetryLimit = 3;
+
         private readonly ILogger<MapBoxConversionService> _logger;
         private readonly ServiceOptions _serviceOptions;
 
@@ -49,13 +49,6 @@ namespace GruntiMaps.WebAPI.Services
         private readonly IStatusTable _statusTable;
         private readonly ITileStorage _tileStorage;
 
-        /// <summary>
-        ///     Create a new MapBoxConversionService instance.
-        /// </summary>
-        /// <param name="logger">system logger</param>
-        /// <param name="mbConversionQueue"></param>
-        /// <param name="statusTable"></param>
-        /// <param name="tileStorage"></param>
         public MapBoxConversionService(ILogger<MapBoxConversionService> logger, 
             IOptions<ServiceOptions> serviceOptions,
             IMbConversionQueue mbConversionQueue,
@@ -71,38 +64,29 @@ namespace GruntiMaps.WebAPI.Services
 
         protected override async Task Process()
         {
-            // _logger.LogDebug("MapBoxConversion process starting.");
-
             // there's two types of conversion to consider.
             // 1. spatial source data arrives and is placed in storage, we get a message and convert it 
             //    to geojson using gdal, and put the result in storage. We add a new req to the queue to 
             //    convert the geojson to mbtile.
             // 2. the geojson from the previous step (or possibly geojson directly) is in storage, we get
             //    a message and convert to mbtile and place result in storage.
-            var mbMsg = await _mbConversionQueue.GetMessage();
-            if (mbMsg != null) // if no message, don't try
+            var queued = await _mbConversionQueue.GetJob();
+            if (queued != null) // if no job queued, don't try
             {
-                ConversionMessageData mbData = null;
+
                 try
                 {
-                    try
-                    {
-                        mbData = JsonConvert.DeserializeObject<ConversionMessageData>(mbMsg.Content);
-                    }
-                    catch (JsonReaderException e)
-                    {
-                        _logger.LogError($"failed to decode JSON message on queue {e}");
-                        return;
-                    }
-                    if (mbData.DataLocation != null && mbData.LayerName != null && mbData.Description != null)
-                    // if the mbData had missing values, don't process it, just delete it from queue.
+                    var job = queued.Content;
+                    if (job?.DataLocation != null && job.LayerId != null && job.WorkspaceId != null)
+                    // if the job has missing values, don't process it, just delete it from queue.
                     {
                         // convert the geoJSON to a mapbox dataset
-                        var start = DateTime.UtcNow;
-                        var randomFolderName = Path.GetRandomFileName();
-                        _logger.LogDebug($"folder name = {randomFolderName}");
+                        var timer = new Stopwatch();
+                        timer.Start();
+                        _logger.LogDebug($"Processing MbConversion for Layer {queued.Content.LayerId} within Queue Message {queued.Id}");
+
                         // it will be in the system's temporary directory
-                        var tempPath = Path.Combine(Path.GetTempPath(), randomFolderName);
+                        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                         _logger.LogDebug($"temporary path = {tempPath}");
 
                         // If the directory already existed, throw an error - this should never happen, but just in case.
@@ -117,13 +101,15 @@ namespace GruntiMaps.WebAPI.Services
                         _logger.LogDebug($"The directory was created successfully at {Directory.GetCreationTime(tempPath)}.");
 
                         // retrieve the geoJSON file from the supplied URI 
-                        var geoJsonFilename = $"{mbData.LayerId}.geojson";
-                        var inputFile = Path.Combine(tempPath, geoJsonFilename);
-                        _logger.LogDebug($"Downloading {mbData.DataLocation} to {inputFile}");
-                        WebClient myWebClient = new WebClient();
-                        myWebClient.DownloadFile(mbData.DataLocation, inputFile);
-                        var mbtilesFilename = $"{mbData.LayerId}.mbtiles";
-                        var mbtileFile = Path.Combine(tempPath, mbtilesFilename);
+                        var geoJsonFilename = $"{job.LayerId}.geojson";
+                        var inputFilePath = Path.Combine(tempPath, geoJsonFilename);
+                        _logger.LogDebug($"Downloading {job.DataLocation} to {inputFilePath}");
+                        using (var webClient = new WebClient())
+                        {
+                            webClient.DownloadFile(job.DataLocation, inputFilePath);
+                        }
+
+                        var mbTilesFilePath = Path.Combine(tempPath, $"{job.LayerId}.mbtiles");
                         var tippecanoe = new Process
                         {
                             // TODO: need to consider whether *all* of these arguments are good for us *all* of the time.
@@ -135,10 +121,10 @@ namespace GruntiMaps.WebAPI.Services
                             {
                                 FileName = "tippecanoe",
                                 Arguments =
-                                    $"-o {mbtileFile} " + //$"--output={outputFile} " + 
-                                    $"-n \"{mbData.LayerName}\" " + // $"--name=\"{name}\" "+
-                                    $"-N \"{mbData.Description}\" " + // $"--description=\"{description}\" "+
-                                    $"-l \"{mbData.LayerName}\" " + // $"--layer=\"{name}\" " + 
+                                    $"-o {mbTilesFilePath} " + //$"--output={outputFile} " + 
+                                    $"-n \"{job.LayerName}\" " + // $"--name=\"{name}\" "+
+                                    $"-N \"{job.Description}\" " + // $"--description=\"{description}\" "+
+                                    $"-l \"{job.LayerName}\" " + // $"--layer=\"{name}\" " + 
                                     // "-z18 " + // $"--maximum-zoom=18 " + 
                                     "-zg " + // $"--maximum-zoom=g " + // let's go back to guessing. It's insanely slow for z18 with big datasets.
                                     "-Bg " + // $"--base-zoom=g " +
@@ -148,7 +134,7 @@ namespace GruntiMaps.WebAPI.Services
                                     "-pS " + // $"--simplify-only-low-zooms "+
                                     "-ab " + // $"--detect-shared-borders "+
                                     "-aw " + // $"--detect-longitude-wraparound "
-                                    $"{inputFile}",
+                                    $"{inputFilePath}",
                                 UseShellExecute = false,
                                 RedirectStandardOutput = true,
                                 RedirectStandardError = true,
@@ -156,6 +142,7 @@ namespace GruntiMaps.WebAPI.Services
                             }
                         };
                         _logger.LogDebug($"Tippecanoe arguments are {tippecanoe.StartInfo.Arguments}");
+
                         tippecanoe.Start();
                         var errmsg = "";
                         while (!tippecanoe.StandardError.EndOfStream) errmsg += tippecanoe.StandardError.ReadLine();
@@ -168,34 +155,42 @@ namespace GruntiMaps.WebAPI.Services
                             throw new Exception($"GeoJSON to mbtiles conversion failed. {errmsg}");
                         }
 
-                        _logger.LogDebug($"mbtile file is in {mbtileFile}");
+                        _logger.LogDebug($"mbtile file is in {mbTilesFilePath}");
                         // now we need to put the converted mbtile file into storage
-                        await _tileStorage.Store($"{mbData.LayerId}.mbtiles", mbtileFile);
+                        await _tileStorage.Store($"{job.WorkspaceId}/{job.LayerId}.mbtiles", mbTilesFilePath);
                         _logger.LogDebug("Upload of mbtile file to storage complete.");
-                        var end = DateTime.UtcNow;
-                        var duration = end - start;
-                        _logger.LogDebug($"MapBoxConversion took {duration.TotalMilliseconds} ms.");
+
+                        timer.Stop();
+                        _logger.LogDebug($"MapBoxConversion finshed for Layer {job.LayerId} in {timer.ElapsedMilliseconds} ms.");
                     }
-                    await _mbConversionQueue.DeleteMessage(mbMsg);
+                    await _mbConversionQueue.DeleteJob(queued);
                     _logger.LogDebug("Deleted MapBoxConversion message");
-                    await _statusTable.UpdateStatus(mbData.LayerId, LayerStatus.Finished);
-                }
-                catch (Exception)
-                {
-                    if (mbData != null)
+                    if (job?.LayerId != null && job?.WorkspaceId != null)
                     {
-                        await _statusTable.UpdateStatus(mbData.LayerId, LayerStatus.Failed);
+                        await _statusTable.UpdateStatus(job.WorkspaceId, job.LayerId, LayerStatus.Finished);
                     }
-                    throw;
+                }
+                catch (Exception ex)
+                {
+                    if (queued.DequeueCount >= RetryLimit)
+                    {
+                        await _mbConversionQueue.DeleteJob(queued);
+                        if (queued.Content?.LayerId != null && queued.Content?.WorkspaceId != null)
+                        {
+                            await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
+                        }
+                        _logger.LogError($"MbConversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"MbConversion failed for layer {queued.Content?.LayerId} and will retry later", ex);
+                    }
                 }
             }
             else
             {
                 await Task.Delay(_serviceOptions.ConvertPolling);
             }
-
-            // _logger.LogDebug("MapBoxConversion process complete.");
-
         }
     }
 }

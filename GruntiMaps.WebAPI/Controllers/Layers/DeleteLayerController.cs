@@ -19,7 +19,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 using System.Threading.Tasks;
-using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -28,7 +27,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GruntiMaps.WebAPI.Controllers.Layers
 {
     [Authorize]
-    public class DeleteLayerController : ApiControllerBase
+    public class DeleteLayerController : WorkspaceLayerControllerBase
     {
         private readonly IMapData _mapData;
         private readonly IStatusTable _statusTable;
@@ -40,11 +39,11 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
             _statusTable = statusTable;
         }
 
-        [HttpDelete(Resources.Layers + "/{id}")]
-        public async Task<IActionResult> Invoke(string id)
+        [HttpDelete]
+        public async Task<IActionResult> Invoke()
         {
-            await _statusTable.RemoveStatus(id);
-            await _mapData.DeleteLayer(id);
+            await _statusTable.RemoveStatus(WorkspaceId, LayerId);
+            await _mapData.DeleteLayer(WorkspaceId, LayerId);
             return NoContent();
         }
     }

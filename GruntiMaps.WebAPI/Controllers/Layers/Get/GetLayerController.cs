@@ -18,25 +18,20 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using System.Threading.Tasks;
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.Common.Services;
-using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Api.DataContracts.V2.Layers;
-using GruntiMaps.Common.Enums;
 using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
-using GruntiMaps.WebAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 {
-    public class GetLayerController : ApiControllerBase
+    public class GetLayerController : WorkspaceLayerControllerBase
     {
         private readonly IMapData _mapData;
-        private readonly IStatusTable _statusTable;
         private readonly IResourceLinksGenerator _resourceLinksGenerator;
 
         public GetLayerController(IMapData mapData,
@@ -44,40 +39,23 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
             IResourceLinksGenerator resourceLinksGenerator)
         {
             _mapData = mapData;
-            _statusTable = statusTable;
             _resourceLinksGenerator = resourceLinksGenerator;
         }
 
         [AllowAnonymous]
-        [HttpGet(Resources.Layers + "/{id}", Name = RouteNames.GetLayer)]
-        public async Task<LayerDto> Invoke(string id)
+        [HttpGet(Name = RouteNames.GetLayer)]
+        public LayerDto Invoke()
         {
-            var status = await _statusTable.GetStatus(id);
-            if (!_mapData.HasLayer(id))
-            {
-                if (status.HasValue)
-                {
-                    return new LayerDto()
-                    {
-                        Id = id,
-                        Status = status.Value
-                    };
-                }
-                else
-                {
-                    throw new EntityNotFoundException();
-                }
-            }
+            var layer = _mapData.HasLayer(WorkspaceId, LayerId) 
+                ? _mapData.GetLayer(WorkspaceId, LayerId) 
+                : throw new EntityNotFoundException();
 
-            var layer = (Layer)_mapData.GetLayer(id);
-
-            return new LayerDto()
+            return new LayerDto
             {
                 Id = layer.Id,
                 Name = layer.Name,
                 Description = layer.Source.Description,
-                Status = status ?? LayerStatus.Finished,
-                Links = _resourceLinksGenerator.GenerateResourceLinks(id)
+                Links = _resourceLinksGenerator.GenerateResourceLinks(WorkspaceId, LayerId)
             };
         }
 

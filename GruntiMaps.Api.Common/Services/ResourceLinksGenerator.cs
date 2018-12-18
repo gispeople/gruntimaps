@@ -26,7 +26,7 @@ namespace GruntiMaps.Api.Common.Services
 {
     public interface IResourceLinksGenerator
     {
-        IList<LinkDto> GenerateResourceLinks(string id);
+        IList<LinkDto> GenerateResourceLinks(string workspaceId, string layerId);
     }
 
     public class ResourceLinksGenerator : IResourceLinksGenerator
@@ -38,19 +38,20 @@ namespace GruntiMaps.Api.Common.Services
             _urlGenerator = urlGenerator;
         }
 
-        public IList<LinkDto> GenerateResourceLinks(string id) {
+        public IList<LinkDto> GenerateResourceLinks(string workspaceId, string layerId) {
             var links = new List<LinkDto>();
 
-            var baseUrl = _urlGenerator.BuildUrl(RouteNames.GetLayer, new {id});
+            var baseUrl = _urlGenerator.BuildUrl(RouteNames.GetLayer, new { workspaceId, layerId });
 
             links.Add(new LinkDto(LinkRelations.Self, baseUrl));
-            links.Add(new LinkDto(LinkRelations.Source, _urlGenerator.BuildUrl(RouteNames.GetLayerSource, new { id })));
-            links.Add(new LinkDto(LinkRelations.Style, _urlGenerator.BuildUrl(RouteNames.GetLayerStyle, new { id })));
-            links.Add(new LinkDto(LinkRelations.Mappack, _urlGenerator.BuildUrl(RouteNames.GetLayerMapPack, new { id })));
-            links.Add(new LinkDto(LinkRelations.Metadata, _urlGenerator.BuildUrl(RouteNames.GetLayerMetaData, new { id })));
-            links.Add(new LinkDto(LinkRelations.Geojson, _urlGenerator.BuildUrl(RouteNames.GetLayerGeoJson, new { id })));
-            links.Add(new LinkDto(LinkRelations.Tile, $"{baseUrl}/tile/" + "{x}/{y}/{z}"));
-            links.Add(new LinkDto(LinkRelations.Grid, $"{baseUrl}/grid/" + "{x}/{y}/{z}"));
+            links.Add(new LinkDto(LinkRelations.Source, _urlGenerator.BuildUrl(RouteNames.GetLayerSource, new { workspaceId, layerId })));
+            links.Add(new LinkDto(LinkRelations.Style, _urlGenerator.BuildUrl(RouteNames.GetLayerStyle, new { workspaceId, layerId })));
+            links.Add(new LinkDto(LinkRelations.Status, _urlGenerator.BuildUrl(RouteNames.GetLayerStatus, new { workspaceId, layerId })));
+            links.Add(new LinkDto(LinkRelations.Mappack, _urlGenerator.BuildUrl(RouteNames.GetLayerMapPack, new { workspaceId, layerId })));
+            links.Add(new LinkDto(LinkRelations.Metadata, _urlGenerator.BuildUrl(RouteNames.GetLayerMetaData, new { workspaceId, layerId })));
+            links.Add(new LinkDto(LinkRelations.Geojson, _urlGenerator.BuildUrl(RouteNames.GetLayerGeoJson, new { workspaceId, layerId })));
+            links.Add(new LinkDto(LinkRelations.Tile, $"{baseUrl}/{DataContracts.V2.Resources.TileSubResource}/" + "{x}/{y}/{z}"));
+            links.Add(new LinkDto(LinkRelations.Grid, $"{baseUrl}/{DataContracts.V2.Resources.GridSubResource}/" + "{x}/{y}/{z}"));
 
             return links;
         }

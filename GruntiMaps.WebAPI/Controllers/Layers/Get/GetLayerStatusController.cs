@@ -18,37 +18,34 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using System.Net;
+using System.Threading.Tasks;
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.DataContracts.V2;
+using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Domain.Common.Exceptions;
-using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.ResourceAccess.Table;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 {
-    public class GetLayerGridController : WorkspaceLayerControllerBase
+    public class GetLayerStatusController : WorkspaceLayerControllerBase
     {
-        private readonly IMapData _mapData;
+        private readonly IStatusTable _statusTable;
 
-        public GetLayerGridController(IMapData mapData)
+        public GetLayerStatusController(IStatusTable statusTable)
         {
-            _mapData = mapData;
+            _statusTable = statusTable;
         }
 
-        [HttpGet(Resources.GridSubResource + "/{x}/{y}/{z}", Name = RouteNames.GetLayerGrid)]
-        public ActionResult Invoke(int x, int y, int z)
+        [HttpGet(Resources.StatusSubResource, Name = RouteNames.GetLayerStatus)]
+        public async Task<LayerStatusDto> Invoke()
         {
-            y = (1 << z) - y - 1; // convert xyz to tms
-
-            return _mapData.HasLayer(WorkspaceId, LayerId)
-                ? new ContentResult
-                {
-                    StatusCode = (int) HttpStatusCode.OK,
-                    Content = _mapData.GetLayer(WorkspaceId, LayerId).Grid(x, y, z),
-                    ContentType = "application/json"
-                }
-                : throw new EntityNotFoundException();
+            var status = await _statusTable.GetStatus(WorkspaceId, LayerId);
+            return new LayerStatusDto
+            {
+                Id = LayerId,
+                Status = status ?? throw new EntityNotFoundException()
+            };
         }
     }
 }

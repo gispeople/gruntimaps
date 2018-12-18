@@ -96,19 +96,35 @@ namespace GruntiMaps.ResourceAccess.Azure
             return blob.DeleteIfExistsAsync();
         }
 
-        public async Task<List<string>> List()
+        public Task<List<string>> List()
         {
-            BlobContinuationToken continuationToken = null;
-            var result = new List<string>();
-            do
+            var directory = _azureContainer.GetDirectoryReference("");
+            return RecursiveListFile(directory);
+        }
+
+        private async Task<List<string>> RecursiveListFile(IListBlobItem listBlobItem)
+        {
+            switch (listBlobItem)
             {
-                var response = await _azureContainer.ListBlobsSegmentedAsync(continuationToken);
-                continuationToken = response.ContinuationToken;
+                case CloudBlockBlob blob:
+                    return new List<string> {blob.Name};
+                case CloudBlobDirectory directory:
+                    BlobContinuationToken continuationToken = null;
+                    var files = new List<string>();
+                    do
+                    {
+                        var response = await directory.ListBlobsSegmentedAsync(continuationToken);
+                        continuationToken = response.ContinuationToken;
 
-                result.AddRange(from item in response.Results where item.GetType() == typeof(CloudBlockBlob) select ((CloudBlockBlob)item).Name);
-            } while (continuationToken != null);
-
-            return result;
+                        foreach (var result in response.Results)
+                        {
+                            files.AddRange(await RecursiveListFile(result));
+                        }
+                    } while (continuationToken != null);
+                    return files;
+                default:
+                    return new List<string>();
+            }
         }
     }
 }

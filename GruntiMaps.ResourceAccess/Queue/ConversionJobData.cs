@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 Copyright 2016, 2017, 2018 GIS People Pty Ltd
 
@@ -18,14 +18,17 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-namespace GruntiMaps.WebAPI.Models
+namespace GruntiMaps.ResourceAccess.Queue
 {
-    // Message sent to data converter that describes the work to be done.
-    public class ConversionMessageData
+    /// <summary>
+    /// Specs sent to data converter that describes the work to be done.
+    /// </summary>
+    public class ConversionJobData
     {
         public string LayerId;
+        public string WorkspaceId;
+        public string LayerName;
         public string Description;
         public string DataLocation;
-        public string LayerName;
     }
 }

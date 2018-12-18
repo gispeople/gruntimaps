@@ -20,7 +20,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 using System.Threading.Tasks;
-using GruntiMaps.WebAPI.Models;
 
 namespace GruntiMaps.WebAPI.Interfaces
 {
@@ -29,22 +28,32 @@ namespace GruntiMaps.WebAPI.Interfaces
         /// <summary>
         /// Get the ILayer object
         /// </summary>
+        /// <param name="workspaceId">workspace id</param>
         /// <param name="id">layer id</param>
         /// <returns>layer</returns>
-        ILayer GetLayer(string id);
+        ILayer GetLayer(string workspaceId, string id);
 
         /// <summary>
-        /// Get all active layers
+        /// Get all active layers within a workspace
         /// </summary>
-        /// <returns>all active layers as array</returns>
-        ILayer[] AllActiveLayers { get; }
+        /// <param name="workspaceId">workspace id</param>
+        /// <returns>active layers as array</returns>
+        ILayer[] GetAllActiveLayers(string workspaceId);
 
         /// <summary>
         /// Check existance of a layer
         /// </summary>
+        /// <param name="workspaceId">workspace id</param>
         /// <param name="id">layer id</param>
         /// <returns>the existance of the layer</returns>
-        bool HasLayer(string id);
+        bool HasLayer(string workspaceId, string id);
+
+        /// <summary>
+        /// Upload local layer to hosted storage to publish changes
+        /// </summary>
+        /// <param name="workspaceId"></param>
+        /// <param name="id">layer id</param>
+        void UploadLocalLayer(string workspaceId, string id);
 
         /// <summary>
         /// Refresh active layer to sync with remote storage
@@ -55,8 +64,9 @@ namespace GruntiMaps.WebAPI.Interfaces
         /// <summary>
         /// Delete an active layer
         /// </summary>
-        /// <param name="id">layer id</param>
+        /// <param name="workspaceId">workspace id</param>
+        /// <param name="layerId">layer id</param>
         /// <returns></returns>
-        Task DeleteLayer(string id);
+        Task DeleteLayer(string workspaceId, string layerId);
     }
 }

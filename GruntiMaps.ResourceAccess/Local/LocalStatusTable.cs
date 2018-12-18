@@ -41,16 +41,17 @@ namespace GruntiMaps.ResourceAccess.Local
             var connStr = builder.ConnectionString;
             _queueDatabase = new SqliteConnection(connStr);
             _queueDatabase.Open();
-            const string createStatusesTable = "CREATE TABLE IF NOT EXISTS Statuses(Id NVARCHAR(50) PRIMARY KEY, Status NVARCHAR(50) NOT NULL)";
+            const string createStatusesTable = "CREATE TABLE IF NOT EXISTS Statuses(Id NVARCHAR(50) PRIMARY KEY, WorkspaceId NVARCHAR(50) PRIMARY KEY, Status NVARCHAR(50) NOT NULL)";
             new SqliteCommand(createStatusesTable, _queueDatabase).ExecuteNonQuery();
         }
 
-        public Task<LayerStatus?> GetStatus(string id)
+        public Task<LayerStatus?> GetStatus(string workspaceId, string layerId)
         {
-            const string getRelatedQueueMsg = "SELECT Status FROM Statuses WHERE Id = $Id";
-            var getRelatedQueueCmd = new SqliteCommand(getRelatedQueueMsg, _queueDatabase);
-            getRelatedQueueCmd.Parameters.AddWithValue("$Id", id);
-            var relatedQueueReader = getRelatedQueueCmd.ExecuteReader();
+            const string getRelatedQueueMsg = "SELECT Status FROM Statuses WHERE Id = $Id and WorkspaceId = $WorkspaceId";
+            var cmd = new SqliteCommand(getRelatedQueueMsg, _queueDatabase);
+            cmd.Parameters.AddWithValue("$Id", layerId);
+            cmd.Parameters.AddWithValue("$WorkspaceId", workspaceId);
+            var relatedQueueReader = cmd.ExecuteReader();
             if (relatedQueueReader.HasRows)
             {
                 Enum.TryParse(relatedQueueReader["Status"].ToString(), out LayerStatus status);
@@ -60,32 +61,34 @@ namespace GruntiMaps.ResourceAccess.Local
             return Task.FromResult<LayerStatus?>(null);
         }
 
-        public async Task UpdateStatus(string id, LayerStatus status)
+        public async Task UpdateStatus(string workspaceId, string layerId, LayerStatus status)
         {
-            var currentStatus = await GetStatus(id);
+            var currentStatus = await GetStatus(workspaceId, layerId);
 
             string msg;
             if (!currentStatus.HasValue)
             {
                 // create one if status doesn't exist
-                msg = "INSERT INTO Statuses (Id, Status) VALUES($Id, $Status)";
+                msg = "INSERT INTO Statuses (Id, WorkspaceId, Status) VALUES($Id, $WorkspaceId, $Status)";
             }
             else
             {
                 // update it if it exists
-                msg = "UPDATE Statuses SET Status = $Status WHERE Id = $Id";
+                msg = "UPDATE Statuses SET Status = $Status WHERE Id = $Id and WorkspaceId = $WorkspaceId";
             }
             var cmd = new SqliteCommand(msg, _queueDatabase);
             cmd.Parameters.AddWithValue("$Status", status.ToString());
-            cmd.Parameters.AddWithValue("$Id", id);
+            cmd.Parameters.AddWithValue("$Id", layerId);
+            cmd.Parameters.AddWithValue("$WorkspaceId", workspaceId);
             cmd.ExecuteScalar();
         }
 
-        public Task RemoveStatus(string id)
+        public Task RemoveStatus(string workspaceId, string layerId)
         {
-            var msg = "DELETE FROM Statuses WHERE Id = $Id";
+            var msg = "DELETE FROM Statuses WHERE Id = $Id and WorkspaceId = $WorkspaceId";
             var cmd = new SqliteCommand(msg, _queueDatabase);
-            cmd.Parameters.AddWithValue("$Id", id);
+            cmd.Parameters.AddWithValue("$Id", layerId);
+            cmd.Parameters.AddWithValue("$WorkspaceId", workspaceId);
             cmd.ExecuteScalar();
             return Task.CompletedTask;
         }

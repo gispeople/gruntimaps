@@ -25,6 +25,7 @@ namespace GruntiMaps.Api.Common.Resources
         public const string GetLayer = "GetLayer";
         public const string GetLayerSource = "GetLayerSource";
         public const string GetLayerStyle = "GetLayerStyle";
+        public const string GetLayerStatus = "GetLayerStatus";
         public const string GetLayerMapPack = "GetLayerMapPack";
         public const string GetLayerMetaData = "GetLayerMetaData";
         public const string GetLayerGeoJson = "GetLayerGeoJson";

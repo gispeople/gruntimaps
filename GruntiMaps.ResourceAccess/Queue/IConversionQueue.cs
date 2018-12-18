@@ -18,13 +18,14 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using GruntiMaps.Api.DataContracts.V2;
-using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
-namespace GruntiMaps.WebAPI.Controllers
+namespace GruntiMaps.ResourceAccess.Queue
 {
-    [Route(Resources.Api)]
-    public abstract class ApiControllerBase : ControllerBase
+    public interface IConversionQueue
     {
+        Task<QueuedConversionJob> Queue(ConversionJobData job);
+        Task<QueuedConversionJob> GetJob();
+        Task DeleteJob(QueuedConversionJob job);
     }
 }
