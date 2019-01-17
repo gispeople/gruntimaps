@@ -58,7 +58,7 @@ namespace GruntiMaps.WebAPI.Models
             _styleCache = styleCache;
             try
             {
-                _connection = GetConnection();
+                _connection = GetConnection(true);
                 Source = PopulateSourceInfo();
                 Styles = TryFetchLocalStyleInfo() ?? PopulateStyleInfo();
             }
@@ -68,12 +68,12 @@ namespace GruntiMaps.WebAPI.Models
             }
         }
 
-        private SqliteConnection GetConnection(bool writeable = false)
+        private SqliteConnection GetConnection(bool writable = false)
         {
             if (Id == null) return null;
             var builder = new SqliteConnectionStringBuilder
             {
-                Mode = writeable ? SqliteOpenMode.ReadWrite : SqliteOpenMode.ReadOnly,
+                Mode = writable ? SqliteOpenMode.ReadWrite : SqliteOpenMode.ReadOnly,
                 Cache = SqliteCacheMode.Private,
                 DataSource = _tileCache.GetFilePath(WorkspaceId, Id)
             };
@@ -372,7 +372,7 @@ namespace GruntiMaps.WebAPI.Models
         //        private void SetDataVersion(int value)
         //        {
         //            // update db and then update our version
-        //            // open database as writeable so we can insert value
+        //            // open database as writable so we can insert value
         //            using (var rwConn = GetConnection(true))
         //            {
         //                using (var rwCmd = rwConn.CreateCommand())

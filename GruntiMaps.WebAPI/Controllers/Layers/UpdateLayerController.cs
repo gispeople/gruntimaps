@@ -59,17 +59,22 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
                 return NotFound();
             }
 
-            if (_mapData.HasLayer(WorkspaceId, LayerId) && string.IsNullOrEmpty(dto.DataLocation) && status == LayerStatus.Finished)
+            if (string.IsNullOrEmpty(dto.DataLocation))
             {
-                // Try change it locally and upload if it's already active and no ongoing conversion.
-                var layer = _mapData.GetLayer(WorkspaceId, LayerId);
-                layer.UpdateNameDescription(dto.Name ?? layer.Source.Name, dto.Description ?? layer.Source.Description);
-                _mapData.UploadLocalLayer(WorkspaceId, LayerId);
-                return Accepted(new LayerStatusDto
+                // Layer can only be updated locally if without a data location
+                if (_mapData.HasLayer(WorkspaceId, LayerId) && status == LayerStatus.Finished)
                 {
-                    Id = LayerId,
-                    Status = LayerStatus.Finished
-                });
+                    // Try change it locally and upload if it's already active and no ongoing conversion.
+                    var layer = _mapData.GetLayer(WorkspaceId, LayerId);
+                    layer.UpdateNameDescription(dto.Name ?? layer.Source.Name, dto.Description ?? layer.Source.Description);
+                    _mapData.UploadLocalLayer(WorkspaceId, LayerId);
+                    return Accepted(new LayerStatusDto
+                    {
+                        Id = LayerId,
+                        Status = LayerStatus.Finished
+                    });
+                }
+                return BadRequest("Only finalized layer can be updated without a data location");
             }
 
             // in other cases we will have to create a new conversion job
