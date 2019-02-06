@@ -19,9 +19,11 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
  */
 
+using System;
 using System.Threading.Tasks;
 using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.WebAPI.Interfaces;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace GruntiMaps.WebAPI.Services
@@ -32,13 +34,20 @@ namespace GruntiMaps.WebAPI.Services
     /// </summary>
     public class LayerCacheRefreshService : BackgroundService
     {
-        private readonly IMapData _mapdata;
+        private readonly IMapData _mapData;
         private readonly ServiceOptions _serviceOptions;
+        private readonly ILayerStyleService _layerStyleService;
+        private readonly ILogger<LayerCacheRefreshService> _logger;
 
-        public LayerCacheRefreshService(IOptions<ServiceOptions> serviceOptions, IMapData mapdata)
+        public LayerCacheRefreshService(IOptions<ServiceOptions> serviceOptions, 
+            IMapData mapData,
+            ILayerStyleService layerStyleService,
+            ILogger<LayerCacheRefreshService> logger)
         {
-            _mapdata = mapdata;
+            _mapData = mapData;
             _serviceOptions = serviceOptions.Value;
+            _layerStyleService = layerStyleService;
+            _logger = logger;
         }
 
         protected override async Task Process()
@@ -46,10 +55,27 @@ namespace GruntiMaps.WebAPI.Services
             //                _logger.LogDebug("LayerUpdate task doing background work.");
 
             //var start = DateTime.UtcNow;
-            await _mapdata.RefreshLayers();
+            try
+            {
+                await _mapData.RefreshLayers();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Refreshing Layer exits unexpectedly", ex);
+            }
+            
             //var end = DateTime.UtcNow;
             //var duration = end - start;
             //                _logger.LogDebug($"Layer refresh took {duration.TotalMilliseconds} ms.");
+
+            try
+            {
+                await _layerStyleService.RefreshAll();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Refreshing Layer style exits unexpectedly", ex);
+            }
 
             await Task.Delay(_serviceOptions.LayerRefresh);
         }

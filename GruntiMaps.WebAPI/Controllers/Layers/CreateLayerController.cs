@@ -21,12 +21,12 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 using System;
 using System.Threading.Tasks;
-using GruntiMaps.Api.Common.Services;
 using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Common.Enums;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Table;
+using GruntiMaps.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,18 +35,18 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
     [Authorize]
     public class CreateLayerController : WorkspaceControllerBase
     {
-        private readonly IResourceLinksGenerator _resourceLinksGenerator;
         private readonly IGdConversionQueue _gdConversionQueue;
         private readonly IStatusTable _statusTable;
+        private readonly ILayerStyleService _layerStyleService;
 
         public CreateLayerController(
-            IResourceLinksGenerator resourceLinksGenerator,
             IGdConversionQueue gdConversionQueue,
-            IStatusTable statusTable)
+            IStatusTable statusTable,
+            ILayerStyleService layerStyleService)
         {
-            _resourceLinksGenerator = resourceLinksGenerator;
             _gdConversionQueue = gdConversionQueue;
             _statusTable = statusTable;
+            _layerStyleService = layerStyleService;
         }
 
         [HttpPost(Resources.Layers)]
@@ -63,6 +63,12 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
             };
             await _gdConversionQueue.Queue(job);
             await _statusTable.UpdateStatus(WorkspaceId, id, LayerStatus.Processing);
+
+            if (dto.Styles != null)
+            {
+                await _layerStyleService.Update(WorkspaceId, id, dto.Styles);
+            }
+
             return Accepted(new LayerStatusDto
             {
                 Id = id,

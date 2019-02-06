@@ -18,13 +18,16 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using GruntiMaps.Common.Enums;
 
-namespace GruntiMaps.Api.DataContracts.V2.Layers
+using System.Threading.Tasks;
+
+namespace GruntiMaps.Domain.Common.Validation
 {
-    public class LayerStatusDto
+    public interface IValidator<in T>
     {
-        public string Id { get; set; }
-        public LayerStatus Status { get; set; }
+        /// <summary>
+        /// Validates the input and throws a ValidatorException if it's invalid.
+        /// </summary>
+        Task Validate(T value);
     }
 }

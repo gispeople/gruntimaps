@@ -41,6 +41,7 @@ namespace GruntiMaps.WebAPI.Models
     public class MapData : IMapData
     {
         private readonly ILogger<MapData> _logger;
+        private readonly ILoggerFactory _loggerFactory;
 
         private readonly ITileStorage _tileStorage;
         private readonly IFontStorage _fontStorage;
@@ -55,12 +56,14 @@ namespace GruntiMaps.WebAPI.Models
             ITileStorage tileStorage,
             IFontStorage fontStorage,
             IWorkspaceTileCache tileCache,
-            IWorkspaceStyleCache styleCache)
+            IWorkspaceStyleCache styleCache,
+            ILoggerFactory loggerFactory)
         {
             _layerDict = new Dictionary<string, ILayer>();
             _pathOptions = pathOptions.Value;
             _logger = logger;
             _logger.LogDebug($"Creating MapData root={_pathOptions.Root}");
+            _loggerFactory = loggerFactory;
 
             _tileStorage = tileStorage;
             _fontStorage = fontStorage;
@@ -74,7 +77,10 @@ namespace GruntiMaps.WebAPI.Models
         }
 
         public ILayer GetLayer(string workspaceId, string id)
-            => _layerDict[id].WorkspaceId == workspaceId ? _layerDict[id] : null;
+        {
+            _layerDict.TryGetValue(id, out var layer);
+            return layer?.WorkspaceId == workspaceId ? layer : null;
+        }
 
         public ILayer[] GetAllActiveLayers(string workspaceId) =>
             _layerDict.Values.Where(layer => layer.WorkspaceId == workspaceId).ToArray();
@@ -230,7 +236,7 @@ namespace GruntiMaps.WebAPI.Models
 
             try
             {
-                _layerDict.Add(layerId, new Layer(workspaceId, layerId, _tileCache, _styleCache));
+                _layerDict.Add(layerId, new Layer(workspaceId, layerId, _tileCache, _styleCache, _loggerFactory.CreateLogger<Layer>()));
             }
             catch (Exception e)
             {

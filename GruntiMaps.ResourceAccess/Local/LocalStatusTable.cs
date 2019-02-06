@@ -41,7 +41,7 @@ namespace GruntiMaps.ResourceAccess.Local
             var connStr = builder.ConnectionString;
             _queueDatabase = new SqliteConnection(connStr);
             _queueDatabase.Open();
-            const string createStatusesTable = "CREATE TABLE IF NOT EXISTS Statuses(Id NVARCHAR(50) PRIMARY KEY, WorkspaceId NVARCHAR(50) PRIMARY KEY, Status NVARCHAR(50) NOT NULL)";
+            const string createStatusesTable = "CREATE TABLE IF NOT EXISTS Statuses(Id NVARCHAR(50) PRIMARY KEY, WorkspaceId NVARCHAR(50), Status NVARCHAR(50) NOT NULL)";
             new SqliteCommand(createStatusesTable, _queueDatabase).ExecuteNonQuery();
         }
 

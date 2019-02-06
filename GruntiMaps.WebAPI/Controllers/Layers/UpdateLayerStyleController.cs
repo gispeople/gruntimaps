@@ -18,31 +18,32 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using GruntiMaps.Api.Common.Resources;
+
+using System.Threading.Tasks;
 using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Api.DataContracts.V2.Layers;
-using GruntiMaps.Api.DataContracts.V2.Styles;
-using GruntiMaps.Domain.Common.Exceptions;
-using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.WebAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GruntiMaps.WebAPI.Controllers.Layers.Get
+namespace GruntiMaps.WebAPI.Controllers.Layers
 {
-    public class GetLayerStyleController : WorkspaceLayerControllerBase
+    [Authorize]
+    public class UpdateLayerStyleController : WorkspaceLayerControllerBase
     {
-        private readonly IMapData _mapData;
+        private readonly ILayerStyleService _styleService;
 
-        public GetLayerStyleController(IMapData mapData)
+        public UpdateLayerStyleController(ILayerStyleService styleService)
         {
-            _mapData = mapData;
+            _styleService = styleService;
         }
 
-        [HttpGet(Resources.StyleSubResource, Name = RouteNames.GetLayerStyle)]
-        public StyleDto[] Invoke()
+        [HttpPatch(Resources.StyleSubResource)]
+        public async Task<ActionResult> Invoke([FromBody] UpdateLayerStyleDto dto)
         {
-            return _mapData.HasLayer(WorkspaceId, LayerId)
-                ? _mapData.GetLayer(WorkspaceId, LayerId).Styles
-                : throw new EntityNotFoundException();
+            await _styleService.Update(WorkspaceId, LayerId, dto.Styles);
+
+            return NoContent();
         }
     }
 }

@@ -46,10 +46,10 @@ namespace GruntiMaps.WebAPI.Filters
 
             context.Result = new JsonResult(new ErrorResultContent
             {
-                Errors = new[] { content }
+                Errors = new[] {content}
             })
             {
-                StatusCode = (int)HttpStatusCode.InternalServerError,
+                StatusCode = (int) HttpStatusCode.InternalServerError,
             };
 
             context.ExceptionHandled = true;

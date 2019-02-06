@@ -19,7 +19,8 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 using System;
-using GruntiMaps.Api.DataContracts.V2.Layers;
+using GruntiMaps.Api.DataContracts.V2.Enums;
+using GruntiMaps.Api.DataContracts.V2.Styles;
 using Newtonsoft.Json.Linq;
 
 namespace GruntiMaps.WebAPI.Models
@@ -44,7 +45,7 @@ namespace GruntiMaps.WebAPI.Models
                 MetaData = MetaData,
                 Source = id,
                 SourceLayer = layerName,
-                Type = "circle",
+                Type = PaintType.Circle,
                 Paint = new JObject
                 {
                     { "circle-stroke-color", "white" },
@@ -64,7 +65,7 @@ namespace GruntiMaps.WebAPI.Models
                 MetaData = MetaData,
                 Source = id,
                 SourceLayer = layerName,
-                Type = "line",
+                Type = PaintType.Line,
                 Paint = new JObject
                 {
                     {
@@ -83,7 +84,7 @@ namespace GruntiMaps.WebAPI.Models
                 MetaData = MetaData,
                 Source = id,
                 SourceLayer = layerName,
-                Type = "fill",
+                Type = PaintType.Fill,
                 Paint = new JObject
                 {
                     {
