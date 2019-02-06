@@ -20,6 +20,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 using GruntiMaps.Api.DataContracts.V2.Layers;
+using GruntiMaps.Api.DataContracts.V2.Styles;
 using Newtonsoft.Json.Linq;
 
 namespace GruntiMaps.WebAPI.Interfaces
@@ -35,6 +36,7 @@ namespace GruntiMaps.WebAPI.Interfaces
         byte[] Tile(int x, int y, int z);
         string Grid(int x, int y, int z);
         void UpdateNameDescription(string name, string description);
+        void ReFetchStyle();
         void Close();
     }
 }

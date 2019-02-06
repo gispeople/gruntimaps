@@ -36,6 +36,10 @@ namespace GruntiMaps.WebAPI.Filters
 
             switch (context.Exception)
             {
+                case ValidatorException ex:
+                    statusCode = HttpStatusCode.BadRequest;
+                    content = ex.Errors;
+                    break;
                 case BadRequestException _:
                     statusCode = HttpStatusCode.BadRequest;
                     content = BuildErrorResult(context.Exception.Message);

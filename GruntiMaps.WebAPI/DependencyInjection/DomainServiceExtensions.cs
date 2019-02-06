@@ -18,7 +18,12 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+
+using FluentValidation;
 using GruntiMaps.Api.Common.Services;
+using GruntiMaps.Api.DataContracts.V2.Layers;
+using GruntiMaps.WebAPI.Domain.Validators;
+using GruntiMaps.WebAPI.Services;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,6 +36,9 @@ namespace GruntiMaps.WebAPI.DependencyInjection
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
             services.AddSingleton<IUrlGenerator, UrlGenerator>();
             services.AddSingleton<IResourceLinksGenerator, ResourceLinksGenerator>();
+            services.AddSingleton<ILayerStyleService, LayerStyleService>();
+
+            services.AddScoped<IValidator<UpdateLayerDto>, UpdateLayerDtoValidator>();
         }
     }
 }

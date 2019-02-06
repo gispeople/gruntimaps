@@ -22,4 +22,10 @@
     <ProjectReference Include="..\GruntiMaps.Common\GruntiMaps.Common.csproj" />
     <ProjectReference Include="..\GruntiMaps.ResourceAccess\GruntiMaps.ResourceAccess.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="FluentValidation">
+      <HintPath>..\..\..\..\.nuget\packages\fluentvalidation\8.1.3\lib\netstandard2.0\FluentValidation.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

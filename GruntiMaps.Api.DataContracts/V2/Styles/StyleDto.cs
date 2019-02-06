@@ -18,10 +18,12 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+
+using GruntiMaps.Api.DataContracts.V2.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace GruntiMaps.Api.DataContracts.V2.Layers
+namespace GruntiMaps.Api.DataContracts.V2.Styles
 {
     public class StyleDto
     {
@@ -36,8 +38,8 @@ namespace GruntiMaps.Api.DataContracts.V2.Layers
         [JsonProperty("source-layer")]
         public string SourceLayer { get; set; }
 
-        public string Type { get; set; }
+        public PaintType Type { get; set; }
 
-        public JObject Paint { get; set; }
+        public PaintDto Paint { get; set; }
     }
 }

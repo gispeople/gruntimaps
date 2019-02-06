@@ -50,7 +50,7 @@ namespace GruntiMaps.ResourceAccess.WorkspaceCache
             {
                 using (var md5 = MD5.Create())
                 {
-                    using (var stream = File.OpenRead(FilePath(workspaceId, id, extension)))
+                    using (var stream = File.Open(FilePath(workspaceId, id, extension), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
                         return Convert.ToBase64String(md5.ComputeHash(stream));
                     }
@@ -82,7 +82,7 @@ namespace GruntiMaps.ResourceAccess.WorkspaceCache
                 try
                 {
                     stream = File.Open(FilePath(workspaceId, id, extension),
-                        FileMode.Open, FileAccess.Read, FileShare.None);
+                        FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 }
                 catch (IOException)
                 {
