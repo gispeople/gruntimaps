@@ -57,25 +57,37 @@ namespace GruntiMaps.WebAPI.Services
 
         public async Task Update(string workspaceId, string layerId, StyleDto[] styles)
         {
-            foreach (var style in styles)
+            if (styles != null && styles.Length > 0)
             {
-                var tempId = (new Guid()).ToString();
-                style.Id = tempId;
-                style.Name = $"{tempId}-{style.Type}";
-                style.Source = null;
-                style.SourceLayer = null;
+                foreach (var style in styles)
+                {
+                    var tempId = (new Guid()).ToString();
+                    style.Id = tempId;
+                    style.Name = $"{tempId}-{style.Type}";
+                    style.Source = null;
+                    style.SourceLayer = null;
+                }
+
+                var json = JsonConvert.SerializeObject(styles);
+                var path = _styleCache.GetFilePath(workspaceId, layerId, "json");
+                File.WriteAllText(path, json);
+                await _styleStorage.Store($"{workspaceId}/{layerId}.json", path);
+            }
+            else
+            {
+                // remove style if it's null or empty
+                await _styleStorage.DeleteIfExist($"{workspaceId}/{layerId}.json");
+                _styleCache.DeleteIfExist(workspaceId, layerId, "json");
             }
 
-            var json = JsonConvert.SerializeObject(styles);
-            var path = _styleCache.GetFilePath(workspaceId, layerId, "json");
-            File.WriteAllText(path, json);
-            await _styleStorage.Store($"{workspaceId}/{layerId}.json", path);
             _mapData.GetLayer(workspaceId, layerId)?.ReFetchStyle();
         }
 
         public async Task RefreshAll()
         {
             var layerStyles = await _styleStorage.List();
+
+            // update new or changed layer
             foreach (var layerStyle in layerStyles)
             {
                 if (!GetWorkspaceAndLayerId(layerStyle, out string workspaceId, out string layerId))
@@ -85,9 +97,23 @@ namespace GruntiMaps.WebAPI.Services
                 }
                 if (_styleCache.GetFileMd5(workspaceId, layerId) != await _styleStorage.GetMd5(layerStyle))
                 {
-                    _logger.LogDebug($"Syncing layer {layerId} for workspace {workspaceId}");
+                    _logger.LogDebug($"Syncing layer style {layerId} for workspace {workspaceId}");
                     await _styleStorage.UpdateLocalFile(layerStyle, _styleCache.GetFilePath(workspaceId, layerId));
                     _mapData.GetLayer(workspaceId, layerId)?.ReFetchStyle();
+                }
+            }
+
+            // delete file that no longer exists remotely
+            foreach (var workspaceId in _styleCache.ListWorkspaces())
+            {
+                foreach (var id in _styleCache.ListFileIds(workspaceId))
+                {
+                    if (!layerStyles.Contains($"{workspaceId}/{id}.json"))
+                    {
+                        _logger.LogDebug($"Deleting layer style {id} for workspace {workspaceId}");
+                        _styleCache.DeleteIfExist(workspaceId, id);
+                        _logger.LogDebug($"Deleted layer style {id} for workspace {workspaceId}");
+                    }
                 }
             }
         }

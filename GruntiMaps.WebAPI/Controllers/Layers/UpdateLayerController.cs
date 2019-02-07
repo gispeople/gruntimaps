@@ -77,7 +77,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
                 await _statusTable.UpdateStatus(WorkspaceId, LayerId, LayerStatus.Processing);
             }
 
-            if (dto.Styles != null && dto.Styles.Length > 0)
+            if (dto.Styles != null)
             {
                 await _layerStyleService.Update(WorkspaceId, LayerId, dto.Styles);
             }
