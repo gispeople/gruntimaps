@@ -61,7 +61,7 @@ namespace GruntiMaps.WebAPI.Services
             {
                 foreach (var style in styles)
                 {
-                    var tempId = (new Guid()).ToString();
+                    var tempId = Guid.NewGuid().ToString();
                     style.Id = tempId;
                     style.Name = $"{tempId}-{style.Type}";
                     style.Source = null;
