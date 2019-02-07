@@ -19,9 +19,9 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-using FluentValidation;
 using GruntiMaps.Api.Common.Services;
 using GruntiMaps.Api.DataContracts.V2.Layers;
+using GruntiMaps.Domain.Common.Validation;
 using GruntiMaps.WebAPI.Domain.Validators;
 using GruntiMaps.WebAPI.Services;
 using Microsoft.AspNetCore.Mvc.Infrastructure;

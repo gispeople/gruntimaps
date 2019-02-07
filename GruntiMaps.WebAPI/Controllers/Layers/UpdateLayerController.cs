@@ -26,7 +26,6 @@ using GruntiMaps.Domain.Common.Validation;
 using Microsoft.AspNetCore.Mvc;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Table;
-using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 
@@ -37,20 +36,17 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
     {
         private readonly IGdConversionQueue _gdConversionQueue;
         private readonly IStatusTable _statusTable;
-        private readonly IMapData _mapData;
         private readonly ILayerStyleService _layerStyleService;
         private readonly IValidator<UpdateLayerDto> _validator;
 
         public UpdateLayerController(
             IGdConversionQueue gdConversionQueue,
             IStatusTable statusTable,
-            IMapData mapData,
             ILayerStyleService layerStyleService,
             IValidator<UpdateLayerDto> validator)
         {
             _gdConversionQueue = gdConversionQueue;
             _statusTable = statusTable;
-            _mapData = mapData;
             _layerStyleService = layerStyleService;
             _validator = validator;
         }
