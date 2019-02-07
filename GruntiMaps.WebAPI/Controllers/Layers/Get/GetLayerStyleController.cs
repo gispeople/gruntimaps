@@ -20,7 +20,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 */
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.DataContracts.V2;
-using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Api.DataContracts.V2.Styles;
 using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.WebAPI.Interfaces;

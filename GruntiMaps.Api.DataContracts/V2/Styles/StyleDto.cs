@@ -28,17 +28,14 @@ namespace GruntiMaps.Api.DataContracts.V2.Styles
 {
     public class StyleDto
     {
-        [Required]
         public string Id { get; set; }
 
-        [Required]
         public string Name { get; set; }
 
         public JObject MetaData { get; set; }
-        [Required]
+
         public string Source { get; set; }
 
-        [Required]
         [JsonProperty("source-layer")]
         public string SourceLayer { get; set; }
 

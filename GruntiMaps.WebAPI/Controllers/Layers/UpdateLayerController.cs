@@ -18,9 +18,11 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+
 using System.Threading.Tasks;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Common.Enums;
+using GruntiMaps.Domain.Common.Validation;
 using Microsoft.AspNetCore.Mvc;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Table;
@@ -37,57 +39,47 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
         private readonly IStatusTable _statusTable;
         private readonly IMapData _mapData;
         private readonly ILayerStyleService _layerStyleService;
+        private readonly IValidator<UpdateLayerDto> _validator;
 
         public UpdateLayerController(
             IGdConversionQueue gdConversionQueue,
             IStatusTable statusTable,
             IMapData mapData,
-            ILayerStyleService layerStyleService)
+            ILayerStyleService layerStyleService,
+            IValidator<UpdateLayerDto> validator)
         {
             _gdConversionQueue = gdConversionQueue;
             _statusTable = statusTable;
             _mapData = mapData;
             _layerStyleService = layerStyleService;
+            _validator = validator;
         }
 
         [HttpPatch]
         public async Task<ActionResult> Invoke([FromBody] UpdateLayerDto dto)
         {
+            await _validator.Validate(dto);
+
             var status = await _statusTable.GetStatus(WorkspaceId, LayerId);
             if (!status.HasValue)
             {
                 return NotFound();
             }
 
-            if (string.IsNullOrEmpty(dto.DataLocation))
+            if (dto.DataLocation != null)
             {
-                // Layer can only be updated locally if without a data location
-                if (_mapData.HasLayer(WorkspaceId, LayerId) && status == LayerStatus.Finished)
+                // in other cases we will have to create a new conversion job
+                var job = new ConversionJobData
                 {
-                    // Try change it locally and upload if it's already active and no ongoing conversion.
-                    var layer = _mapData.GetLayer(WorkspaceId, LayerId);
-                    layer.UpdateNameDescription(dto.Name ?? layer.Source.Name, dto.Description ?? layer.Source.Description);
-                    _mapData.UploadLocalLayer(WorkspaceId, LayerId);
-                    return Accepted(new LayerStatusDto
-                    {
-                        Id = LayerId,
-                        Status = LayerStatus.Finished
-                    });
-                }
-                return BadRequest("Only finalized layer can be updated without a data location");
+                    LayerId = LayerId,
+                    WorkspaceId = WorkspaceId,
+                    LayerName = dto.Name,
+                    DataLocation = dto.DataLocation,
+                    Description = dto.Description
+                };
+                await _gdConversionQueue.Queue(job);
+                await _statusTable.UpdateStatus(WorkspaceId, LayerId, LayerStatus.Processing);
             }
-
-            // in other cases we will have to create a new conversion job
-            var job = new ConversionJobData
-            {
-                LayerId = LayerId,
-                WorkspaceId = WorkspaceId,
-                LayerName = dto.Name,
-                DataLocation = dto.DataLocation,
-                Description = dto.Description
-            };
-            await _gdConversionQueue.Queue(job);
-            await _statusTable.UpdateStatus(WorkspaceId, LayerId, LayerStatus.Processing);
 
             if (dto.Styles != null && dto.Styles.Length > 0)
             {

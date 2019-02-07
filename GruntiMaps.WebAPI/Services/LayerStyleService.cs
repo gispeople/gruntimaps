@@ -18,6 +18,8 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using GruntiMaps.Api.DataContracts.V2.Styles;
@@ -55,6 +57,15 @@ namespace GruntiMaps.WebAPI.Services
 
         public async Task Update(string workspaceId, string layerId, StyleDto[] styles)
         {
+            foreach (var style in styles)
+            {
+                var tempId = (new Guid()).ToString();
+                style.Id = tempId;
+                style.Name = $"{tempId}-{style.Type}";
+                style.Source = null;
+                style.SourceLayer = null;
+            }
+
             var json = JsonConvert.SerializeObject(styles);
             var path = _styleCache.GetFilePath(workspaceId, layerId, "json");
             File.WriteAllText(path, json);

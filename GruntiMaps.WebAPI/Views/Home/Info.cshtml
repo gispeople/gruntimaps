@@ -95,7 +95,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
             <p>Local storage provider, path = @ProviderOptions.Value.Local.Path</p>
             break;
         case ProviderType.Azure:
-            <p>Azure storage provider, map data is being obtained from connection string: <b>@ProviderOptions.Value.Azure.ConnectionString</b></p>
+            <p>Azure storage provider, map data is being obtained from connection string: <b>@ProviderOptions.Value.Azure.ConnectionString.Substring(40, 25)</b></p>
             break;
     }
     <h3>Storage Containers</h3>

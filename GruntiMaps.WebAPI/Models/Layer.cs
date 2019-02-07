@@ -178,6 +178,11 @@ namespace GruntiMaps.WebAPI.Models
                     {
                         var styleStr = f.ReadToEnd();
                         var styles = JsonConvert.DeserializeObject<StyleDto[]>(styleStr);
+                        foreach (var style in styles)
+                        {
+                            style.Source = Id;
+                            style.SourceLayer = Name;
+                        }
                         _logger.LogDebug($"{styles.Length} custom layers fetched for {WorkspaceId}/{Id}");
                         return styles;
                     }
