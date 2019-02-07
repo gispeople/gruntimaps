@@ -18,31 +18,34 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using GruntiMaps.Api.Common.Resources;
-using GruntiMaps.Api.DataContracts.V2;
-using GruntiMaps.Api.DataContracts.V2.Layers;
-using GruntiMaps.Api.DataContracts.V2.Styles;
+
+using System.Collections.Generic;
+using System.Linq;
+using FluentValidation;
+using System.Threading.Tasks;
 using GruntiMaps.Domain.Common.Exceptions;
-using GruntiMaps.WebAPI.Interfaces;
-using Microsoft.AspNetCore.Mvc;
 
-namespace GruntiMaps.WebAPI.Controllers.Layers.Get
+namespace GruntiMaps.Domain.Common.Validation
 {
-    public class GetLayerStyleController : WorkspaceLayerControllerBase
+    public abstract class FluentValidator<TEntity> : AbstractValidator<TEntity>, IValidator<TEntity>
     {
-        private readonly IMapData _mapData;
-
-        public GetLayerStyleController(IMapData mapData)
+        public new virtual async Task Validate(TEntity value)
         {
-            _mapData = mapData;
+            var context = new ValidationContext<TEntity>(value);
+
+            SetupRootContextData(value, context.RootContextData);
+
+            var result = await ValidateAsync(context);
+
+            if (!result.IsValid)
+            {
+                throw new ValidatorException(result.Errors.Select(e => new ValidatorError(e.PropertyName, e.ErrorMessage)));
+            }
         }
 
-        [HttpGet(Resources.StyleSubResource, Name = RouteNames.GetLayerStyle)]
-        public StyleDto[] Invoke()
+        protected virtual void SetupRootContextData(TEntity value, IDictionary<string, object> data)
         {
-            return _mapData.HasLayer(WorkspaceId, LayerId)
-                ? _mapData.GetLayer(WorkspaceId, LayerId).Styles
-                : throw new EntityNotFoundException();
+
         }
     }
 }

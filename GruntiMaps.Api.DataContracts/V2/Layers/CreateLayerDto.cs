@@ -18,7 +18,9 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+
 using System.ComponentModel.DataAnnotations;
+using GruntiMaps.Api.DataContracts.V2.Styles;
 
 namespace GruntiMaps.Api.DataContracts.V2.Layers
 {
@@ -30,5 +32,7 @@ namespace GruntiMaps.Api.DataContracts.V2.Layers
         public string Description { get; set; }
         [Required]
         public string DataLocation { get; set; }
+
+        public StyleDto[] Styles { get; set; }
     }
 }

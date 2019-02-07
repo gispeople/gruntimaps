@@ -12,7 +12,7 @@ namespace GruntiMaps.WebAPI.Utils
             {
                 using (var md5 = MD5.Create())
                 {
-                    using (var stream = File.OpenRead(filePath))
+                    using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
                         return Convert.ToBase64String(md5.ComputeHash(stream));
                     }

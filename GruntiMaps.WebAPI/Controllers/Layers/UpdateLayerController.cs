@@ -22,10 +22,10 @@ using System.Threading.Tasks;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Common.Enums;
 using Microsoft.AspNetCore.Mvc;
-using GruntiMaps.Api.Common.Services;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
+using GruntiMaps.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers
@@ -33,21 +33,21 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
     [Authorize]
     public class UpdateLayerController : WorkspaceLayerControllerBase
     {
-        private readonly IResourceLinksGenerator _resourceLinksGenerator;
         private readonly IGdConversionQueue _gdConversionQueue;
         private readonly IStatusTable _statusTable;
         private readonly IMapData _mapData;
+        private readonly ILayerStyleService _layerStyleService;
 
         public UpdateLayerController(
-            IResourceLinksGenerator resourceLinksGenerator,
             IGdConversionQueue gdConversionQueue,
             IStatusTable statusTable,
-            IMapData mapData)
+            IMapData mapData,
+            ILayerStyleService layerStyleService)
         {
-            _resourceLinksGenerator = resourceLinksGenerator;
             _gdConversionQueue = gdConversionQueue;
             _statusTable = statusTable;
             _mapData = mapData;
+            _layerStyleService = layerStyleService;
         }
 
         [HttpPatch]
@@ -88,6 +88,12 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
             };
             await _gdConversionQueue.Queue(job);
             await _statusTable.UpdateStatus(WorkspaceId, LayerId, LayerStatus.Processing);
+
+            if (dto.Styles != null && dto.Styles.Length > 0)
+            {
+                await _layerStyleService.Update(WorkspaceId, LayerId, dto.Styles);
+            }
+
             return Accepted(new LayerStatusDto
             {
                 Id = LayerId,

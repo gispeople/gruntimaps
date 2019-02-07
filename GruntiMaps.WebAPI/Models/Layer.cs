@@ -25,11 +25,14 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
+using GruntiMaps.Api.DataContracts.V2.Enums;
 using GruntiMaps.Api.DataContracts.V2.Layers;
+using GruntiMaps.Api.DataContracts.V2.Styles;
 using GruntiMaps.ResourceAccess.WorkspaceCache;
 using GruntiMaps.WebAPI.Interfaces;
 using GruntiMaps.WebAPI.Utils;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -37,10 +40,10 @@ namespace GruntiMaps.WebAPI.Models
 {
     public class Layer : ILayer
     {
+        private readonly ILogger<Layer> _logger;
         private readonly SqliteConnection _connection;
         private readonly IWorkspaceTileCache _tileCache;
         private readonly IWorkspaceStyleCache _styleCache;
-
 
         private JObject _dataJson;
 
@@ -48,14 +51,15 @@ namespace GruntiMaps.WebAPI.Models
         public string WorkspaceId { get; }
         public string Name => Source.Name;
         public SourceDto Source { get; }
-        public StyleDto[] Styles { get; }
+        public StyleDto[] Styles { get; private set; }
 
-        public Layer(string workspaceId, string layerId, IWorkspaceTileCache tileCache, IWorkspaceStyleCache styleCache)
+        public Layer(string workspaceId, string layerId, IWorkspaceTileCache tileCache, IWorkspaceStyleCache styleCache, ILogger<Layer> logger)
         {
             Id = layerId;
             WorkspaceId = workspaceId;
             _tileCache = tileCache;
             _styleCache = styleCache;
+            _logger = logger;
             try
             {
                 _connection = GetConnection(true);
@@ -159,7 +163,7 @@ namespace GruntiMaps.WebAPI.Models
             }
             catch (Exception e)
             {
-                throw new Exception($"Failed to popluate source info for {Id}", e);
+                throw new Exception($"Failed to populate source info for {Id}", e);
             }
         }
 
@@ -169,19 +173,26 @@ namespace GruntiMaps.WebAPI.Models
             {
                 if (_styleCache.FileExists(WorkspaceId, Id))
                 {
+                    _logger.LogDebug($"Fetching custom layer for {WorkspaceId}/{Id}");
                     using (var f = new StreamReader(_styleCache.GetFilePath(WorkspaceId, Id)))
                     {
                         var styleStr = f.ReadToEnd();
                         var styles = JsonConvert.DeserializeObject<StyleDto[]>(styleStr);
+                        _logger.LogDebug($"{styles.Length} custom layers fetched for {WorkspaceId}/{Id}");
                         return styles;
                     }
                 }
             }
-            catch
+            catch(Exception ex)
             {
-                // ignored
+                _logger.LogWarning($"Failed to fetch custom layer for {WorkspaceId}/{Id}", ex);
             }
             return null;
+        }
+
+        public void ReFetchStyle()
+        {
+            Styles = TryFetchLocalStyleInfo() ?? PopulateStyleInfo();
         }
 
         private StyleDto[] PopulateStyleInfo()
@@ -202,19 +213,19 @@ namespace GruntiMaps.WebAPI.Models
                     switch ((string)layer["geometry"])
                     {
                         case "Point":
-                            if (!styles.Exists(style => style.Type == "circle"))
+                            if (!styles.Exists(style => style.Type == PaintType.Circle))
                             {
                                 styles.Add(DefaultLayerStyles.Circle(Id, layerName));
                             }
                             break;
                         case "LineString":
-                            if (!styles.Exists(style => style.Type == "line"))
+                            if (!styles.Exists(style => style.Type == PaintType.Line))
                             {
                                 styles.Add(DefaultLayerStyles.Line(Id, layerName));
                             }
                             break;
                         case "Polygon":
-                            if (!styles.Exists(style => style.Type == "fill"))
+                            if (!styles.Exists(style => style.Type == PaintType.Fill))
                             {
                                 styles.Add(DefaultLayerStyles.Fill(Id, layerName));
                             }

@@ -18,26 +18,23 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
-namespace GruntiMaps.Api.DataContracts.V2.Layers
+namespace GruntiMaps.Domain.Common.Exceptions
 {
-    public class StyleDto
+    public class ValidatorError
     {
-        public string Id { get; set; }
+        public string Field { get; }
+        public string Message { get; }
 
-        public string Name { get; set; }
+        public ValidatorError(string message) :
+            this("Errors", message)
+        {
+        }
 
-        public JObject MetaData { get; set; }
-
-        public string Source { get; set; }
-
-        [JsonProperty("source-layer")]
-        public string SourceLayer { get; set; }
-
-        public string Type { get; set; }
-
-        public JObject Paint { get; set; }
+        public ValidatorError(string field, string message)
+        {
+            Field = field;
+            Message = message;
+        }
     }
 }

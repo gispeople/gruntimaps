@@ -18,13 +18,16 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using GruntiMaps.Common.Enums;
 
-namespace GruntiMaps.Api.DataContracts.V2.Layers
+using GruntiMaps.ResourceAccess.Storage;
+
+namespace GruntiMaps.ResourceAccess.Local
 {
-    public class LayerStatusDto
+    public class LocalStyleStorage : LocalStorage, IStyleStorage
     {
-        public string Id { get; set; }
-        public LayerStatus Status { get; set; }
+        public LocalStyleStorage(string storagePath, string containerName)
+            : base(storagePath, containerName)
+        {
+        }
     }
 }

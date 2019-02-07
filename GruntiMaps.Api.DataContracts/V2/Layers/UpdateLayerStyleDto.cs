@@ -18,13 +18,13 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using GruntiMaps.Common.Enums;
+
+using GruntiMaps.Api.DataContracts.V2.Styles;
 
 namespace GruntiMaps.Api.DataContracts.V2.Layers
 {
-    public class LayerStatusDto
+    public class UpdateLayerStyleDto
     {
-        public string Id { get; set; }
-        public LayerStatus Status { get; set; }
+        public StyleDto[] Styles { get; set; }
     }
 }

@@ -100,6 +100,21 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                         throw new NotImplementedException();
                 }
             });
+            services.AddSingleton<IStyleStorage>(provider =>
+            {
+                var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
+                var container = provider.GetService<IOptions<ContainerOptions>>().Value.Styles;
+                switch (providerOptions.Type)
+                {
+                    case ProviderType.Azure:
+                        return new AzureStyleStorage(providerOptions.Azure.ConnectionString,
+                            container, provider.GetService<ILogger>());
+                    case ProviderType.Local:
+                        return new LocalStyleStorage(providerOptions.Local.Path, container);
+                    default:
+                        throw new NotImplementedException();
+                }
+            });
             services.AddSingleton<IGeoJsonStorage>(provider =>
             {
                 var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;

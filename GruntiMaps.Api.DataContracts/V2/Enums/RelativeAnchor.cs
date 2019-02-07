@@ -18,13 +18,18 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-using GruntiMaps.Common.Enums;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
-namespace GruntiMaps.Api.DataContracts.V2.Layers
+namespace GruntiMaps.Api.DataContracts.V2.Enums
 {
-    public class LayerStatusDto
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum RelativeAnchor
     {
-        public string Id { get; set; }
-        public LayerStatus Status { get; set; }
+        [EnumMember(Value = "map")]
+        Map,
+        [EnumMember(Value = "viewport")]
+        Viewport,
     }
 }
