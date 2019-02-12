@@ -20,7 +20,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 using System.ComponentModel.DataAnnotations;
-using GruntiMaps.Api.DataContracts.V2.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -40,10 +39,10 @@ namespace GruntiMaps.Api.DataContracts.V2.Styles
         public string SourceLayer { get; set; }
 
         [Required]
-        public PaintType? Type { get; set; }
+        public StyleType? Type { get; set; }
 
-        public JObject Layout { get; set; }
+        public LayoutDto Layout { get; set; }
 
-        public JObject Paint { get; set; }
+        public PaintDto Paint { get; set; }
     }
 }

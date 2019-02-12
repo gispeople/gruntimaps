@@ -19,14 +19,12 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-using System.ComponentModel.DataAnnotations;
 using GruntiMaps.Api.DataContracts.V2.Styles;
 
 namespace GruntiMaps.Api.DataContracts.V2.Layers
 {
     public class UpdateLayerStyleDto
     {
-        [Required]
         public StyleDto[] Styles { get; set; }
     }
 }

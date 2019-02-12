@@ -51,7 +51,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
             _validator = validator;
         }
 
-        [HttpPatch]
+        [HttpPut]
         public async Task<ActionResult> Invoke([FromBody] UpdateLayerDto dto)
         {
             await _validator.Validate(dto);
@@ -75,11 +75,6 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
                 };
                 await _gdConversionQueue.Queue(job);
                 await _statusTable.UpdateStatus(WorkspaceId, LayerId, LayerStatus.Processing);
-            }
-
-            if (dto.Styles != null)
-            {
-                await _layerStyleService.Update(WorkspaceId, LayerId, dto.Styles);
             }
 
             return Accepted(new LayerStatusDto

@@ -19,7 +19,6 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 using System;
-using GruntiMaps.Api.DataContracts.V2.Enums;
 using GruntiMaps.Api.DataContracts.V2.Styles;
 using Newtonsoft.Json.Linq;
 
@@ -45,15 +44,12 @@ namespace GruntiMaps.WebAPI.Models
                 MetaData = MetaData,
                 Source = id,
                 SourceLayer = layerName,
-                Type = PaintType.Circle,
-                Paint = new JObject
+                Type = StyleType.Circle,
+                Paint = new PaintDto
                 {
-                    { "circle-stroke-color", "white" },
-                    {
-                        "circle-color",
-                        KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]
-                    },
-                    { "circle-stroke-width", 1 }
+                    CircleStrokeColor = "white",
+                    CircleColor = KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length],
+                    CircleStrokeWidth = 1
                 }
             };
 
@@ -65,14 +61,11 @@ namespace GruntiMaps.WebAPI.Models
                 MetaData = MetaData,
                 Source = id,
                 SourceLayer = layerName,
-                Type = PaintType.Line,
-                Paint = new JObject
+                Type = StyleType.Line,
+                Paint = new PaintDto
                 {
-                    {
-                        "line-color",
-                        KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]
-                    },
-                    { "line-width", 2 }
+                    LineColor = KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length],
+                    LineWidth = 2
                 }
             };
 
@@ -84,15 +77,12 @@ namespace GruntiMaps.WebAPI.Models
                 MetaData = MetaData,
                 Source = id,
                 SourceLayer = layerName,
-                Type = PaintType.Fill,
-                Paint = new JObject
+                Type = StyleType.Fill,
+                Paint = new PaintDto
                 {
-                    {
-                        "fill-color",
-                        KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]
-                    },
-                    { "fill-outline-color", "white" },
-                    { "fill-opacity", 0.2 }
+                    FillColor = KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length],
+                    FillOutlineColor = "white",
+                    FillOpacity = 0.2
                 }
             };
     }

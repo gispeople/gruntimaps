@@ -25,7 +25,6 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
-using GruntiMaps.Api.DataContracts.V2.Enums;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Api.DataContracts.V2.Styles;
 using GruntiMaps.ResourceAccess.WorkspaceCache;
@@ -218,19 +217,19 @@ namespace GruntiMaps.WebAPI.Models
                     switch ((string)layer["geometry"])
                     {
                         case "Point":
-                            if (!styles.Exists(style => style.Type == PaintType.Circle))
+                            if (!styles.Exists(style => style.Type == StyleType.Circle))
                             {
                                 styles.Add(DefaultLayerStyles.Circle(Id, layerName));
                             }
                             break;
                         case "LineString":
-                            if (!styles.Exists(style => style.Type == PaintType.Line))
+                            if (!styles.Exists(style => style.Type == StyleType.Line))
                             {
                                 styles.Add(DefaultLayerStyles.Line(Id, layerName));
                             }
                             break;
                         case "Polygon":
-                            if (!styles.Exists(style => style.Type == PaintType.Fill))
+                            if (!styles.Exists(style => style.Type == StyleType.Fill))
                             {
                                 styles.Add(DefaultLayerStyles.Fill(Id, layerName));
                             }

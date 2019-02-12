@@ -18,32 +18,19 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace GruntiMaps.Api.DataContracts.V2.Enums
+namespace GruntiMaps.Api.DataContracts.V2.Styles
 {
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum PaintType
+    public enum RelativeAlignment
     {
-        [EnumMember(Value = "fill")]
-        Fill,
-        [EnumMember(Value = "line")]
-        Line,
-        [EnumMember(Value = "symbol")]
-        Symbol,
-        [EnumMember(Value = "circle")]
-        Circle,
-        [EnumMember(Value = "heatmap")]
-        Heatmap,
-        [EnumMember(Value = "fill-extrusion")]
-        FillExtrusion,
-        [EnumMember(Value = "raster")]
-        Raster,
-        [EnumMember(Value = "hillshade")]
-        Hillshade,
-        [EnumMember(Value = "background")]
-        Background,
+        [EnumMember(Value = "map")]
+        Map,
+        [EnumMember(Value = "viewport")]
+        Viewport,
     }
 }

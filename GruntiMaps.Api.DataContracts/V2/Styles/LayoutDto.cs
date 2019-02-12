@@ -20,24 +20,43 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 using System.ComponentModel.DataAnnotations;
+using GruntiMaps.Api.DataContracts.V2.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace GruntiMaps.Api.DataContracts.V2.Styles
 {
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class LayoutDto
     {
         // General
         [JsonProperty("visibility")]
-        public bool? Visibility { get; set; }
+        public Visibility? Visibility { get; set; }
+
+        // line
+        [JsonProperty("line-cap")]
+        public string LineCap { get; set; }
+
+        [JsonProperty("line-join")]
+        public string LineJoin { get; set; }
+
+        [JsonProperty("line-miter-limit")]
+        public double? LineMiterLimit { get; set; }
+
+        [JsonProperty("line-round-limit")]
+        public double? LineRoundLimit { get; set; }
 
         // Symbol
         [JsonProperty("symbol-placement")]
         public string SymbolPlacement { get; set; }
 
         [JsonProperty("symbol-spacing")]
-        [Range(1, 65535)]
+        [Range(1, double.MaxValue)]
         public double? SymbolSpacing { get; set; }
+
+        [JsonProperty("symbol-sort-key")]
+        [Range(1, double.MaxValue)]
+        public double? SymbolSortKey { get; set; }
 
         [JsonProperty("symbol-avoid-edges")]
         public bool? SymbolAvoidEdges { get; set; }
@@ -52,10 +71,10 @@ namespace GruntiMaps.Api.DataContracts.V2.Styles
         public bool? IconOptional { get; set; }
 
         [JsonProperty("icon-rotation-alignment")]
-        public string IconRotationAlignment { get; set; }
+        public RelativeAlignmentWithAuto? IconRotationAlignment { get; set; }
 
         [JsonProperty("icon-size")]
-        [Range(0, 65535)]
+        [Range(0, double.MaxValue)]
         public double? IconSize { get; set; }
 
         [JsonProperty("icon-text-fit")]
@@ -68,7 +87,7 @@ namespace GruntiMaps.Api.DataContracts.V2.Styles
         public string IconImage { get; set; }
 
         [JsonProperty("icon-padding")]
-        [Range(0, 65535)]
+        [Range(0, double.MaxValue)]
         public double? IconPadding { get; set; }
 
         [JsonProperty("icon-keep-upright")]
@@ -78,20 +97,68 @@ namespace GruntiMaps.Api.DataContracts.V2.Styles
         public double[] IconOffset { get; set; }
 
         [JsonProperty("icon-anchor")]
-        public string IconAnchor { get; set; }
+        public RelativeAnchor? IconAnchor { get; set; }
 
         [JsonProperty("icon-pitch-alignment")]
-        public string IconPitchAlignment { get; set; }
+        public RelativeAlignmentWithAuto? IconPitchAlignment { get; set; }
 
         [JsonProperty("text-pitch-alignment")]
-        public string TextPitchAlignment { get; set; }
+        public RelativeAlignmentWithAuto? TextPitchAlignment { get; set; }
 
         [JsonProperty("text-rotation-alignment")]
-        public string TextRotationAlignment { get; set; }
+        public RelativeAlignmentWithAuto? TextRotationAlignment { get; set; }
 
         [JsonProperty("text-field")]
         public JObject TextField { get; set; }
-        // still many
 
+        [JsonProperty("text-font")]
+        public string[] TextFont { get; set; }
+
+        [JsonProperty("text-size")]
+        [Range(0, double.MaxValue)]
+        public double? TextSize { get; set; }
+
+        [JsonProperty("text-max-width")]
+        [Range(0, double.MaxValue)]
+        public double? TextMaxWidth { get; set; }
+
+        [JsonProperty("text-line-height")]
+        public double? TextLineHeight { get; set; }
+
+        [JsonProperty("text-letter-spacing")]
+        public double? TextLetterSpacing { get; set; }
+
+        [JsonProperty("text-justify")]
+        public string TextJustify { get; set; }
+
+        [JsonProperty("text-anchor")]
+        public RelativeAlignmentWithAuto? TextAnchor { get; set; }
+
+        [JsonProperty("text-max-angle")]
+        public double? TextMaxAngle { get; set; }
+
+        [JsonProperty("text-rotate")]
+        public double? TextRotate { get; set; }
+
+        [JsonProperty("text-padding")]
+        public double? TextPadding { get; set; }
+
+        [JsonProperty("text-keep-upright")]
+        public bool? TextKeepUpright { get; set; }
+
+        [JsonProperty("text-transform")]
+        public string TextTransform { get; set; }
+
+        [JsonProperty("text-offset")]
+        public double[] TextOffset { get; set; }
+
+        [JsonProperty("text-allow-overlap")]
+        public bool? TextAllowOverlap { get; set; }
+
+        [JsonProperty("text-ignore-placement")]
+        public bool? TextIgnorePlacement { get; set; }
+
+        [JsonProperty("text-optional")]
+        public bool? TextOptional { get; set; }
     }
 }

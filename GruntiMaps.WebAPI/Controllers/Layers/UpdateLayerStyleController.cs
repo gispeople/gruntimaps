@@ -22,6 +22,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 using System.Threading.Tasks;
 using GruntiMaps.Api.DataContracts.V2;
 using GruntiMaps.Api.DataContracts.V2.Layers;
+using GruntiMaps.Api.DataContracts.V2.Styles;
 using GruntiMaps.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -38,10 +39,10 @@ namespace GruntiMaps.WebAPI.Controllers.Layers
             _styleService = styleService;
         }
 
-        [HttpPatch(Resources.StyleSubResource)]
+        [HttpPut(Resources.StyleSubResource)]
         public async Task<ActionResult> Invoke([FromBody] UpdateLayerStyleDto dto)
         {
-            await _styleService.Update(WorkspaceId, LayerId, dto.Styles);
+            await _styleService.Update(WorkspaceId, LayerId, dto.Styles ?? new StyleDto[] { });
 
             return NoContent();
         }
