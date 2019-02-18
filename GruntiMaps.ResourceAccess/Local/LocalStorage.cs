@@ -25,6 +25,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Flurl;
 using GruntiMaps.ResourceAccess.Storage;
 
 namespace GruntiMaps.ResourceAccess.Local
@@ -51,6 +52,11 @@ namespace GruntiMaps.ResourceAccess.Local
                 });
             }
             return outputPath;
+        }
+
+        public Task<bool> Exist(string fileName)
+        {
+            return Task.FromResult<bool>(File.Exists(Path.Combine(_containerPath, fileName)));
         }
 
         public Task<string> GetMd5(string fileName)
@@ -106,6 +112,11 @@ namespace GruntiMaps.ResourceAccess.Local
                 return true;
             }
             return false;
+        }
+
+        public Task<Url> GetDownloadUrl(string fileName)
+        {
+            throw new NotImplementedException();
         }
     }
 }

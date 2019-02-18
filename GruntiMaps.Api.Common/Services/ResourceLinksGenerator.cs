@@ -47,7 +47,8 @@ namespace GruntiMaps.Api.Common.Services
             links.Add(new LinkDto(LinkRelations.Source, _urlGenerator.BuildUrl(RouteNames.GetLayerSource, new { workspaceId, layerId })));
             links.Add(new LinkDto(LinkRelations.Style, _urlGenerator.BuildUrl(RouteNames.GetLayerStyle, new { workspaceId, layerId })));
             links.Add(new LinkDto(LinkRelations.Status, _urlGenerator.BuildUrl(RouteNames.GetLayerStatus, new { workspaceId, layerId })));
-            links.Add(new LinkDto(LinkRelations.Mappack, _urlGenerator.BuildUrl(RouteNames.GetLayerMapPack, new { workspaceId, layerId })));
+            links.Add(new LinkDto(LinkRelations.Maptiles, _urlGenerator.BuildUrl(RouteNames.GetLayerMbtiles, new { workspaceId, layerId })));
+            links.Add(new LinkDto(LinkRelations.MaptilesHash, _urlGenerator.BuildUrl(RouteNames.GetLayerMbtilesHash, new { workspaceId, layerId })));
             links.Add(new LinkDto(LinkRelations.Metadata, _urlGenerator.BuildUrl(RouteNames.GetLayerMetaData, new { workspaceId, layerId })));
             links.Add(new LinkDto(LinkRelations.Geojson, _urlGenerator.BuildUrl(RouteNames.GetLayerGeoJson, new { workspaceId, layerId })));
             links.Add(new LinkDto(LinkRelations.Tile, $"{baseUrl}/{DataContracts.V2.Resources.TileSubResource}/" + "{x}/{y}/{z}"));

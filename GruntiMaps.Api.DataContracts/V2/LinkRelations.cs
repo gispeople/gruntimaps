@@ -26,7 +26,8 @@ namespace GruntiMaps.Api.DataContracts.V2
         public const string Source = "source";
         public const string Style = "style";
         public const string Status = "status";
-        public const string Mappack = "mappack";
+        public const string Maptiles = "mbtiles";
+        public const string MaptilesHash = "mbtiles-hash";
         public const string Tile = "tile";
         public const string Grid = "grid";
         public const string Metadata = "metadata";

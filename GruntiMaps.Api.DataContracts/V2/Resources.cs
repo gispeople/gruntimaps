@@ -30,7 +30,8 @@ namespace GruntiMaps.Api.DataContracts.V2
         public const string GridSubResource = "grid";
         public const string MetaDataSubResource = "metadata";
         public const string GeoJsonSubResource = "geo-json";
-        public const string MapPackSubResource = "map-pack";
+        public const string MbtilesSubResource = "mbtile";
+        public const string MbtilesHashSubResource = MbtilesSubResource + "/hash";
         public const string SourceSubResource = "source";
         public const string StyleSubResource = "style";
         public const string StatusSubResource = "status";
