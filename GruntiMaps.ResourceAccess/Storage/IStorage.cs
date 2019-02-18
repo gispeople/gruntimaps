@@ -20,6 +20,7 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Flurl;
 
 namespace GruntiMaps.ResourceAccess.Storage
 {
@@ -28,9 +29,11 @@ namespace GruntiMaps.ResourceAccess.Storage
         // returns the location of the created file (provider-dependent)
         Task<string> Store(string fileName, string inputPath);
 
+        Task<bool> Exist(string fileName);
         Task<string> GetMd5(string fileName);
         Task UpdateLocalFile(string fileName, string localPath);
         Task<List<string>> List();
         Task<bool> DeleteIfExist(string fileName);
+        Task<Url> GetDownloadUrl(string fileName);
     }
 }

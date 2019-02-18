@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Flurl;
 using GruntiMaps.ResourceAccess.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
@@ -67,6 +68,11 @@ namespace GruntiMaps.ResourceAccess.Azure
             }
         }
 
+        public Task<bool> Exist(string fileName)
+        {
+            return _azureContainer.GetBlockBlobReference(fileName).ExistsAsync();
+        }
+
         public async Task<string> GetMd5(string fileName)
         {
             var blob = _azureContainer.GetBlockBlobReference(fileName);
@@ -94,6 +100,11 @@ namespace GruntiMaps.ResourceAccess.Azure
         {
             CloudBlockBlob blob = _azureContainer.GetBlockBlobReference(fileName);
             return blob.DeleteIfExistsAsync();
+        }
+
+        public Task<Url> GetDownloadUrl(string fileName)
+        {
+            return Task.FromResult<Url>(_azureContainer.GetBlockBlobReference(fileName).Uri.AbsoluteUri);
         }
 
         public Task<List<string>> List()

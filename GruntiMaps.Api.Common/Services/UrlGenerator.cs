@@ -31,12 +31,10 @@ namespace GruntiMaps.Api.Common.Services
     public class UrlGenerator : IUrlGenerator
     {
         private readonly IActionContextAccessor _actionAccessor;
-        private readonly IUrlHelperFactory _urlHelperFactory;
 
-        public UrlGenerator(IActionContextAccessor actionAccessor, IUrlHelperFactory urlHelperFactory)
+        public UrlGenerator(IActionContextAccessor actionAccessor)
         {
             _actionAccessor = actionAccessor;
-            _urlHelperFactory = urlHelperFactory;
         }
 
         public string BuildUrl(string routeName, object values)
