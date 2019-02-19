@@ -72,7 +72,16 @@ namespace GruntiMaps.WebAPI.Services
             // geojson files. Why, you might ask, because tippecanoe can import GeoJSON directly? It's because
             // passing the GeoJSON through ogr2ogr will ensure that the final GeoJSON is in the correct projection
             // and that it should be valid GeoJSON as well.
-            var queued = await _gdConversionQueue.GetJob();
+            QueuedConversionJob queued = null;
+            try
+            {
+                queued = await _gdConversionQueue.GetJob();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"GdalConversion failed to retrieve queued job", ex);
+            }
+            
             if (queued != null) // if no job queued, don't try
             {
                 try
@@ -185,12 +194,21 @@ namespace GruntiMaps.WebAPI.Services
                 {
                     if (queued.DequeueCount >= RetryLimit)
                     {
-                        await _gdConversionQueue.DeleteJob(queued);
-                        if (queued.Content?.LayerId != null && queued.Content?.WorkspaceId != null)
+                        try
                         {
-                            await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
+                            await _gdConversionQueue.DeleteJob(queued);
+                            if (queued.Content?.LayerId != null && queued.Content?.WorkspaceId != null)
+                            {
+                                await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId,
+                                    LayerStatus.Failed);
+                            }
+
+                            _logger.LogError($"GdalConversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
                         }
-                        _logger.LogError($"GdalConversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
+                        catch (Exception e)
+                        {
+                            _logger.LogError($"GdalConversion failed to clear bad conversion for layer {queued.Content?.LayerId}", e);
+                        }
                     }
                     else
                     {

@@ -70,7 +70,17 @@ namespace GruntiMaps.WebAPI.Services
             //    convert the geojson to mbtile.
             // 2. the geojson from the previous step (or possibly geojson directly) is in storage, we get
             //    a message and convert to mbtile and place result in storage.
-            var queued = await _mbConversionQueue.GetJob();
+
+            QueuedConversionJob queued = null;
+            try
+            {
+                queued = await _mbConversionQueue.GetJob();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"GdalConversion failed to retrieve queued job", ex);
+            }
+
             if (queued != null) // if no job queued, don't try
             {
 
@@ -174,12 +184,19 @@ namespace GruntiMaps.WebAPI.Services
                 {
                     if (queued.DequeueCount >= RetryLimit)
                     {
-                        await _mbConversionQueue.DeleteJob(queued);
-                        if (queued.Content?.LayerId != null && queued.Content?.WorkspaceId != null)
+                        try
                         {
-                            await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
+                            await _mbConversionQueue.DeleteJob(queued);
+                            if (queued.Content?.LayerId != null && queued.Content?.WorkspaceId != null)
+                            {
+                                await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
+                            }
+                            _logger.LogError($"MbConversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
                         }
-                        _logger.LogError($"MbConversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
+                        catch (Exception e)
+                        {
+                            _logger.LogError($"GdalConversion failed to clear bad conversion for layer {queued.Content?.LayerId}", e);
+                        }
                     }
                     else
                     {
