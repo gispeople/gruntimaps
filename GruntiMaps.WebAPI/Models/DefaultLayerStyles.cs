@@ -47,9 +47,9 @@ namespace GruntiMaps.WebAPI.Models
                 Type = StyleType.Circle,
                 Paint = new JObject
                 {
-                    new JObject {"CircleStrokeColor", "white"},
-                    new JObject {"CircleColor", KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]},
-                    new JObject {"CircleStrokeWidth", 1},
+                    new JObject {"circle-stroke-color", "white"},
+                    new JObject {"circle-color", KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]},
+                    new JObject {"circle-stroke-width", 1},
                 }
             };
 
@@ -64,8 +64,8 @@ namespace GruntiMaps.WebAPI.Models
                 Type = StyleType.Line,
                 Paint = new JObject
                 {
-                    new JObject {"LineColor", KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]},
-                    new JObject {"LineWidth", 2},
+                    new JObject {"line-color", KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]},
+                    new JObject {"line-width", 2},
                 }
             };
 
@@ -80,9 +80,9 @@ namespace GruntiMaps.WebAPI.Models
                 Type = StyleType.Fill,
                 Paint = new JObject
                 {
-                    new JObject {"FillOutlineColor", "white"},
-                    new JObject {"FillColor", KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]},
-                    new JObject {"FillOpacity", 0.2},
+                    new JObject {"fill-outline-color", "white"},
+                    new JObject {"fill-color", KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]},
+                    new JObject {"fill-opacity", 0.2},
                 }
             };
     }
