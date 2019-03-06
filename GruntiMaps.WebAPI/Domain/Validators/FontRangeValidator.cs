@@ -19,30 +19,30 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-using System.Threading.Tasks;
-using GruntiMaps.ResourceAccess.GlobalCache;
-using GruntiMaps.WebAPI.Domain.Validators;
-using Microsoft.AspNetCore.Mvc;
+using System.Text.RegularExpressions;
+using System.Web;
+using FluentValidation;
+using GruntiMaps.Domain.Common.Validation;
 
-namespace GruntiMaps.WebAPI.Controllers.Fonts
+namespace GruntiMaps.WebAPI.Domain.Validators
 {
-    public class ListFontRangesController : FontControllerBase
+    public interface IFontRangeValidator : GruntiMaps.Domain.Common.Validation.IValidator<string>
     {
-        private readonly IGlobalFontCache _cache;
-        private readonly IFontFaceValidator _faceValidator;
+    }
 
-        public ListFontRangesController(IGlobalFontCache cache,
-            IFontFaceValidator faceValidator)
+    public class FontRangeValidator : FluentValidator<string>, IFontFaceValidator
+    {
+        public FontRangeValidator()
         {
-            _cache = cache;
-            _faceValidator = faceValidator;
+            RuleFor(x => x)
+                .Must(MustBeValidFontRange)
+                .WithMessage("Invalid font range");
         }
 
-        [Route("{face}")]
-        public async Task<string[]> Invoke(string face)
+        private bool MustBeValidFontRange(string range)
         {
-            await _faceValidator.Validate(face);
-            return _cache.ListFontRanges(face);
+            var decoded = HttpUtility.UrlDecode(range);
+            return !string.IsNullOrWhiteSpace(decoded) && Regex.IsMatch(decoded, "^[0-9]{1,5}-[0-9]{1,5}$");
         }
     }
 }
