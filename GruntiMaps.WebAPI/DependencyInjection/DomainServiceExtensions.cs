@@ -39,6 +39,7 @@ namespace GruntiMaps.WebAPI.DependencyInjection
             services.AddSingleton<ILayerStyleService, LayerStyleService>();
 
             services.AddScoped<IValidator<UpdateLayerDto>, UpdateLayerDtoValidator>();
+            services.AddScoped<IFontFaceValidator, FontFaceValidator>();
         }
     }
 }

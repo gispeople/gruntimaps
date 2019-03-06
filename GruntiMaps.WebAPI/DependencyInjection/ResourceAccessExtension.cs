@@ -22,6 +22,7 @@ using System;
 using GruntiMaps.Api.Common.Configuration;
 using GruntiMaps.Api.Common.Enums;
 using GruntiMaps.ResourceAccess.Azure;
+using GruntiMaps.ResourceAccess.GlobalCache;
 using GruntiMaps.ResourceAccess.Local;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Storage;
@@ -160,10 +161,13 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                 }
             });
 
-            // Local Cache
+            // Local Cache (Workspace)
             services.AddSingleton<IWorkspaceTileCache, WorkspaceTileCache>();
             services.AddSingleton<IWorkspaceStyleCache, WorkspaceStyleCache>();
             services.AddSingleton<IWorkspacePackCache, WorkspacePackCache>();
+
+            // Local Cache (Global)
+            services.AddSingleton<IGlobalFontCache, GlobalFontCache>();
         }
     }
 }
