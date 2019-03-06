@@ -45,11 +45,11 @@ namespace GruntiMaps.WebAPI.Models
                 Source = id,
                 SourceLayer = layerName,
                 Type = StyleType.Circle,
-                Paint = new PaintDto
+                Paint = new JObject
                 {
-                    CircleStrokeColor = "white",
-                    CircleColor = KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length],
-                    CircleStrokeWidth = 1
+                    new JObject {"CircleStrokeColor", "white"},
+                    new JObject {"CircleColor", KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]},
+                    new JObject {"CircleStrokeWidth", 1},
                 }
             };
 
@@ -62,10 +62,10 @@ namespace GruntiMaps.WebAPI.Models
                 Source = id,
                 SourceLayer = layerName,
                 Type = StyleType.Line,
-                Paint = new PaintDto
+                Paint = new JObject
                 {
-                    LineColor = KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length],
-                    LineWidth = 2
+                    new JObject {"LineColor", KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]},
+                    new JObject {"LineWidth", 2},
                 }
             };
 
@@ -78,11 +78,11 @@ namespace GruntiMaps.WebAPI.Models
                 Source = id,
                 SourceLayer = layerName,
                 Type = StyleType.Fill,
-                Paint = new PaintDto
+                Paint = new JObject
                 {
-                    FillColor = KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length],
-                    FillOutlineColor = "white",
-                    FillOpacity = 0.2
+                    new JObject {"FillOutlineColor", "white"},
+                    new JObject {"FillColor", KellyColors[Math.Abs(layerName.GetHashCode()) % KellyColors.Length]},
+                    new JObject {"FillOpacity", 0.2},
                 }
             };
     }

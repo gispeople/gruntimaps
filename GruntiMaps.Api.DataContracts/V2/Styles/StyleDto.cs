@@ -41,8 +41,8 @@ namespace GruntiMaps.Api.DataContracts.V2.Styles
         [Required]
         public StyleType? Type { get; set; }
 
-        public LayoutDto Layout { get; set; }
+        public JObject Layout { get; set; }
 
-        public PaintDto Paint { get; set; }
+        public JObject Paint { get; set; }
     }
 }
