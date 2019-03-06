@@ -35,5 +35,9 @@ namespace GruntiMaps.Api.DataContracts.V2
         public const string SourceSubResource = "source";
         public const string StyleSubResource = "style";
         public const string StatusSubResource = "status";
+
+        public const string Fonts = "fonts";
+
+        public const string Sprites = "sprites";
     }
 }
