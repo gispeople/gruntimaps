@@ -224,13 +224,13 @@ namespace GruntiMaps.WebAPI.Models
 
             if (!_tileCache.FileExists(workspaceId, layerId))
             {
-                _logger.LogDebug($"Layer creation canceled for workspace {workspaceId} and layer {layerId} since file not exist");
+                _logger.LogWarning($"Layer creation canceled for workspace {workspaceId} and layer {layerId} since file not exist");
                 return;
             }
 
             if (!_tileCache.FileIsValidMbTile(workspaceId, layerId))
             {
-                _logger.LogDebug($"Layer creation canceled for workspace {workspaceId} and layer {layerId} since file is not valid mbtile");
+                _logger.LogWarning($"Layer creation canceled for workspace {workspaceId} and layer {layerId} since file is not valid mbtile");
                 return;
             }
 

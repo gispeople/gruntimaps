@@ -30,7 +30,7 @@ namespace GruntiMaps.WebAPI.Domain.Validators
     {
     }
 
-    public class FontRangeValidator : FluentValidator<string>, IFontFaceValidator
+    public class FontRangeValidator : FluentValidator<string>, IFontRangeValidator
     {
         public FontRangeValidator()
         {
