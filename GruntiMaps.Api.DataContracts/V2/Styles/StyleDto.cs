@@ -31,15 +31,24 @@ namespace GruntiMaps.Api.DataContracts.V2.Styles
 
         public string Name { get; set; }
 
+        [JsonProperty("metadata")]
         public JObject MetaData { get; set; }
 
         public string Source { get; set; }
+
+        [JsonProperty("maxzoom")]
+        public int? MaxZoom { get; set; }
+
+        [JsonProperty("minzoom")]
+        public int? MinZoom { get; set; }
 
         [JsonProperty("source-layer")]
         public string SourceLayer { get; set; }
 
         [Required]
         public StyleType? Type { get; set; }
+
+        public JArray Filter { get; set; }
 
         public JObject Layout { get; set; }
 
