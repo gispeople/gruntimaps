@@ -83,6 +83,8 @@ namespace GruntiMaps.WebAPI.Services
 
             if (queued != null) // if no job queued, don't try
             {
+                var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                _logger.LogDebug($"temporary path = {tempPath}");
 
                 try
                 {
@@ -94,10 +96,6 @@ namespace GruntiMaps.WebAPI.Services
                         var timer = new Stopwatch();
                         timer.Start();
                         _logger.LogDebug($"Processing MbConversion for Layer {queued.Content.LayerId} within Queue Message {queued.Id}");
-
-                        // it will be in the system's temporary directory
-                        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-                        _logger.LogDebug($"temporary path = {tempPath}");
 
                         // If the directory already existed, throw an error - this should never happen, but just in case.
                         if (Directory.Exists(tempPath))
@@ -203,6 +201,8 @@ namespace GruntiMaps.WebAPI.Services
                         _logger.LogWarning($"MbConversion failed for layer {queued.Content?.LayerId} and will retry later", ex);
                     }
                 }
+
+                Directory.Delete(tempPath, true);
             }
             else
             {

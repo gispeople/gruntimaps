@@ -44,6 +44,9 @@ namespace GruntiMaps.WebAPI.Models
         private readonly ILoggerFactory _loggerFactory;
 
         private readonly ITileStorage _tileStorage;
+        private readonly IGeoJsonStorage _geoJsonStorage;
+        private readonly IStyleStorage _styleStorage;
+        private readonly IPackStorage _packStorage;
         private readonly IFontStorage _fontStorage;
         private readonly IWorkspaceTileCache _tileCache;
         private readonly IWorkspaceStyleCache _styleCache;
@@ -54,6 +57,9 @@ namespace GruntiMaps.WebAPI.Models
         public MapData(IOptions<PathOptions> pathOptions, 
             ILogger<MapData> logger,
             ITileStorage tileStorage,
+            IGeoJsonStorage geoJsonStorage,
+            IStyleStorage styleStorage,
+            IPackStorage packStorage,
             IFontStorage fontStorage,
             IWorkspaceTileCache tileCache,
             IWorkspaceStyleCache styleCache,
@@ -67,6 +73,9 @@ namespace GruntiMaps.WebAPI.Models
 
             _tileStorage = tileStorage;
             _fontStorage = fontStorage;
+            _geoJsonStorage = geoJsonStorage;
+            _styleStorage = styleStorage;
+            _packStorage = packStorage;
 
             _tileCache = tileCache;
             _styleCache = styleCache;
@@ -186,10 +195,14 @@ namespace GruntiMaps.WebAPI.Models
         /// <returns></returns>
         public async Task DeleteLayer(string workspaceId, string layerId)
         {
-            Task task = _tileStorage.DeleteIfExist($"{workspaceId}/{layerId}.mbtiles");
+            var tasks = new List<Task>();
+            tasks.Add(_tileStorage.DeleteIfExist($"{workspaceId}/{layerId}.mbtiles"));
+            tasks.Add(_styleStorage.DeleteIfExist($"{workspaceId}/{layerId}.json"));
+            tasks.Add(_geoJsonStorage.DeleteIfExist($"{workspaceId}/{layerId}.geojson"));
+            tasks.Add(_packStorage.DeleteIfExist($"{workspaceId}/{layerId}.mbtiles"));
             CloseService(layerId);
             _tileCache.DeleteIfExist(workspaceId, layerId);
-            await task;
+            await Task.WhenAll(tasks);
         }
 
         /// Close a MapBox tile service so that it can be changed.

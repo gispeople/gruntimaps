@@ -81,7 +81,10 @@ namespace GruntiMaps.WebAPI.Services
             {
                 _logger.LogError($"GdalConversion failed to retrieve queued job", ex);
             }
-            
+
+            var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            _logger.LogDebug($"temporary path = {tempPath}");
+
             if (queued != null) // if no job queued, don't try
             {
                 try
@@ -93,10 +96,6 @@ namespace GruntiMaps.WebAPI.Services
                         var timer = new Stopwatch();
                         timer.Start();
                         _logger.LogDebug($"Processing Gdal Conversion for Layer {queued.Content.LayerId} within Queue Message {queued.Id}");
-
-                        // it will be in the system's temporary directory
-                        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-                        _logger.LogDebug($"temporary path = {tempPath}");
 
                         // If the directory already existed, throw an error - this should never happen, but just in case.
                         if (Directory.Exists(tempPath))
@@ -215,6 +214,8 @@ namespace GruntiMaps.WebAPI.Services
                         _logger.LogWarning($"GdalConversion failed for layer {queued.Content?.LayerId} will retry later", ex);
                     }
                 }
+
+                Directory.Delete(tempPath, true);
             }
             else
             {
