@@ -172,7 +172,7 @@ namespace GruntiMaps.WebAPI.Services
                             _logger.LogDebug("Upload of geojson file to storage complete.");
 
                             timer.Stop();
-                            _logger.LogDebug($"GDAL Conversion finshed for Layer {job.LayerId} in {timer.ElapsedMilliseconds} ms.");
+                            _logger.LogDebug($"GDAL Conversion finished for Layer {job.LayerId} in {timer.ElapsedMilliseconds} ms.");
 
                             // we created geoJson so we can put a request in for geojson to mvt conversion.
                             await _mbConversionQueue.Queue(new ConversionJobData

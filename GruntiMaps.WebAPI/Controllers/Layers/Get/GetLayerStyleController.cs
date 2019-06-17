@@ -18,12 +18,13 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.DataContracts.V2;
-using GruntiMaps.Api.DataContracts.V2.Styles;
 using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 {
@@ -37,11 +38,16 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
         }
 
         [HttpGet(Resources.StyleSubResource, Name = RouteNames.GetLayerStyle)]
-        public StyleDto[] Invoke()
+        public ActionResult Invoke()
         {
-            return _mapData.HasLayer(WorkspaceId, LayerId)
+            var styles =  _mapData.HasLayer(WorkspaceId, LayerId)
                 ? _mapData.GetLayer(WorkspaceId, LayerId).Styles
                 : throw new EntityNotFoundException();
+
+            return new JsonResult(styles, new JsonSerializerSettings()
+            {
+                Formatting = Formatting.Indented
+            });
         }
     }
 }
