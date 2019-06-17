@@ -25,6 +25,7 @@ using GruntiMaps.Domain.Common.Exceptions;
 using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 {
@@ -46,7 +47,8 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 
             return new JsonResult(styles, new JsonSerializerSettings()
             {
-                Formatting = Formatting.Indented
+                Formatting = Formatting.Indented,
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
             });
         }
     }
