@@ -26,6 +26,8 @@ using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 {
@@ -44,19 +46,23 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 
         [AllowAnonymous]
         [HttpGet(Name = RouteNames.GetLayer)]
-        public LayerDto Invoke()
+        public ActionResult Invoke()
         {
             var layer = _mapData.HasLayer(WorkspaceId, LayerId) 
                 ? _mapData.GetLayer(WorkspaceId, LayerId) 
                 : throw new EntityNotFoundException();
 
-            return new LayerDto
+            return new JsonResult(new LayerDto
             {
                 Id = layer.Id,
                 Name = layer.Name,
                 Description = layer.Source.Description,
                 Links = _resourceLinksGenerator.GenerateResourceLinks(WorkspaceId, LayerId)
-            };
+            }, new JsonSerializerSettings()
+            {
+                Formatting = Formatting.Indented,
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            });
         }
 
     }
