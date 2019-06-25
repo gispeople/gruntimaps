@@ -37,7 +37,7 @@ namespace GruntiMaps.ResourceAccess.Azure
         private readonly ILogger _logger;
         public AzureStorage(string connectionString, string containerName, ILogger logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new NullReferenceException(nameof(logger));
             _azureContainer = CloudStorageAccount
                 .Parse(connectionString)
                 .CreateCloudBlobClient()

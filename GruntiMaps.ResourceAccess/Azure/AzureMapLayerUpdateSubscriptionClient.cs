@@ -20,7 +20,7 @@ namespace GruntiMaps.ResourceAccess.Azure
             string subscription,
             ILogger logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new NullReferenceException(nameof(logger));
             _client = new SubscriptionClient(connectionString, topic, subscription);
         }
 
@@ -52,6 +52,8 @@ namespace GruntiMaps.ResourceAccess.Azure
             return async (message, token) =>
             {
                 _logger.LogDebug($"Processing Topic message {message.MessageId}");
+
+                var abc = Encoding.UTF8.GetString(message.Body);
 
                 var mapLayerUpdateData =
                     JsonConvert.DeserializeObject<MapLayerUpdateData>(Encoding.UTF8.GetString(message.Body));

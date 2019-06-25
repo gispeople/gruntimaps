@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace GruntiMaps.ResourceAccess.Azure
 {
-    public class AzureMapLayerUpdateTopicClient : IMapLayerUpdateTopicClient, IDisposable
+    public class AzureMapLayerUpdateTopicClient : IMapLayerUpdateTopicClient
     {
         private readonly ITopicClient _client;
 
@@ -21,11 +21,6 @@ namespace GruntiMaps.ResourceAccess.Azure
         {
             var messageByte = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
             return _client.SendAsync(new Message(messageByte));
-        }
-
-        public void Dispose()
-        {
-            _client.CloseAsync();
         }
     }
 }

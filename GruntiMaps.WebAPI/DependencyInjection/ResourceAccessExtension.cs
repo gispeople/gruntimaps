@@ -81,7 +81,7 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                 {
                     case ProviderType.Azure:
                         return new AzurePackStorage(providerOptions.Azure.ConnectionString,
-                            container, provider.GetService<ILogger>());
+                            container, provider.GetService<ILogger<AzurePackStorage>>());
                     case ProviderType.Local:
                         return new LocalPackStorage(providerOptions.Local.Path, container);
                     default:
@@ -96,7 +96,7 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                 {
                     case ProviderType.Azure:
                         return new AzureTileStorage(providerOptions.Azure.ConnectionString,
-                            container, provider.GetService<ILogger>());
+                            container, provider.GetService<ILogger<AzureTileStorage>>());
                     case ProviderType.Local:
                         return new LocalTileStorage(providerOptions.Local.Path, container);
                     default:
@@ -111,7 +111,7 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                 {
                     case ProviderType.Azure:
                         return new AzureStyleStorage(providerOptions.Azure.ConnectionString,
-                            container, provider.GetService<ILogger>());
+                            container, provider.GetService<ILogger<AzureStyleStorage>>());
                     case ProviderType.Local:
                         return new LocalStyleStorage(providerOptions.Local.Path, container);
                     default:
@@ -126,7 +126,7 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                 {
                     case ProviderType.Azure:
                         return new AzureGeoJsonStorage(providerOptions.Azure.ConnectionString,
-                            container, provider.GetService<ILogger>());
+                            container, provider.GetService<ILogger<AzureGeoJsonStorage>>());
                     case ProviderType.Local:
                         return new LocalGeoJsonStorage(providerOptions.Local.Path, container);
                     default:
@@ -141,7 +141,7 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                 {
                     case ProviderType.Azure:
                         return new AzureFontStorage(providerOptions.Azure.ConnectionString,
-                            container, provider.GetService<ILogger>());
+                            container, provider.GetService<ILogger<AzureFontStorage>>());
                     case ProviderType.Local:
                         return new LocalFontStorage(providerOptions.Local.Path, container);
                     default:
@@ -193,7 +193,7 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                         return new AzureMapLayerUpdateSubscriptionClient(providerOptions.Azure.ServiceBus.ConnectionString, 
                             providerOptions.Azure.ServiceBus.Topic, 
                             providerOptions.Azure.ServiceBus.Subscription,
-                            provider.GetService<ILogger>());
+                            provider.GetService<ILogger<AzureMapLayerUpdateSubscriptionClient>>());
                     default:
                         throw new NotImplementedException();
                 }
