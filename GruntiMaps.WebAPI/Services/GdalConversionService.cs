@@ -82,11 +82,11 @@ namespace GruntiMaps.WebAPI.Services
                 _logger.LogError($"GdalConversion failed to retrieve queued job", ex);
             }
 
-            var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            _logger.LogDebug($"temporary path = {tempPath}");
-
             if (queued != null) // if no job queued, don't try
             {
+                var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                _logger.LogDebug($"temporary path = {tempPath}");
+
                 try
                 {
                     var job = queued.Content;
