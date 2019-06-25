@@ -67,11 +67,6 @@ namespace GruntiMaps.WebAPI.Services
             }
 
             _subscriptionClient.RegisterOnMessageHandlerAndReceiveMessages(UpdateMapLayer);
-
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                await Task.Delay(5000, cancellationToken);
-            }
         }
 
         private async Task UpdateMapLayer(MapLayerUpdateData data)
