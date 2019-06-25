@@ -76,8 +76,13 @@ namespace GruntiMaps.ResourceAccess.Azure
         public async Task<string> GetMd5(string fileName)
         {
             var blob = _azureContainer.GetBlockBlobReference(fileName);
-            await blob.FetchAttributesAsync();
-            return blob.Properties.ContentMD5;
+            if (await blob.ExistsAsync())
+            {
+                await blob.FetchAttributesAsync();
+                return blob.Properties.ContentMD5;
+            }
+
+            return null;
         }
 
         public async Task UpdateLocalFile(string fileName, string localPath)

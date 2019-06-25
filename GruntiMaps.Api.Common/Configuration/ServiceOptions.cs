@@ -22,7 +22,6 @@ namespace GruntiMaps.Api.Common.Configuration
 {
     public class ServiceOptions
     {
-        public int LayerRefresh { get; set; }
         public int ConvertPolling { get; set; }
     }
 }

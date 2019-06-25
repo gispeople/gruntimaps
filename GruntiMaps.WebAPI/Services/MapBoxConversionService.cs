@@ -169,7 +169,7 @@ namespace GruntiMaps.WebAPI.Services
                         _logger.LogDebug("Upload of mbtile file to storage complete.");
 
                         timer.Stop();
-                        _logger.LogDebug($"MapBoxConversion finshed for Layer {job.LayerId} in {timer.ElapsedMilliseconds} ms.");
+                        _logger.LogDebug($"MapBoxConversion finished for Layer {job.LayerId} in {timer.ElapsedMilliseconds} ms.");
                     }
                     await _mbConversionQueue.DeleteJob(queued);
                     _logger.LogDebug("Deleted MapBoxConversion message");

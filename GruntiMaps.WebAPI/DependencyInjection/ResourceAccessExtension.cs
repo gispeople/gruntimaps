@@ -27,7 +27,9 @@ using GruntiMaps.ResourceAccess.Local;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Storage;
 using GruntiMaps.ResourceAccess.Table;
+using GruntiMaps.ResourceAccess.TopicSubscription;
 using GruntiMaps.ResourceAccess.WorkspaceCache;
+using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -168,6 +170,34 @@ namespace GruntiMaps.WebAPI.DependencyInjection
 
             // Local Cache (Global)
             services.AddSingleton<IGlobalFontCache, GlobalFontCache>();
+
+            // Service Bus Topic Subscription
+            services.AddSingleton<IMapLayerUpdateTopicClient>(provider =>
+            {
+                var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
+                switch (providerOptions.Type)
+                {
+                    case ProviderType.Azure:
+                        return new AzureMapLayerUpdateTopicClient(providerOptions.Azure.ServiceBus.ConnectionString, providerOptions.Azure.ServiceBus.Topic);
+                    default:
+                        throw new NotImplementedException();
+                }
+            });
+
+            services.AddSingleton<IMapLayerUpdateSubscriptionClient>(provider =>
+            {
+                var providerOptions = provider.GetService<IOptions<ProviderOptions>>().Value;
+                switch (providerOptions.Type)
+                {
+                    case ProviderType.Azure:
+                        return new AzureMapLayerUpdateSubscriptionClient(providerOptions.Azure.ServiceBus.ConnectionString, 
+                            providerOptions.Azure.ServiceBus.Topic, 
+                            providerOptions.Azure.ServiceBus.Subscription,
+                            provider.GetService<ILogger>());
+                    default:
+                        throw new NotImplementedException();
+                }
+            });
         }
     }
 }

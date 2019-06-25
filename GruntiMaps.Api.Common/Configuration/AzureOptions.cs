@@ -23,5 +23,6 @@ namespace GruntiMaps.Api.Common.Configuration
     public class AzureOptions
     {
         public string ConnectionString { get; set; }
+        public ServiceBusOptions ServiceBus { get; set; }
     }
 }

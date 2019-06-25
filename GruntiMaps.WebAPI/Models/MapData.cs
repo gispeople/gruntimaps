@@ -108,8 +108,6 @@ namespace GruntiMaps.WebAPI.Models
         // retrieve global and per-instance tile packs 
         public async Task RefreshLayers()
         {
-            // check for map packs first.
-            _logger.LogDebug("Starting Refreshing layers");
 
 //            var packs = await _packStorage.List();
 //            foreach (var pack in packs)
@@ -150,9 +148,6 @@ namespace GruntiMaps.WebAPI.Models
 //                }
 //            }
 
-            // see if there's any new standalone map layers
-            _logger.LogDebug("Checking for standalone layers");
-
             var mbtiles = await _tileStorage.List();
             foreach (var mbtile in mbtiles)
             {
@@ -161,13 +156,7 @@ namespace GruntiMaps.WebAPI.Models
                     _logger.LogDebug($"Failed to retrieve correct ids for mbtile {mbtile}");
                     continue;
                 }
-                if (_tileCache.GetFileMd5(workspaceId, layerId) != await _tileStorage.GetMd5(mbtile))
-                {
-                    _logger.LogDebug($"Syncing layer {layerId} for workspace {workspaceId}");
-                    CloseService(layerId);
-                    await _tileStorage.UpdateLocalFile(mbtile, _tileCache.GetFilePath(workspaceId, layerId));
-                    OpenService(workspaceId, layerId);
-                }
+                await UpdateLayer(workspaceId, layerId);
             }
 
             // remove deleted layer from local cache
@@ -183,8 +172,6 @@ namespace GruntiMaps.WebAPI.Models
                 }
             }
 
-            _logger.LogDebug("Ending Refreshing layers");
-
         }
 
         /// <summary>
@@ -195,6 +182,7 @@ namespace GruntiMaps.WebAPI.Models
         /// <returns></returns>
         public async Task DeleteLayer(string workspaceId, string layerId)
         {
+            _logger.LogDebug($"Deleting layer {workspaceId}/{layerId}");
             var tasks = new List<Task>();
             tasks.Add(_tileStorage.DeleteIfExist($"{workspaceId}/{layerId}.mbtiles"));
             tasks.Add(_styleStorage.DeleteIfExist($"{workspaceId}/{layerId}.json"));
@@ -203,6 +191,48 @@ namespace GruntiMaps.WebAPI.Models
             CloseService(layerId);
             _tileCache.DeleteIfExist(workspaceId, layerId);
             await Task.WhenAll(tasks);
+            _logger.LogDebug($"Layer {workspaceId}/{layerId} deleted");
+        }
+
+        public async Task UpdateLayer(string workspaceId, string layerId)
+        {
+            _logger.LogDebug($"Syncing layer {workspaceId}/{layerId}");
+
+            var serviceClosed = false;
+
+            var tileBlobPath = $"{workspaceId}/{layerId}.mbtiles";
+            if (_tileCache.GetFileMd5(workspaceId, layerId) != await _tileStorage.GetMd5(tileBlobPath))
+            {
+                CloseService(layerId);
+                serviceClosed = true;
+                await _tileStorage.UpdateLocalFile(tileBlobPath, _tileCache.GetFilePath(workspaceId, layerId));
+                
+            }
+
+            var styleBlobPath = $"{workspaceId}/{layerId}.json";
+            if (_styleCache.GetFileMd5(workspaceId, layerId) != await _styleStorage.GetMd5(styleBlobPath))
+            {
+                CloseService(layerId);
+                serviceClosed = true;
+                if (await _styleStorage.Exist(styleBlobPath))
+                {
+                    await _styleStorage.UpdateLocalFile(styleBlobPath, _styleCache.GetFilePath(workspaceId, layerId));
+                }
+                else
+                {
+                    _styleCache.DeleteIfExist(workspaceId, layerId);
+                }
+            }
+
+            if (serviceClosed)
+            {
+                OpenService(workspaceId, layerId);
+                _logger.LogDebug($"Layer {workspaceId}/{layerId} synced with latest data");
+            }
+            else
+            {
+                _logger.LogDebug($"Layer {workspaceId}/{layerId} synced with no data change");
+            }
         }
 
         /// Close a MapBox tile service so that it can be changed.

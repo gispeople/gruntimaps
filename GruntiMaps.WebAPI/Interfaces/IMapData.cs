@@ -51,9 +51,17 @@ namespace GruntiMaps.WebAPI.Interfaces
         /// <summary>
         /// Upload local layer to hosted storage to publish changes
         /// </summary>
-        /// <param name="workspaceId"></param>
+        /// <param name="workspaceId">workspace id</param>
         /// <param name="id">layer id</param>
         void UploadLocalLayer(string workspaceId, string id);
+
+        /// <summary>
+        /// Update/Create layer if there's update in remote storage
+        /// </summary>
+        /// <param name="workspaceId">workspace id</param>
+        /// <param name="layerId">layer id</param>
+        /// <returns></returns>
+        Task UpdateLayer(string workspaceId, string layerId);
 
         /// <summary>
         /// Refresh active layer to sync with remote storage

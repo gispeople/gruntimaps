@@ -20,11 +20,13 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 using System;
+using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
-using GruntiMaps.Api.Common.Configuration;
+using GruntiMaps.ResourceAccess.TopicSubscription;
 using GruntiMaps.WebAPI.Interfaces;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace GruntiMaps.WebAPI.Services
 {
@@ -32,52 +34,63 @@ namespace GruntiMaps.WebAPI.Services
     /// <summary>
     ///     Service to poll for changes to available map layers and update the available list.
     /// </summary>
-    public class LayerCacheRefreshService : BackgroundService
+    public class LayerCacheRefreshService : IHostedService
     {
         private readonly IMapData _mapData;
-        private readonly ServiceOptions _serviceOptions;
-        private readonly ILayerStyleService _layerStyleService;
+        private readonly IMapLayerUpdateSubscriptionClient _subscriptionClient;
         private readonly ILogger<LayerCacheRefreshService> _logger;
 
-        public LayerCacheRefreshService(IOptions<ServiceOptions> serviceOptions, 
-            IMapData mapData,
-            ILayerStyleService layerStyleService,
+        public LayerCacheRefreshService(IMapData mapData,
+            IMapLayerUpdateSubscriptionClient subscriptionClient,
             ILogger<LayerCacheRefreshService> logger)
         {
             _mapData = mapData;
-            _serviceOptions = serviceOptions.Value;
-            _layerStyleService = layerStyleService;
+            _subscriptionClient = subscriptionClient;
             _logger = logger;
         }
 
-        protected override async Task Process()
-        {
-            //                _logger.LogDebug("LayerUpdate task doing background work.");
 
-            //var start = DateTime.UtcNow;
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
             try
             {
+                _logger.LogDebug("Preforming full layer refresh upon initialization");
+                var timer = new Stopwatch();
+                timer.Start();
                 await _mapData.RefreshLayers();
+                timer.Stop();
+                _logger.LogDebug($"Full layer refresh finished in {timer.ElapsedMilliseconds} ms");
             }
             catch (Exception ex)
             {
                 _logger.LogError("Refreshing Layer exits unexpectedly", ex);
             }
-            
-            //var end = DateTime.UtcNow;
-            //var duration = end - start;
-            //                _logger.LogDebug($"Layer refresh took {duration.TotalMilliseconds} ms.");
 
-            try
-            {
-                await _layerStyleService.RefreshAll();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Refreshing Layer style exits unexpectedly", ex);
-            }
+            _subscriptionClient.RegisterOnMessageHandlerAndReceiveMessages(UpdateMapLayer);
 
-            await Task.Delay(_serviceOptions.LayerRefresh);
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(5000, cancellationToken);
+            }
+        }
+
+        private async Task UpdateMapLayer(MapLayerUpdateData data)
+        {
+            switch (data.Type)
+            {
+                case MapLayerUpdateType.Create:
+                case MapLayerUpdateType.Update:
+                    await _mapData.UpdateLayer(data.WorkspaceId, data.MapLayerId);
+                    break;
+                case MapLayerUpdateType.Delete:
+                    await _mapData.DeleteLayer(data.WorkspaceId, data.MapLayerId);
+                    break;
+            }
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
         }
     }
 }
