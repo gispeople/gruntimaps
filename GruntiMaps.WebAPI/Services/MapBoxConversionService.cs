@@ -29,6 +29,7 @@ using GruntiMaps.Common.Enums;
 using GruntiMaps.ResourceAccess.Queue;
 using GruntiMaps.ResourceAccess.Storage;
 using GruntiMaps.ResourceAccess.Table;
+using GruntiMaps.ResourceAccess.TopicSubscription;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -48,18 +49,21 @@ namespace GruntiMaps.WebAPI.Services
         private readonly IMbConversionQueue _mbConversionQueue;
         private readonly IStatusTable _statusTable;
         private readonly ITileStorage _tileStorage;
+        private readonly IMapLayerUpdateTopicClient _topicClient;
 
         public MapBoxConversionService(ILogger<MapBoxConversionService> logger, 
             IOptions<ServiceOptions> serviceOptions,
             IMbConversionQueue mbConversionQueue,
             IStatusTable statusTable,
-            ITileStorage tileStorage)
+            ITileStorage tileStorage,
+            IMapLayerUpdateTopicClient topicClient)
         {
             _logger = logger;
             _serviceOptions = serviceOptions.Value;
             _mbConversionQueue = mbConversionQueue;
             _statusTable = statusTable;
             _tileStorage = tileStorage;
+            _topicClient = topicClient;
         }
 
         protected override async Task Process()
@@ -173,10 +177,14 @@ namespace GruntiMaps.WebAPI.Services
                     }
                     await _mbConversionQueue.DeleteJob(queued);
                     _logger.LogDebug("Deleted MapBoxConversion message");
-                    if (job?.LayerId != null && job?.WorkspaceId != null)
+
+                    await _statusTable.UpdateStatus(job.WorkspaceId, job.LayerId, LayerStatus.Finished);
+                    await _topicClient.SendMessage(new MapLayerUpdateData()
                     {
-                        await _statusTable.UpdateStatus(job.WorkspaceId, job.LayerId, LayerStatus.Finished);
-                    }
+                        MapLayerId = job.LayerId,
+                        WorkspaceId = job.WorkspaceId,
+                        Type = MapLayerUpdateType.Update
+                    });
                 }
                 catch (Exception ex)
                 {

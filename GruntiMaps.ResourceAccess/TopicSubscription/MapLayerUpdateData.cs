@@ -9,7 +9,6 @@
 
     public enum MapLayerUpdateType
     {
-        Create,
         Update,
         Delete
     }

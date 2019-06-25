@@ -73,7 +73,6 @@ namespace GruntiMaps.WebAPI.Services
         {
             switch (data.Type)
             {
-                case MapLayerUpdateType.Create:
                 case MapLayerUpdateType.Update:
                     await _mapData.UpdateLayer(data.WorkspaceId, data.MapLayerId);
                     break;

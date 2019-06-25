@@ -229,10 +229,6 @@ namespace GruntiMaps.WebAPI.Models
                 OpenService(workspaceId, layerId);
                 _logger.LogDebug($"Layer {workspaceId}/{layerId} synced with latest data");
             }
-            else
-            {
-                _logger.LogDebug($"Layer {workspaceId}/{layerId} synced with no data change");
-            }
         }
 
         /// Close a MapBox tile service so that it can be changed.

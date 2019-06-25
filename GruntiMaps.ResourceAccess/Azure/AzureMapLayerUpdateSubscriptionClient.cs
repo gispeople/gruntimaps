@@ -51,10 +51,16 @@ namespace GruntiMaps.ResourceAccess.Azure
         {
             return async (message, token) =>
             {
+                _logger.LogDebug($"Processing Topic message {message.MessageId}");
+
                 var mapLayerUpdateData =
                     JsonConvert.DeserializeObject<MapLayerUpdateData>(Encoding.UTF8.GetString(message.Body));
 
+                _logger.LogDebug($"Topic message deserialized for layer {mapLayerUpdateData.WorkspaceId}/{mapLayerUpdateData.MapLayerId} for {mapLayerUpdateData.Type}");
+
                 await function(mapLayerUpdateData);
+
+                _logger.LogDebug($"Topic message processed for layer {mapLayerUpdateData.WorkspaceId}/{mapLayerUpdateData.MapLayerId} for {mapLayerUpdateData.Type}");
 
                 // Complete the message so that it is not received again.
                 // This can be done only if the subscriptionClient is created in ReceiveMode.PeekLock mode (which is the default).
