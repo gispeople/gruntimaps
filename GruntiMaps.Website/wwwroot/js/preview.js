@@ -58,9 +58,29 @@ $(document).ready(function () {
         });
     }
 
+    function createPlaceholderLayers(map) {
+        // the following empty layers are there to allow the other layers to be added in a predictable order.
+        const emptySrc = "empty";
+        map.addSource(emptySrc,
+            {
+                "type": "geojson",
+                "data": { "type": "Feature", "properties": { "title": "empty" }, "geometry": null }
+            });
+        map.addLayer({ "type": "background", "id": "background-placeholder", "source": emptySrc, "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "raster", "id": "raster-placeholder", "source": emptySrc, "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "hillshade", "id": "hillshade-placeholder", "source": emptySrc, "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "fill", "id": "fill-placeholder", "source": emptySrc, "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "fill-extrusion", "id": "fill-extrusion-placeholder", "source": emptySrc, "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "line", "id": "line-placeholder", "source": emptySrc, "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "circle", "id": "circle-placeholder", "source": emptySrc, "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "symbol", "id": "symbol-placeholder", "source": emptySrc, "layout": { "visibility": "none"} });
+        map.addLayer({ "type": "heatmap", "id": "heatmap-placeholder", "source": emptySrc, "layout": { "visibility": "none"} });
+
+    }
+
     // create preview map
     mapboxgl.config.REQUIRE_ACCESS_TOKEN = false;
-    var host = "https://localhost:5001";
+    var host = "https://dev.gruntimaps.com";
     window.map = new mapboxgl.Map({
         container: "map",
         style: {
@@ -97,62 +117,47 @@ $(document).ready(function () {
     window.map.addControl(tilt, "top-left");
 
     window.map.on("load", function () {
-        // the following empty layers are there to allow the other layers to be added in a predictable order.
-        // 
-        window.map.addSource("empty",
-            {
-                "type": "geojson",
-                "data": { "type": "Feature", "properties": { "title": "empty" }, "geometry": null }
-            });
-        window.map.addLayer({ "type": "background", "id": "background-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        window.map.addLayer({ "type": "raster", "id": "raster-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        window.map.addLayer({ "type": "hillshade", "id": "hillshade-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        window.map.addLayer({ "type": "fill", "id": "fill-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        window.map.addLayer({ "type": "fill-extrusion", "id": "fill-extrusion-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        window.map.addLayer({ "type": "line", "id": "line-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        window.map.addLayer({ "type": "circle", "id": "circle-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        window.map.addLayer({ "type": "symbol", "id": "symbol-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        window.map.addLayer({ "type": "heatmap", "id": "heatmap-placeholder", "source": "empty", "layout": { "visibility": "none"} });
-        $.get(host + '/api/layers', function (layers) {
+        createPlaceholderLayers(window.map);
+        $.get(host + "/api/layers", function (layers) {
             for (let layer of layers) {
-                const source = layer.links.find(link => link.rel === 'source').href;
+                const source = layer.links.find(link => link.rel === "source").href;
                 $.get(source, function (src) {
+                    // have each source remember what style it uses.
                     src.metadata = { gruntimaps: { styles: layer.links.find(link => link.rel === "style").href } };
                     window.map.addSource(layer.id, src);
                 });
             }
         });
     });
-    window.map.on("sourcedata",
-        function (e) {
-            if (e.sourceDataType === "metadata") {
-                var layerGroup = document.getElementById(e.sourceId);
-                if (layerGroup === null) {
-                    layerGroup = document.createElement("div");
-                    layerGroup.id = e.sourceId;
-                    layerGroup.textContent = e.source.description;
-                    layerGroup.className = "active";
-                    layerGroup.onclick = function(f) {
-                        f.preventDefault();
-                        f.stopPropagation();
-                        for (let c of f.target.children) {
-                            console.log(c);
-                            if (window.map.getLayoutProperty(c.text, "visibility") === "visible") {
-                                window.map.setLayoutProperty(c.text, "visibility", "none");
-                                layerGroup.className = "";
-                            } else {
-                                window.map.setLayoutProperty(c.text, "visibility", "visible");
-                                layerGroup.className = "active";
-                            }
+
+    window.map.on("sourcedata", function (e) {
+        if (e.sourceDataType === "metadata") {
+            var layerGroup = document.getElementById(e.sourceId);
+            if (layerGroup === null) {
+                layerGroup = document.createElement("div");
+                layerGroup.id = e.sourceId;
+                layerGroup.textContent = e.source.description;
+                layerGroup.className = "active";
+                layerGroup.onclick = function(f) {
+                    f.preventDefault();
+                    f.stopPropagation();
+                    for (let c of f.target.children) {
+                        console.log(c);
+                        if (window.map.getLayoutProperty(c.text, "visibility") === "visible") {
+                            window.map.setLayoutProperty(c.text, "visibility", "none");
+                            layerGroup.className = "";
+                        } else {
+                            window.map.setLayoutProperty(c.text, "visibility", "visible");
+                            layerGroup.className = "active";
                         }
-                    };
+                    }
+                };
 
-                    const menu = document.getElementById("menu");
-                    menu.appendChild(layerGroup);
-                }
-
-                loadLayers(e.source);
+                const menu = document.getElementById("menu");
+                menu.appendChild(layerGroup);
             }
+
+            loadLayers(e.source);
         }
-    );
+    });
 });
