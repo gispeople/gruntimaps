@@ -285,7 +285,11 @@ namespace GruntiMaps.WebAPI.Models
 
         private void CheckDirectories()
         {
+            Directory.CreateDirectory(_pathOptions.Root);
             Directory.CreateDirectory(_pathOptions.Fonts);
+            Directory.CreateDirectory(_pathOptions.Packs);
+            Directory.CreateDirectory(_pathOptions.Styles);
+            Directory.CreateDirectory(_pathOptions.Tiles);
         }
 
         /// <summary>

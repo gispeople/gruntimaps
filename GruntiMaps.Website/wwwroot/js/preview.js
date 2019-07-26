@@ -80,7 +80,7 @@ $(document).ready(function () {
 
     // create preview map
     mapboxgl.config.REQUIRE_ACCESS_TOKEN = false;
-    var host = "https://dev.gruntimaps.com";
+    var host = "https://localhost:5001";
     window.map = new mapboxgl.Map({
         container: "map",
         style: {

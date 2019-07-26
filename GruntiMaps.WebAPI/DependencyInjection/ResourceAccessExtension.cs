@@ -179,6 +179,8 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                 {
                     case ProviderType.Azure:
                         return new AzureMapLayerUpdateTopicClient(providerOptions.Azure.ServiceBus.ConnectionString, providerOptions.Azure.ServiceBus.Topic);
+                    case ProviderType.Local:
+                        return new LocalMapLayerUpdateTopicClient(provider.GetService<ILogger<LocalMapLayerUpdateTopicClient>>());
                     default:
                         throw new NotImplementedException();
                 }
@@ -194,6 +196,8 @@ namespace GruntiMaps.WebAPI.DependencyInjection
                             providerOptions.Azure.ServiceBus.Topic, 
                             providerOptions.Azure.ServiceBus.Subscription,
                             provider.GetService<ILogger<AzureMapLayerUpdateSubscriptionClient>>());
+                    case ProviderType.Local:
+                        return new LocalMapLayerUpdateSubscriptionClient(provider.GetService<ILogger<LocalMapLayerUpdateSubscriptionClient>>());
                     default:
                         throw new NotImplementedException();
                 }
