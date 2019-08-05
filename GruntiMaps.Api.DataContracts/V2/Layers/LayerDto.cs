@@ -27,6 +27,8 @@ namespace GruntiMaps.Api.DataContracts.V2.Layers
         public string Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+        public string MbTileMd5 { get; set; }
+        public string CustomStyleMd5 { get; set; }
         public IList<LinkDto> Links { get; set; }
     }
 }

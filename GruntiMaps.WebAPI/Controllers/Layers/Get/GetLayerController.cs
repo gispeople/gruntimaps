@@ -18,10 +18,13 @@ You should have received a copy of the GNU Affero General Public License along
 with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+
+using System.Threading.Tasks;
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.Common.Services;
 using GruntiMaps.Api.DataContracts.V2.Layers;
 using GruntiMaps.Domain.Common.Exceptions;
+using GruntiMaps.ResourceAccess.Storage;
 using GruntiMaps.ResourceAccess.Table;
 using GruntiMaps.WebAPI.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -35,18 +38,23 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
     {
         private readonly IMapData _mapData;
         private readonly IResourceLinksGenerator _resourceLinksGenerator;
+        private readonly ITileStorage _tileStorage;
+        private readonly IStyleStorage _styleStorage;
 
         public GetLayerController(IMapData mapData,
-            IStatusTable statusTable,
-            IResourceLinksGenerator resourceLinksGenerator)
+            IResourceLinksGenerator resourceLinksGenerator, 
+            ITileStorage tileStorage, 
+            IStyleStorage styleStorage)
         {
             _mapData = mapData;
             _resourceLinksGenerator = resourceLinksGenerator;
+            _tileStorage = tileStorage;
+            _styleStorage = styleStorage;
         }
 
         [AllowAnonymous]
         [HttpGet(Name = RouteNames.GetLayer)]
-        public ActionResult Invoke()
+        public async Task<ActionResult> Invoke()
         {
             var layer = _mapData.HasLayer(WorkspaceId, LayerId) 
                 ? _mapData.GetLayer(WorkspaceId, LayerId) 
@@ -57,8 +65,10 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
                 Id = layer.Id,
                 Name = layer.Name,
                 Description = layer.Source.Description,
+                MbTileMd5 = await _tileStorage.GetMd5($"{WorkspaceId}/{LayerId}.mbtiles"),
+                CustomStyleMd5 = await _styleStorage.GetMd5($"{WorkspaceId}/{LayerId}.json"),
                 Links = _resourceLinksGenerator.GenerateResourceLinks(WorkspaceId, LayerId)
-            }, new JsonSerializerSettings()
+            }, new JsonSerializerSettings
             {
                 Formatting = Formatting.Indented,
                 ContractResolver = new CamelCasePropertyNamesContractResolver()
