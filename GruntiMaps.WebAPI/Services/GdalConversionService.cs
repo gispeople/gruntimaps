@@ -27,21 +27,22 @@ using GruntiMaps.ResourceAccess.Table;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Threading.Tasks;
+using GruntiMaps.Common.Extensions;
+using GruntiMaps.Common.Services;
+using GruntiMaps.WebAPI.Models;
 
 namespace GruntiMaps.WebAPI.Services
 {
     public class GdalConversionService : BackgroundService
     {
-        private const int RetryLimit = 3;
+        private const int RetryLimit = 2;
+        private const string ConverterFileName = "ogr2ogr";
 
         private readonly ILogger<GdalConversionService> _logger;
         private readonly ServiceOptions _serviceOptions;
-        private readonly List<string> _supportedFileTypes;
 
         private readonly IGdConversionQueue _gdConversionQueue;
         private readonly IMbConversionQueue _mbConversionQueue;
@@ -57,7 +58,6 @@ namespace GruntiMaps.WebAPI.Services
         {
             _logger = logger;
             _serviceOptions = serviceOptions.Value;
-            _supportedFileTypes = new List<string> { ".shp", ".geojson", ".gdb" };
 
             _gdConversionQueue = gdConversionQueue;
             _mbConversionQueue = mbConversionQueue;
@@ -84,89 +84,39 @@ namespace GruntiMaps.WebAPI.Services
 
             if (queued != null) // if no job queued, don't try
             {
-                var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-                _logger.LogDebug($"temporary path = {tempPath}");
-
-                try
+                using (var workFolder = new TemporaryWorkFolder())
                 {
-                    var job = queued.Content;
-                    if (job?.DataLocation != null && job.LayerId != null && job.WorkspaceId != null)
-                    // if the job has missing values, don't process it, just delete it from queue.
+                    try
                     {
-                        var timer = new Stopwatch();
-                        timer.Start();
-                        _logger.LogDebug($"Processing Gdal Conversion for Layer {queued.Content.LayerId} within Queue Message {queued.Id}");
-
-                        // If the directory already existed, throw an error - this should never happen, but just in case.
-                        if (Directory.Exists(tempPath))
+                        var job = queued.Content;
+                        if (job?.DataLocation != null && job.LayerId != null && job.WorkspaceId != null)
+                        // if the job has missing values, don't process it, just delete it from queue.
                         {
-                            _logger.LogError($"The temporary path '{tempPath}' already existed.");
-                            throw new Exception("The temporary path already existed.");
-                        }
+                            var timer = new Stopwatch();
+                            timer.Start();
+                            _logger.LogDebug($"Processing GDAL Conversion for Layer {queued.Content.LayerId} within Queue Message {queued.Id}");
 
-                        // Try to create the directory.
-                        Directory.CreateDirectory(tempPath);
-                        _logger.LogDebug($"The directory was created successfully at {Directory.GetCreationTime(tempPath)}.");
+                            // Keep source and dest separate in case of file name collision.
+                            var sourcePath = workFolder.CreateSubFolder("source");
+                            var destPath = workFolder.CreateSubFolder("dest");
 
-                        // we need to keep source and dest separate in case there's a collision in filenames.
-                        var sourcePath = Path.Combine(tempPath, "source");
-                        Directory.CreateDirectory(sourcePath);
-
-                        var destPath = Path.Combine(tempPath, "dest");
-                        Directory.CreateDirectory(destPath);
-
-                        if (job.DataLocation != null) // if it was null we don't want to do anything except remove the job from queue
-                        {
-                            // retrieve the source data file from the supplied URI 
-                            var remoteUri = new Uri(job.DataLocation);
-                            // we will need to know if this is a supported file type
-                            var fileType = Path.GetExtension(remoteUri.AbsolutePath).ToLower();
-                            if (!_supportedFileTypes.Contains(fileType))
-                            {
-                                throw new Exception($"Unsupported file type: {fileType}");
-                            }
-
-                            var inputFilePath = Path.Combine(sourcePath, Path.GetFileName(remoteUri.AbsolutePath));
-                            _logger.LogDebug($"Downloading {job.DataLocation} to {inputFilePath}");
-                            using (var webClient = new WebClient())
-                            {
-                                webClient.DownloadFile(job.DataLocation, inputFilePath);
-                            }
-
+                            var inputFilePath = await new Uri(job.DataLocation).DownloadToLocal(sourcePath);
                             var geoJsonFile = Path.Combine(destPath, $"{job.LayerId}.geojson");
-                            var gdalProcess = new Process
-                            {
-                                StartInfo =
-                                {
-                                    FileName = "ogr2ogr",
-                                    Arguments =
-                                        "-f \"GeoJSON\" " +    // always converting to GeoJSON
-                                        $"-nln \"{job.LayerName}\" " +
-                                        "-t_srs \"EPSG:4326\" " +  // always transform to WGS84
-                                        $"{geoJsonFile} " +
-                                        $"{inputFilePath}",
-                                    UseShellExecute = false,
-                                    RedirectStandardOutput = true,
-                                    RedirectStandardError = true,
-                                    CreateNoWindow = true
-                                }
-                            };
-                            _logger.LogDebug($"ogr2ogr arguments are {gdalProcess.StartInfo.Arguments}");
 
-                            gdalProcess.Start();
-                            var errmsg = "";
-                            while (!gdalProcess.StandardError.EndOfStream) errmsg += gdalProcess.StandardError.ReadLine();
-                            gdalProcess.WaitForExit();
-                            var exitCode = gdalProcess.ExitCode;
-                            _logger.LogDebug($"og2ogr returned exit code {exitCode}");
-                            if (exitCode != 0)
+
+                            var processArgument = GetProcessArgument(job.LayerName, geoJsonFile, inputFilePath);
+                            _logger.LogDebug($"executing ogr2ogr process with argument {processArgument}");
+                            var executionResult =
+                                ProcessExecutionService.ExecuteProcess(ConverterFileName, processArgument);
+                            if (executionResult.success)
                             {
-                                _logger.LogError($"Spatial data to GeoJSON conversion failed (errcode={exitCode}), msgs = {errmsg}");
-                                throw new Exception($"Spatial data to GeoJSON conversion failed. {errmsg}");
+                                _logger.LogDebug($"ogr2ogr process successfully executed");
+                            }
+                            else
+                            {
+                                _logger.LogError($"ogr2ogr process failed: {executionResult.error}");
                             }
 
-
-                            _logger.LogDebug($"geojson file is in {geoJsonFile}");
                             // now we need to put the converted geojson file into storage
                             var location = await _geoJsonStorage.Store($"{job.WorkspaceId}/{job.LayerId}.geojson", geoJsonFile);
                             _logger.LogDebug("Upload of geojson file to storage complete.");
@@ -184,38 +134,37 @@ namespace GruntiMaps.WebAPI.Services
                                 DataLocation = location
                             });
                         }
+                        // we completed GDAL conversion and creation of MVT conversion request, so remove the GDAL request from the queue
+                        await _gdConversionQueue.DeleteJob(queued);
+                        _logger.LogDebug("GDAL Conversion message deleted ");
                     }
-                    // we completed GDAL conversion and creation of MVT conversion request, so remove the GDAL request from the queue
-                    await _gdConversionQueue.DeleteJob(queued);
-                    _logger.LogDebug("Deleted GdalConversion message");
-                }
-                catch (Exception ex)
-                {
-                    if (queued.DequeueCount >= RetryLimit)
+                    catch (Exception ex)
                     {
-                        try
+                        if (queued.DequeueCount >= RetryLimit)
                         {
-                            await _gdConversionQueue.DeleteJob(queued);
-                            if (queued.Content?.LayerId != null && queued.Content?.WorkspaceId != null)
+                            try
                             {
-                                await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId,
-                                    LayerStatus.Failed);
-                            }
+                                await _gdConversionQueue.DeleteJob(queued);
+                                if (queued.Content?.LayerId != null && queued.Content?.WorkspaceId != null)
+                                {
+                                    await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId,
+                                        LayerStatus.Failed);
+                                }
 
-                            _logger.LogError($"GdalConversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
+                                _logger.LogError($"GDAL Conversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
+                            }
+                            catch (Exception e)
+                            {
+                                _logger.LogError($"GDAL Conversion failed to clear bad conversion for layer {queued.Content?.LayerId}", e);
+                            }
                         }
-                        catch (Exception e)
+                        else
                         {
-                            _logger.LogError($"GdalConversion failed to clear bad conversion for layer {queued.Content?.LayerId}", e);
+                            _logger.LogWarning($"GDAL Conversion failed for layer {queued.Content?.LayerId} will retry later", ex);
                         }
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"GdalConversion failed for layer {queued.Content?.LayerId} will retry later", ex);
                     }
                 }
 
-                Directory.Delete(tempPath, true);
             }
             else
             {
@@ -223,5 +172,13 @@ namespace GruntiMaps.WebAPI.Services
             }
         }
 
+        private string GetProcessArgument(string name, string geoJsonPath, string inputPath)
+        {
+            return "-f \"GeoJSON\" " + // always converting to GeoJSON
+                   $"-nln \"{name}\" " +
+                   "-t_srs \"EPSG:4326\" " + // always transform to WGS84
+                   $"{geoJsonPath} " +
+                   $"{inputPath}";
+        }
     }
 }
