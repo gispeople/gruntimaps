@@ -124,7 +124,7 @@ namespace GruntiMaps.WebAPI.Services
                             _logger.LogDebug("Upload of mbtile file to storage complete.");
 
                             timer.Stop();
-                            _logger.LogDebug($"MapBoxConversion finished for Layer {job.LayerId} in {timer.ElapsedMilliseconds} ms.");
+                            _logger.LogDebug($"MapBox Conversion finished for Layer {job.LayerId} in {timer.ElapsedMilliseconds} ms.");
 
                             await _statusTable.UpdateStatus(job.WorkspaceId, job.LayerId, LayerStatus.Finished);
                             await _topicClient.SendMessage(new MapLayerUpdateData
@@ -135,7 +135,7 @@ namespace GruntiMaps.WebAPI.Services
                             });
                         }
                         await _mbConversionQueue.DeleteJob(queued);
-                        _logger.LogDebug("Deleted MapBoxConversion message");
+                        _logger.LogDebug("Deleted MapBox Conversion message");
                     }
                     catch (Exception ex)
                     {
@@ -148,16 +148,16 @@ namespace GruntiMaps.WebAPI.Services
                                 {
                                     await _statusTable.UpdateStatus(queued.Content.WorkspaceId, queued.Content.LayerId, LayerStatus.Failed);
                                 }
-                                _logger.LogError($"MbConversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
+                                _logger.LogError($"MapBox Conversion failed for layer {queued.Content?.LayerId} after reaching retry limit", ex);
                             }
                             catch (Exception e)
                             {
-                                _logger.LogError($"GdalConversion failed to clear bad conversion for layer {queued.Content?.LayerId}", e);
+                                _logger.LogError($"MapBox Conversion failed to clear bad conversion for layer {queued.Content?.LayerId}", e);
                             }
                         }
                         else
                         {
-                            _logger.LogWarning($"MbConversion failed for layer {queued.Content?.LayerId} and will retry later", ex);
+                            _logger.LogWarning($"MapBox Conversion failed for layer {queued.Content?.LayerId} and will retry later", ex);
                         }
                     }
                 }
