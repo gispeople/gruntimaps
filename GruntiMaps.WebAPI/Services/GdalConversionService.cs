@@ -29,6 +29,8 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Threading.Tasks;
 using GruntiMaps.Common.Extensions;
 using GruntiMaps.Common.Services;
@@ -100,9 +102,9 @@ namespace GruntiMaps.WebAPI.Services
                             var sourcePath = workFolder.CreateSubFolder("source");
                             var destPath = workFolder.CreateSubFolder("dest");
 
-                            var inputFilePath = await new Uri(job.DataLocation).DownloadToLocal(sourcePath);
+                            var downloadedFilePath = await new Uri(job.DataLocation).DownloadToLocal(sourcePath);
+                            var inputFilePath = GetGdalInputFileParameter(downloadedFilePath, workFolder);
                             var geoJsonFile = Path.Combine(destPath, $"{job.LayerId}.geojson");
-
 
                             var processArgument = GetProcessArgument(job.LayerName, geoJsonFile, inputFilePath);
                             _logger.LogDebug($"executing ogr2ogr process with argument {processArgument}");
@@ -179,6 +181,38 @@ namespace GruntiMaps.WebAPI.Services
                    "-t_srs \"EPSG:4326\" " + // always transform to WGS84
                    $"{geoJsonPath} " +
                    $"{inputPath}";
+        }
+
+        private string GetGdalInputFileParameter(string downloadedFilePath, TemporaryWorkFolder workFolder)
+        {
+            try
+            {
+                using (var zip = ZipFile.OpenRead(downloadedFilePath))
+                {
+                    if (zip.Entries.Count == 1)
+                    {
+                        // extract the source if has single entry
+                        var singleEntry = zip.Entries.First();
+                        using (var entryStream = zip.Entries.First().Open())
+                        {
+                            var extractedPath = Path.Combine(workFolder.CreateSubFolder("extracted"), singleEntry.Name);
+                            using (var extractedStream = File.OpenWrite(extractedPath))
+                            {
+                                entryStream.CopyTo(extractedStream);
+                                return extractedPath;
+                            }
+                        }
+                    }
+
+                    // use zip file if has multiple entries
+                    return $@"/vsizip/{downloadedFilePath}";
+                }
+            }
+            catch
+            {
+                // directly use downloaded file if not a zip file
+                return downloadedFilePath;
+            }
         }
     }
 }
