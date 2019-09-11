@@ -126,7 +126,17 @@ namespace GruntiMaps.WebAPI.Services
                             timer.Stop();
                             _logger.LogDebug($"MapBox Conversion finished for Layer {job.LayerId} in {timer.ElapsedMilliseconds} ms.");
 
-                            await _statusTable.UpdateStatus(job.WorkspaceId, job.LayerId, LayerStatus.Finished);
+                            try
+                            {
+                                await _statusTable.UpdateStatus(job.WorkspaceId, job.LayerId, LayerStatus.Finished);
+                                _logger.LogDebug($"Layer {job.LayerId} status updated to Finished");
+                            }
+                            catch(Exception ex)
+                            {
+                                _logger.LogError($"Error when updating Layer {job.LayerId} status to Finished", ex);
+                                throw;
+                            }
+                            
                             await _topicClient.SendMessage(new MapLayerUpdateData
                             {
                                 MapLayerId = job.LayerId,
