@@ -117,6 +117,7 @@ namespace GruntiMaps.WebAPI.Services
                             else
                             {
                                 _logger.LogError($"ogr2ogr process failed: {executionResult.error}");
+                                throw new Exception($"ogr2ogr process failed: {executionResult.error}");
                             }
 
                             // now we need to put the converted geojson file into storage
