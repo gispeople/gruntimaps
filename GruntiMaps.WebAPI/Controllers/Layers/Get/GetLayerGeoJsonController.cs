@@ -19,22 +19,32 @@ with GruntiMaps.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 using System;
+using System.Threading.Tasks;
 using GruntiMaps.Api.Common.Resources;
 using GruntiMaps.Api.DataContracts.V2;
+using GruntiMaps.Domain.Common.Exceptions;
+using GruntiMaps.ResourceAccess.Storage;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GruntiMaps.WebAPI.Controllers.Layers.Get
 {
     public class GetLayerGeoJsonController : WorkspaceLayerControllerBase
     {
-        public GetLayerGeoJsonController()
+        private readonly IGeoJsonStorage _geoJsonStorage;
+        public GetLayerGeoJsonController(IGeoJsonStorage geoJsonStorage)
         {
+            _geoJsonStorage = geoJsonStorage;
         }
 
         [HttpGet(Resources.GeoJsonSubResource, Name = RouteNames.GetLayerGeoJson)]
-        public ActionResult Invoke()
+        public async Task<ActionResult> Invoke(string workspaceId, string layerId)
         {
-            throw new NotImplementedException();
+            var file = $"{WorkspaceId}/{LayerId}.geojson";
+            if (await _geoJsonStorage.Exist(file))
+            {
+                return Redirect(await _geoJsonStorage.GetDownloadUrl(file));
+            }
+            throw new EntityNotFoundException();
         }
     }
 }
