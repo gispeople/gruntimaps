@@ -36,6 +36,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
             _geoJsonStorage = geoJsonStorage;
         }
 
+        [HttpHead(Resources.GeoJsonSubResource, Name = RouteNames.GetLayerGeoJson)]
         [HttpGet(Resources.GeoJsonSubResource, Name = RouteNames.GetLayerGeoJson)]
         public async Task<ActionResult> Invoke(string workspaceId, string layerId)
         {
