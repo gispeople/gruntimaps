@@ -36,6 +36,7 @@ namespace GruntiMaps.WebAPI.Controllers.Layers.Get
             _tileStorage = tileStorage;
         }
 
+        [HttpHead(Resources.MbtilesSubResource, Name = RouteNames.GetLayerMbtiles)]
         [HttpGet(Resources.MbtilesSubResource, Name = RouteNames.GetLayerMbtiles)]
         public async Task<ActionResult> Invoke()
         {
